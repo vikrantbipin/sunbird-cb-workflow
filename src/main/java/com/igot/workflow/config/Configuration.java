@@ -15,6 +15,12 @@ public class Configuration {
     @Value("${workflow.pagination.max.limit}")
     private Integer maxLimit;
 
+    @Value("${hub.service.host}")
+    private String hubServiceHost;
+
+    @Value("${hub.profile.update}")
+    private String hubProfileUpdateEndPoint;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -37,5 +43,21 @@ public class Configuration {
 
     public void setMaxLimit(Integer maxLimit) {
         this.maxLimit = maxLimit;
+    }
+
+    public String getHubServiceHost() {
+        return hubServiceHost;
+    }
+
+    public void setHubServiceHost(String hubServiceHost) {
+        this.hubServiceHost = hubServiceHost;
+    }
+
+    public String getHubProfileUpdateEndPoint() {
+        return hubProfileUpdateEndPoint;
+    }
+
+    public void setHubProfileUpdateEndPoint(String hubProfileUpdateEndPoint) {
+        this.hubProfileUpdateEndPoint = hubProfileUpdateEndPoint;
     }
 }

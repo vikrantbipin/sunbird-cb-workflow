@@ -6,8 +6,6 @@ public class Constants {
 
     public static final String ORG = "dopt";
 
-    public static final String WF_SERVICE_NAME = "profile";
-
     public static final String MESSAGE = "message";
 
     public static final String DATA = "data";
@@ -52,5 +50,11 @@ public class Constants {
 
     public static final String ROLES_CONSTANT = "roles";
 
+    public static final String IS_WORKFLOW_TERMINATED = "inWorkflow";
+
     public static final String SEARCH_CRITERIA_VALIDATION = "Provide the mandatory fields for search!";
+
+    public static final String PROFILE_SERVICE_NAME = "profile";
+
+    public static final String SERVICE_NAME_EXCEPTION = "No configured service found!";
 }

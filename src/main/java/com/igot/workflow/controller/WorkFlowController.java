@@ -3,7 +3,7 @@ package com.igot.workflow.controller;
 import com.igot.workflow.models.Response;
 import com.igot.workflow.models.SearchCriteria;
 import com.igot.workflow.models.WfRequest;
-import com.igot.workflow.service.WorkflowService;
+import com.igot.workflow.service.Workflowservice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class WorkFlowController {
 
     @Autowired
-    private WorkflowService workflowService;
+    private Workflowservice workflowService;
 
     @PostMapping("/transition")
     public ResponseEntity<Response> WfTransition(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody WfRequest wfRequest) {
-        Response response = workflowService.statusChange(rootOrg, org, wfRequest);
+        Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -35,9 +35,9 @@ public class WorkFlowController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping(path = "/nextAction/{state}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> getNextActionForState(@RequestHeader String rootOrg, @RequestHeader String org, @PathVariable("state") String state) {
-        Response response = workflowService.getNextActionForState(rootOrg, org, state);
+    @GetMapping(path = "/nextAction/{serviceName}/{state}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> getNextActionForState(@RequestHeader String rootOrg, @RequestHeader String org,@PathVariable("serviceName") String serviceName , @PathVariable("state") String state) {
+        Response response = workflowService.getNextActionForState(rootOrg, org, serviceName, state);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

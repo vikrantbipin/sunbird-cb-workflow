@@ -1,4 +1,4 @@
-package com.igot.workflow.service;
+package com.igot.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +12,8 @@ import com.igot.workflow.postgres.entity.WfAuditEntity;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
 import com.igot.workflow.postgres.repo.WfAuditRepo;
 import com.igot.workflow.postgres.repo.WfStatusRepo;
+import com.igot.workflow.service.UserProfileWfService;
+import com.igot.workflow.service.Workflowservice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,7 +28,7 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class WorkflowService {
+public class WorkflowServiceImpl implements Workflowservice {
 
 	@Autowired
 	private WfRepo wfRepo;
@@ -42,6 +44,29 @@ public class WorkflowService {
 
 	@Autowired
 	private Configuration configuration;
+
+	@Autowired
+	private UserProfileWfService userProfileWfService;
+
+	/**
+	 *
+	 * @param rootOrg
+	 * @param org
+	 * @param wfRequest
+	 * @return
+	 */
+
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+		Response response = null;
+		switch (wfRequest.getServiceName()) {
+			case Constants.PROFILE_SERVICE_NAME:
+				response = userProfileWfService.updateUserProfile(rootOrg, org, wfRequest);
+				break;
+			default:
+				throw new ApplicationException(Constants.SERVICE_NAME_EXCEPTION);
+		}
+		return response;
+	}
 
 	/**
 	 * Change the status of workflow application
@@ -94,6 +119,7 @@ public class WorkflowService {
 		}
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeState);
+		response.put(Constants.DATA, changeState);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
@@ -352,15 +378,16 @@ public class WorkflowService {
 	 *
 	 * @param rootOrg
 	 * @param org
-	 * @param status
+	 * @param serviceName
+	 * @param state
 	 * @return
 	 */
-	public Response getNextActionForState(String rootOrg, String org, String status) {
+	public Response getNextActionForState(String rootOrg, String org, String serviceName, String state) {
 		Response response = new Response();
 		try {
-			Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, Constants.WF_SERVICE_NAME);
+			Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, serviceName);
 			WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
-			WfStatus wfStatus = getWfStatus(status, workFlowModel);
+			WfStatus wfStatus = getWfStatus(state, workFlowModel);
 			List<HashMap<String, Object>> nextActionArray = new ArrayList<>();
 			HashMap<String, Object> actionMap = null;
 			if (!CollectionUtils.isEmpty(wfStatus.getActions())) {
@@ -368,6 +395,7 @@ public class WorkflowService {
 					actionMap = new HashMap<>();
 					actionMap.put(Constants.ACTION_CONSTANT, action.getAction());
 					actionMap.put(Constants.ROLES_CONSTANT, action.getRoles());
+					actionMap.put(Constants.IS_WORKFLOW_TERMINATED, !wfStatus.getIsLastState());
 					nextActionArray.add(actionMap);
 				}
 			}
@@ -378,6 +406,18 @@ public class WorkflowService {
 			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
 		}
 		return response;
+	}
+
+	public WfStatus getWorkflowStates(String rootOrg, String org, String serviceName, String state){
+		WfStatus wfStatus = null;
+		try {
+		Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, serviceName);
+		WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
+		wfStatus = getWfStatus(state, workFlowModel);
+		} catch (IOException e) {
+			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
+		}
+		return wfStatus;
 	}
 
 	/**
