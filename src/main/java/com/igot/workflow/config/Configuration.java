@@ -21,6 +21,12 @@ public class Configuration {
     @Value("${hub.profile.update}")
     private String hubProfileUpdateEndPoint;
 
+    @Value("${pid.service.host}")
+    private String pidServiceHost;
+
+    @Value("${pid.multiplesearch.endpoint}")
+    private String multipleSearchEndPoint;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -59,5 +65,21 @@ public class Configuration {
 
     public void setHubProfileUpdateEndPoint(String hubProfileUpdateEndPoint) {
         this.hubProfileUpdateEndPoint = hubProfileUpdateEndPoint;
+    }
+
+    public String getPidServiceHost() {
+        return pidServiceHost;
+    }
+
+    public void setPidServiceHost(String pidServiceHost) {
+        this.pidServiceHost = pidServiceHost;
+    }
+
+    public String getMultipleSearchEndPoint() {
+        return multipleSearchEndPoint;
+    }
+
+    public void setMultipleSearchEndPoint(String multipleSearchEndPoint) {
+        this.multipleSearchEndPoint = multipleSearchEndPoint;
     }
 }

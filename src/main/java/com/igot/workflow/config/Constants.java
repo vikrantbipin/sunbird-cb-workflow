@@ -1,5 +1,11 @@
 package com.igot.workflow.config;
 
+import org.apache.commons.collections.list.UnmodifiableList;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class Constants {
 
     public static final String ROOT_ORG = "igot";
@@ -61,5 +67,16 @@ public class Constants {
     public static final String USER_ID_VALUE = "userIdValue";
 
     public static final String APPROVED_STATE = "APPROVED";
+
+    public static final String EMAIL = "email";
+
+    public static final String LAST_NAME = "last_name";
+
+    public static final String FIRST_NAME = "first_name";
+
+    public static final String UUID = "wid";
+
+    public static final List<String> USER_DEFAULT_FIELDS = Collections.unmodifiableList(Arrays.asList(UUID, FIRST_NAME, LAST_NAME, EMAIL));
+
 
 }

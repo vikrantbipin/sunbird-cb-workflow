@@ -15,19 +15,24 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseBody
 public class ApplicationException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final String message;
+    private final String message;
 
-	public ApplicationException(String message) {
-		super(message);
-		this.message = message;
-	}
+    public ApplicationException(String message) {
+        super(message);
+        this.message = message;
+    }
 
-	@Override
-	public String getMessage() {
-		return message;
-	}
+    public ApplicationException(String message, Throwable e) {
+        super(message, e);
+        this.message = message;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
 
 
 }
