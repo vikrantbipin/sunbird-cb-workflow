@@ -2,16 +2,16 @@ package com.igot.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.workflow.exception.ApplicationException;
-import com.igot.workflow.models.*;
-import com.igot.workflow.repository.cassandra.bodhi.WfRepo;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.config.Constants;
+import com.igot.workflow.exception.ApplicationException;
+import com.igot.workflow.models.*;
 import com.igot.workflow.models.cassandra.Workflow;
 import com.igot.workflow.postgres.entity.WfAuditEntity;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
 import com.igot.workflow.postgres.repo.WfAuditRepo;
 import com.igot.workflow.postgres.repo.WfStatusRepo;
+import com.igot.workflow.repository.cassandra.bodhi.WfRepo;
 import com.igot.workflow.service.UserProfileWfService;
 import com.igot.workflow.service.Workflowservice;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +26,8 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WorkflowServiceImpl implements Workflowservice {
@@ -47,6 +49,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	@Autowired
 	private UserProfileWfService userProfileWfService;
+
+	@Autowired
+	private RequestService requestService;
+
+	public WorkflowServiceImpl() {
+	}
 
 	/**
 	 *
@@ -444,5 +452,30 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.DATA, history);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
+	}
+
+	/**
+	 *
+	 * @param userId userId
+	 * @return list of roles for user
+	 */
+	private List<String> getUserRoles(String userId) {
+		List<String> roleList = new ArrayList<>();
+		StringBuilder builder = new StringBuilder();
+		String endPoint = configuration.getUserRoleSearchEndpoint().replace("{user_id}", userId);
+		builder.append(configuration.getLexCoreServiceHost()).append(endPoint);
+		Map<String, Object> response = (Map<String, Object>) requestService.fetchResultUsingGet(builder);
+		List<String> defaultRoles = new ArrayList<>();
+		List<String> userRoles = new ArrayList<>();
+		if (!ObjectUtils.isEmpty(response.get("default_roles"))) {
+			defaultRoles = (List<String>) response.get("default_roles");
+		}
+		if (!ObjectUtils.isEmpty(response.get("user_roles"))) {
+			userRoles = (List<String>) response.get("user_roles");
+		}
+		roleList = Stream.concat(userRoles.stream(), defaultRoles.stream())
+				.distinct()
+				.collect(Collectors.toList());
+		return roleList;
 	}
 }

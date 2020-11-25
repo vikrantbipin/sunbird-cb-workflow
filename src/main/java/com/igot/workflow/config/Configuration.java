@@ -27,6 +27,12 @@ public class Configuration {
     @Value("${pid.multiplesearch.endpoint}")
     private String multipleSearchEndPoint;
 
+    @Value("${lexcore.service.host}")
+    private String lexCoreServiceHost;
+
+    @Value("${userrole.search.endpoint}")
+    private String userRoleSearchEndpoint;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -81,5 +87,21 @@ public class Configuration {
 
     public void setMultipleSearchEndPoint(String multipleSearchEndPoint) {
         this.multipleSearchEndPoint = multipleSearchEndPoint;
+    }
+
+    public String getLexCoreServiceHost() {
+        return lexCoreServiceHost;
+    }
+
+    public void setLexCoreServiceHost(String lexCoreServiceHost) {
+        this.lexCoreServiceHost = lexCoreServiceHost;
+    }
+
+    public String getUserRoleSearchEndpoint() {
+        return userRoleSearchEndpoint;
+    }
+
+    public void setUserRoleSearchEndpoint(String userRoleSearchEndpoint) {
+        this.userRoleSearchEndpoint = userRoleSearchEndpoint;
     }
 }

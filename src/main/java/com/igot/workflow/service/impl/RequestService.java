@@ -40,4 +40,22 @@ public class RequestService {
         }
         return response;
     }
+
+    public Object fetchResultUsingGet(StringBuilder uri) {
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        Object response = null;
+        StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult:")
+                .append(System.lineSeparator());
+        str.append("URI: ").append(uri.toString()).append(System.lineSeparator());
+        try {
+            log.debug(str.toString());
+            response = restTemplate.getForObject(uri.toString(), Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("External Service threw an Exception: ", e);
+        } catch (Exception e) {
+            log.error("Exception while fetching from searcher: ", e);
+        }
+        return response;
+    }
+
 }
