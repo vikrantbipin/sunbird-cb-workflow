@@ -34,15 +34,16 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         Response response = workflowservice.statusChange(rootOrg, org, wfRequest);
         String status = (String) response.get(Constants.DATA);
         WfStatus state = workflowservice.getWorkflowStates(rootOrg, org, wfRequest.getServiceName(), status);
-        if (state.getIsLastState()) {
+        if (Constants.APPROVED_STATE.equals(state.getState())) {
             Map<String, Object> requestValue = new HashMap<>();
             for (HashMap<String, Object> updatedValues : wfRequest.getUpdateFieldValues()) {
                 requestValue.put((String) updatedValues.get(FIELD_KEY), updatedValues.get(FIELD_TO_VALUE));
             }
             StringBuilder builder = new StringBuilder();
-            builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileUpdateEndPoint());
+            String endPoint = configuration.getHubProfileUpdateEndPoint().replace(Constants.USER_ID_VALUE, wfRequest.getApplicationId());
+            builder.append(configuration.getHubServiceHost()).append(endPoint);
             requestService.fetchResult(builder, requestValue);
-        }
+       }
         return response;
     }
 }

@@ -57,4 +57,9 @@ public class Constants {
     public static final String PROFILE_SERVICE_NAME = "profile";
 
     public static final String SERVICE_NAME_EXCEPTION = "No configured service found!";
+
+    public static final String USER_ID_VALUE = "userIdValue";
+
+    public static final String APPROVED_STATE = "APPROVED";
+
 }
