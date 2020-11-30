@@ -18,6 +18,8 @@ public class Constants {
 
     public static final String STATUS = "status";
 
+        public static final String WF_ID_CONSTANT = "wfId";
+
     public static final String SUCCESSFUL = "Successful";
 
     public static final String STATUS_CHANGE_MESSAGE = "Application status changed to ";
@@ -78,5 +80,5 @@ public class Constants {
 
     public static final List<String> USER_DEFAULT_FIELDS = Collections.unmodifiableList(Arrays.asList(UUID, FIRST_NAME, LAST_NAME, EMAIL));
 
-
+    public static final String CBP_WF_SERVICE_NAME = "cbp-content";
 }

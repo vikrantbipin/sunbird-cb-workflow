@@ -70,8 +70,13 @@ public class WorkflowServiceImpl implements Workflowservice {
 			case Constants.PROFILE_SERVICE_NAME:
 				response = userProfileWfService.updateUserProfile(rootOrg, org, wfRequest);
 				break;
+			case Constants.CBP_WF_SERVICE_NAME:
+				//we can change it later for further implementation
+				response = statusChange(rootOrg, org, wfRequest);
+				break;
 			default:
-				throw new ApplicationException(Constants.SERVICE_NAME_EXCEPTION);
+				response = statusChange(rootOrg, org, wfRequest);
+				break;
 		}
 		return response;
 	}
@@ -90,7 +95,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		try {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
-					wfRequest.getUserId(), wfRequest.getWfId());
+					wfRequest.getApplicationId(), wfRequest.getWfId());
 			Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, wfRequest.getServiceName());
 			WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
@@ -126,8 +131,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
 		}
 		Response response = new Response();
+		HashMap<String, Object> data = new HashMap<>();
+		data.put(Constants.STATUS, changeState);
+		data.put(Constants.WF_ID_CONSTANT, wfId);
 		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeState);
-		response.put(Constants.DATA, changeState);
+		response.put(Constants.DATA, data);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
