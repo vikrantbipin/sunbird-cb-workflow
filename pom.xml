@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.igot</groupId>
-    <artifactId>workflow</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>workflow</name>
-    <description>Workflow Implementation</description>
+    <artifactId>sb-workflow-handler</artifactId>
+    <version>1.0.0</version>
+    <name>sb-workflow-handler</name>
+    <description>Sunbird Workflow Handler Implementation</description>
 
     <properties>
         <java.version>1.8</java.version>
