@@ -38,7 +38,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
     public Response updateUserProfile(String rootOrg, String org, WfRequest wfRequest) {
         Response response = workflowservice.statusChange(rootOrg, org, wfRequest);
-        String status = (String) response.get(Constants.DATA);
+        String status = (String)((HashMap<String, Object>)response.get(Constants.DATA)).get(Constants.STATUS);
         WfStatus state = workflowservice.getWorkflowStates(rootOrg, org, wfRequest.getServiceName(), status);
         if (Constants.APPROVED_STATE.equals(state.getState())) {
             StringBuilder builder = new StringBuilder();
