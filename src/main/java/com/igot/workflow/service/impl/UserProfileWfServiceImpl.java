@@ -1,6 +1,7 @@
 package com.igot.workflow.service.impl;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.config.Constants;
 import com.igot.workflow.exception.ApplicationException;
@@ -10,6 +11,8 @@ import com.igot.workflow.models.WfStatus;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
 import com.igot.workflow.service.UserProfileWfService;
 import com.igot.workflow.service.Workflowservice;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserProfileWfServiceImpl implements UserProfileWfService {
+
+    Logger logger = LogManager.getLogger(UserProfileWfServiceImpl.class);
 
     @Autowired
     private Workflowservice workflowservice;
@@ -32,6 +37,9 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     private static final String FIELD_KEY= "fieldKey";
 
     private static final String FIELD_TO_VALUE= "toValue";
@@ -44,7 +52,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             StringBuilder builder = new StringBuilder();
             String endPoint = configuration.getHubProfileUpdateEndPoint().replace(Constants.USER_ID_VALUE, wfRequest.getApplicationId());
             builder.append(configuration.getHubServiceHost()).append(endPoint);
-            requestService.fetchResult(builder, wfRequest.getUpdateFieldValues());
+            requestService.fetchResult(builder, wfRequest.getUpdateFieldValues(), Map.class);
         }
         return response;
     }
@@ -71,13 +79,21 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         pidRequestMap.put("conditions", conditions);
         HashMap<String, Object> userResult = new HashMap<>();
         try {
-            List<Map<String, Object>> pidResponse = restTemplate.postForObject(configuration.getPidServiceHost() + configuration.getMultipleSearchEndPoint(), pidRequestMap, List.class);
+            logger.info("PID URL");
+            logger.info(configuration.getPidServiceHost() + configuration.getMultipleSearchEndPoint());
+            StringBuilder builder = new StringBuilder();
+            builder.append(configuration.getPidServiceHost()).append(configuration.getMultipleSearchEndPoint());
+            List<Map<String, Object>> pidResponse = (List<Map<String, Object>>) requestService.fetchResult(builder, pidRequestMap, List.class);
+            logger.info("PID SERVICE RESPONSE");
+            logger.info(mapper.writeValueAsString(pidResponse));
             for (Map<String, Object> record : pidResponse) {
                 if (record.get("wid") != null && userIds.contains(record.get("wid"))) {
                     userResult.put(record.get("wid").toString(), record);
                 }
             }
         } catch (Exception e) {
+            logger.error("PID ERROR", e);
+            e.printStackTrace();
             throw new ApplicationException("PID ERROR: ", e);
         }
         for (WfStatusEntity wfStatusEntity : statusEntities) {
