@@ -95,6 +95,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			case Constants.PROFILE_SERVICE_NAME:
 				wfApplicationSearchResponse = wfApplicationSearch(rootOrg, org, searchCriteria);
 				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((List<WfStatusEntity>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
+				response = new Response();
 				response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 				response.put(Constants.DATA, userProfiles);
 				response.put(Constants.STATUS, HttpStatus.OK);
