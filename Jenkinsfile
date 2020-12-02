@@ -18,7 +18,7 @@ node() {
 				cd $docker_file_path
 				pwd
 				docker build -f ./Dockerfile.build -t $docker_pre_build .
-				docker run --name $docker_pre_build $docker_pre_build:latest && docker cp $docker_pre_build:/opt/target/sb-workflow-handler-1.0.0.jar.jar .
+				docker run --name $docker_pre_build $docker_pre_build:latest && docker cp $docker_pre_build:/opt/target/sb-workflow-handler-1.0.0.jar .
 				docker rm -f $docker_pre_build
 				docker rmi -f $docker_pre_build
             '''
