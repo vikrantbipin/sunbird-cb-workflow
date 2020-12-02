@@ -353,7 +353,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			limit = configuration.getMaxLimit();
 		if (criteria.getLimit() != null && criteria.getLimit() <= configuration.getDefaultLimit())
 			limit = criteria.getLimit();
-		if (criteria.getLimit() != null && criteria.getLimit() > configuration.getDefaultOffset())
+		if (criteria.getLimit() != null && criteria.getLimit() > configuration.getDefaultLimit())
 			limit = configuration.getDefaultLimit();
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
