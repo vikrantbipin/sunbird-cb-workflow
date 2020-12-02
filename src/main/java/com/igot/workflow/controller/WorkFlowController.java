@@ -31,7 +31,7 @@ public class WorkFlowController {
 
     @PostMapping(path = "/applications/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> wfApplicationSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
-        Response response = workflowService.wfApplicationSearch(rootOrg, org, searchCriteria);
+        Response response = workflowService.applicationsSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

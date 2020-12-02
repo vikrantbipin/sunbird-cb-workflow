@@ -82,6 +82,31 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	/**
+	 *
+	 * @param rootOrg root Org
+	 * @param org org
+	 * @param searchCriteria Search Criteria
+	 * @return Response of Application Search
+	 */
+	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria) {
+		Response response = null;
+		Response wfApplicationSearchResponse = null;
+		switch (searchCriteria.getServiceName()) {
+			case Constants.PROFILE_SERVICE_NAME:
+				wfApplicationSearchResponse = wfApplicationSearch(rootOrg, org, searchCriteria);
+				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((List<WfStatusEntity>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
+				response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+				response.put(Constants.DATA, userProfiles);
+				response.put(Constants.STATUS, HttpStatus.OK);
+				break;
+			default:
+				response = wfApplicationSearch(rootOrg, org, searchCriteria);
+				break;
+		}
+		return response;
+	}
+
+	/**
 	 * Change the status of workflow application
 	 * 
 	 * @param rootOrg

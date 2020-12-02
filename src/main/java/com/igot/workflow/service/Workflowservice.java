@@ -22,4 +22,6 @@ public interface Workflowservice {
     public WfStatus getWorkflowStates(String rootOrg, String org, String serviceName, String state);
 
     public Response getApplicationWfHistory(String rootOrg, String applicationId);
+
+    public Response applicationsSearch(String rootOrg, String org, SearchCriteria criteria);
 }
