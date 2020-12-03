@@ -11,6 +11,7 @@ import com.igot.workflow.postgres.entity.WfAuditEntity;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
 import com.igot.workflow.postgres.repo.WfAuditRepo;
 import com.igot.workflow.postgres.repo.WfStatusRepo;
+import com.igot.workflow.producer.Producer;
 import com.igot.workflow.repository.cassandra.bodhi.WfRepo;
 import com.igot.workflow.service.UserProfileWfService;
 import com.igot.workflow.service.Workflowservice;
@@ -53,10 +54,14 @@ public class WorkflowServiceImpl implements Workflowservice {
 	@Autowired
 	private RequestService requestService;
 
+	@Autowired
+	private Producer producer;
+
 	public WorkflowServiceImpl() {
 	}
 
 	/**
+	 *Change the status of workflow application
 	 *
 	 * @param rootOrg
 	 * @param org
@@ -65,19 +70,56 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 */
 
 	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
-		Response response = null;
-		switch (wfRequest.getServiceName()) {
-			case Constants.PROFILE_SERVICE_NAME:
-				response = userProfileWfService.updateUserProfile(rootOrg, org, wfRequest);
-				break;
-			case Constants.CBP_WF_SERVICE_NAME:
-				//we can change it later for further implementation
-				response = statusChange(rootOrg, org, wfRequest);
-				break;
-			default:
-				response = statusChange(rootOrg, org, wfRequest);
-				break;
+		String changeState = null;
+		String wfId = wfRequest.getWfId();
+		try {
+			validateWfRequest(wfRequest);
+			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
+					wfRequest.getApplicationId(), wfRequest.getWfId());
+			Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, wfRequest.getServiceName());
+			WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
+			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
+			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
+			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+
+			// TODO get the actor roles and call the validateRoles method to check that
+			// actor has proper role to take the workflow action
+
+			String nextState = wfAction.getNextState();
+			if (ObjectUtils.isEmpty(applicationStatus)) {
+				applicationStatus = new WfStatusEntity();
+				wfId = UUID.randomUUID().toString();
+				applicationStatus.setWfId(wfId);
+				applicationStatus.setServiceName(wfRequest.getServiceName());
+				applicationStatus.setUserId(wfRequest.getUserId());
+				applicationStatus.setApplicationId(wfRequest.getApplicationId());
+				applicationStatus.setRootOrg(rootOrg);
+				applicationStatus.setOrg(org);
+				applicationStatus.setCreatedOn(new Date());
+				wfRequest.setWfId(wfId);
+			}
+			changeState = nextState;
+			applicationStatus.setLastUpdatedOn(new Date());
+			applicationStatus.setCurrentStatus(nextState);
+			applicationStatus.setActorUUID(wfRequest.getActorUserId());
+			applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+			wfStatusRepo.save(applicationStatus);
+
+			WfStatus wfStatusCheckForNextState = getWfStatus(changeState, workFlowModel);
+
+			createWfAudit(wfRequest, rootOrg, changeState, !wfStatusCheckForNextState.getIsLastState(), wfId);
+			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+
+		} catch (IOException e) {
+			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
 		}
+		Response response = new Response();
+		HashMap<String, Object> data = new HashMap<>();
+		data.put(Constants.STATUS, changeState);
+		data.put(Constants.WF_ID_CONSTANT, wfId);
+		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeState);
+		response.put(Constants.DATA, data);
+		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
 
@@ -108,64 +150,21 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	/**
-	 * Change the status of workflow application
-	 * 
-	 * @param rootOrg
-	 * @param org
-	 * @param wfRequest
-	 * @return Status change response
+	 *
+	 * @param rootOrg Root Org
+	 * @param wfId Wf Id
+	 * @return Response of workflow process
 	 */
-	public Response statusChange(String rootOrg, String org, WfRequest wfRequest) {
-		String changeState = null;
-		String wfId = wfRequest.getWfId();
-		try {
-			validateWfRequest(wfRequest);
-			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
-					wfRequest.getApplicationId(), wfRequest.getWfId());
-			Workflow workFlow = wfRepo.getWorkFlowForService(rootOrg, org, wfRequest.getServiceName());
-			WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
-			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
-			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
-			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
-			
-			// TODO get the actor roles and call the validateRoles method to check that
-			// actor has proper role to take the workflow action
-			
-			String nextState = wfAction.getNextState();
-			if (ObjectUtils.isEmpty(applicationStatus)) {
-				applicationStatus = new WfStatusEntity();
-				wfId = UUID.randomUUID().toString();
-				applicationStatus.setWfId(wfId);
-				applicationStatus.setServiceName(wfRequest.getServiceName());
-				applicationStatus.setUserId(wfRequest.getUserId());
-				applicationStatus.setApplicationId(wfRequest.getApplicationId());
-				applicationStatus.setRootOrg(rootOrg);
-				applicationStatus.setOrg(org);
-				applicationStatus.setCreatedOn(new Date());
-			}
-			changeState = nextState;
-			applicationStatus.setLastUpdatedOn(new Date());
-			applicationStatus.setCurrentStatus(nextState);
-			applicationStatus.setActorUUID(wfRequest.getActorUserId());
-			applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-			wfStatusRepo.save(applicationStatus);
-
-			WfStatus wfStatusCheckForNextState = getWfStatus(changeState, workFlowModel);
-
-			createWfAudit(wfRequest, rootOrg, changeState, !wfStatusCheckForNextState.getIsLastState(), wfId);
-		} catch (IOException e) {
-			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
-		}
+	@Override
+	public Response getWorkflowProcess(String rootOrg, String wfId) {
 		Response response = new Response();
-		HashMap<String, Object> data = new HashMap<>();
-		data.put(Constants.STATUS, changeState);
-		data.put(Constants.WF_ID_CONSTANT, wfId);
-		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeState);
-		response.put(Constants.DATA, data);
+		WfStatusEntity wfStatusEntity = wfStatusRepo.findByRootOrgAndWfId(rootOrg, wfId);
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, wfStatusEntity);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
-	
+
 	/**
 	 * Validate application against workflow state
 	 * 

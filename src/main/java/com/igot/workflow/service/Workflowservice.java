@@ -9,8 +9,6 @@ public interface Workflowservice {
 
     public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest);
 
-    public Response statusChange(String rootOrg, String org, WfRequest wfRequest);
-
     public Response getWfApplication(String rootOrg, String org, String wfId, String applicationId);
 
     public Response wfApplicationSearch(String rootOrg, String org, SearchCriteria criteria);
@@ -24,4 +22,6 @@ public interface Workflowservice {
     public Response getApplicationWfHistory(String rootOrg, String applicationId);
 
     public Response applicationsSearch(String rootOrg, String org, SearchCriteria criteria);
+
+    public Response getWorkflowProcess(String rootOrg, String wfId);
 }

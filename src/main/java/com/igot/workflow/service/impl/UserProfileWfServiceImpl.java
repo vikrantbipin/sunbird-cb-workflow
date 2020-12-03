@@ -9,6 +9,7 @@ import com.igot.workflow.models.Response;
 import com.igot.workflow.models.WfRequest;
 import com.igot.workflow.models.WfStatus;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
+import com.igot.workflow.postgres.repo.WfStatusRepo;
 import com.igot.workflow.service.UserProfileWfService;
 import com.igot.workflow.service.Workflowservice;
 import org.apache.logging.log4j.LogManager;
@@ -41,21 +42,26 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     @Autowired
     private ObjectMapper mapper;
 
+    @Autowired
+    private WfStatusRepo wfStatusRepo;
+
     private static final String FIELD_KEY= "fieldKey";
 
     private static final String FIELD_TO_VALUE= "toValue";
 
-    public Response updateUserProfile(String rootOrg, String org, WfRequest wfRequest) {
-        Response response = workflowservice.statusChange(rootOrg, org, wfRequest);
-        String status = (String)((HashMap<String, Object>)response.get(Constants.DATA)).get(Constants.STATUS);
-        WfStatus state = workflowservice.getWorkflowStates(rootOrg, org, wfRequest.getServiceName(), status);
-        if (Constants.APPROVED_STATE.equals(state.getState())) {
+    /**
+     * Update user profile based on wf request
+     *
+     * @param wfRequest Workflow request
+     */
+    public void updateUserProfile(WfRequest wfRequest) {
+        WfStatusEntity wfStatusEntity = wfStatusRepo.findByApplicationIdAndWfId(wfRequest.getApplicationId(), wfRequest.getWfId());
+        if (Constants.APPROVED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
             StringBuilder builder = new StringBuilder();
             String endPoint = configuration.getHubProfileUpdateEndPoint().replace(Constants.USER_ID_VALUE, wfRequest.getApplicationId());
             builder.append(configuration.getHubServiceHost()).append(endPoint);
             requestService.fetchResult(builder, wfRequest.getUpdateFieldValues(), Map.class);
         }
-        return response;
     }
 
     /**

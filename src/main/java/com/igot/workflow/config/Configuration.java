@@ -33,6 +33,9 @@ public class Configuration {
     @Value("${userrole.search.endpoint}")
     private String userRoleSearchEndpoint;
 
+    @Value("${kafka.topics.workflow.request}")
+    private String workflowApplicationTopic;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -103,5 +106,13 @@ public class Configuration {
 
     public void setUserRoleSearchEndpoint(String userRoleSearchEndpoint) {
         this.userRoleSearchEndpoint = userRoleSearchEndpoint;
+    }
+
+    public String getWorkflowApplicationTopic() {
+        return workflowApplicationTopic;
+    }
+
+    public void setWorkflowApplicationTopic(String workflowApplicationTopic) {
+        this.workflowApplicationTopic = workflowApplicationTopic;
     }
 }

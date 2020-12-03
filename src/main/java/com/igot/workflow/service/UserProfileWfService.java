@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface UserProfileWfService {
 
-    public Response updateUserProfile(String rootOrg, String org, WfRequest wfRequest);
+    public void updateUserProfile(WfRequest wfRequest);
 
     public List<Map<String, Object>> enrichUserData(List<WfStatusEntity> statusEntities, String rootOrg);
 }

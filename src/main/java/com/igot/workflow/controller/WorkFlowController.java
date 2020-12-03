@@ -52,4 +52,10 @@ public class WorkFlowController {
         Response response = workflowService.getApplicationWfHistory(rootOrg, applicationId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/workflowProcess/{wfId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> getWorkflowProcess(@RequestHeader String rootOrg, @PathVariable("wfId") String wfId) {
+        Response response = workflowService.getWorkflowProcess(rootOrg, wfId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

@@ -15,4 +15,8 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
 
     Page<WfStatusEntity> findByRootOrgAndOrgAndServiceNameAndCurrentStatus(String rootOrg, String org, String servicename , String status, Pageable pageable);
 
+    WfStatusEntity findByApplicationIdAndWfId(String applicationId, String wfId);
+
+    WfStatusEntity findByRootOrgAndWfId(String rootOrg, String wfId);
+
 }
