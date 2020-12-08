@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.config.Constants;
 import com.igot.workflow.exception.ApplicationException;
-import com.igot.workflow.models.Response;
 import com.igot.workflow.models.WfRequest;
-import com.igot.workflow.models.WfStatus;
 import com.igot.workflow.postgres.entity.WfStatusEntity;
 import com.igot.workflow.postgres.repo.WfStatusRepo;
 import com.igot.workflow.service.UserProfileWfService;
@@ -31,7 +29,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     private Workflowservice workflowservice;
 
     @Autowired
-    private RequestService requestService;
+    private RequestServiceImpl requestServiceImpl;
 
     @Autowired
     private Configuration configuration;
@@ -45,10 +43,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     @Autowired
     private WfStatusRepo wfStatusRepo;
 
-    private static final String FIELD_KEY= "fieldKey";
-
-    private static final String FIELD_TO_VALUE= "toValue";
-
     /**
      * Update user profile based on wf request
      *
@@ -56,12 +50,19 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
      */
     public void updateUserProfile(WfRequest wfRequest) {
         WfStatusEntity wfStatusEntity = wfStatusRepo.findByApplicationIdAndWfId(wfRequest.getApplicationId(), wfRequest.getWfId());
-        if (Constants.APPROVED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
-            StringBuilder builder = new StringBuilder();
-            String endPoint = configuration.getHubProfileUpdateEndPoint().replace(Constants.USER_ID_VALUE, wfRequest.getApplicationId());
-            builder.append(configuration.getHubServiceHost()).append(endPoint);
-            requestService.fetchResult(builder, wfRequest.getUpdateFieldValues(), Map.class);
+        if (Constants.PROFILE_SERVICE_NAME.equals(wfRequest.getServiceName()) && Constants.APPROVED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
+            updateProfile(wfRequest);
         }
+        if (Constants.USER_PROFILE_FLAG_SERVICE.equals(wfRequest.getServiceName()) && Constants.PROCESSED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
+            updateProfile(wfRequest);
+        }
+    }
+
+    private void updateProfile(WfRequest wfRequest){
+        StringBuilder builder = new StringBuilder();
+        String endPoint = configuration.getHubProfileUpdateEndPoint().replace(Constants.USER_ID_VALUE, wfRequest.getApplicationId());
+        builder.append(configuration.getHubServiceHost()).append(endPoint);
+        requestServiceImpl.fetchResult(builder, wfRequest.getUpdateFieldValues(), Map.class);
     }
 
     /**
@@ -89,9 +90,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             try {
                 StringBuilder builder = new StringBuilder();
                 builder.append(configuration.getPidServiceHost()).append(configuration.getMultipleSearchEndPoint());
-                List<Map<String, Object>> pidResponse = (List<Map<String, Object>>) requestService.fetchResult(builder, pidRequestMap, List.class);
-                logger.info("PID SERVICE RESPONSE");
-                logger.info(mapper.writeValueAsString(pidResponse));
+                List<Map<String, Object>> pidResponse = (List<Map<String, Object>>) requestServiceImpl.fetchResult(builder, pidRequestMap, List.class);
+                logger.info("PID SERVICE RESPONSE : {}", mapper.writeValueAsString(pidResponse));
                 for (Map<String, Object> record : pidResponse) {
                     if (record.get("wid") != null && userIds.contains(record.get("wid"))) {
                         userResult.put(record.get("wid").toString(), record);

@@ -68,6 +68,8 @@ public class Constants {
 
 	public static final String APPROVED_STATE = "APPROVED";
 
+	public static final String PROCESSED_STATE = "PROCESSED";
+
 	public static final String EMAIL = "email";
 
 	public static final String LAST_NAME = "last_name";
@@ -80,4 +82,6 @@ public class Constants {
 			.unmodifiableList(Arrays.asList(UUID, FIRST_NAME, LAST_NAME, EMAIL));
 
 	public static final String CBP_WF_SERVICE_NAME = "cbp-content";
+
+	public static final String USER_PROFILE_FLAG_SERVICE = "userprofile_flag_service";
 }

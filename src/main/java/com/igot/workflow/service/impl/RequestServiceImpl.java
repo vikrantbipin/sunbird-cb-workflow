@@ -13,9 +13,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
-public class RequestService {
+public class RequestServiceImpl {
 
-    Logger log = LogManager.getLogger(RequestService.class);
+    Logger log = LogManager.getLogger(RequestServiceImpl.class);
 
     @Autowired
     private ObjectMapper mapper;

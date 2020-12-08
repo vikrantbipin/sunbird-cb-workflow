@@ -7,8 +7,10 @@ import java.util.List;
 
 public interface WfAuditRepo extends JpaRepository<WfAuditEntity, Integer> {
 
-    List<WfAuditEntity> findByRootOrgAndApplicationIdAndWfId(String rootOrg, String userId, String wfId);
+    List<WfAuditEntity> findByRootOrgAndApplicationIdAndWfIdOrderByCreatedOnDesc(String rootOrg, String applicationId, String wfId);
 
-    List<WfAuditEntity> findByRootOrgAndApplicationId(String rootOrg, String userId);
+    List<WfAuditEntity> findByRootOrgAndApplicationIdOrderByCreatedOnDesc(String rootOrg, String applicationId);
+
+
 
 }

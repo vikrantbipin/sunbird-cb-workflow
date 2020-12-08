@@ -1,10 +1,11 @@
 package com.igot.workflow.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.config.Constants;
 import com.igot.workflow.exception.ApplicationException;
+import com.igot.workflow.exception.BadRequestException;
+import com.igot.workflow.exception.InvalidDataInputException;
 import com.igot.workflow.models.*;
 import com.igot.workflow.models.cassandra.Workflow;
 import com.igot.workflow.postgres.entity.WfAuditEntity;
@@ -52,7 +53,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	private UserProfileWfService userProfileWfService;
 
 	@Autowired
-	private RequestService requestService;
+	private RequestServiceImpl requestServiceImpl;
 
 	@Autowired
 	private Producer producer;
@@ -70,8 +71,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 */
 
 	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
-		String changeState = null;
 		String wfId = wfRequest.getWfId();
+		String nextState = null;
 		try {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
@@ -85,7 +86,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			// TODO get the actor roles and call the validateRoles method to check that
 			// actor has proper role to take the workflow action
 
-			String nextState = wfAction.getNextState();
+			nextState = wfAction.getNextState();
 			if (ObjectUtils.isEmpty(applicationStatus)) {
 				applicationStatus = new WfStatusEntity();
 				wfId = UUID.randomUUID().toString();
@@ -98,26 +99,25 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicationStatus.setCreatedOn(new Date());
 				wfRequest.setWfId(wfId);
 			}
-			changeState = nextState;
+
+			WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
+
 			applicationStatus.setLastUpdatedOn(new Date());
 			applicationStatus.setCurrentStatus(nextState);
 			applicationStatus.setActorUUID(wfRequest.getActorUserId());
 			applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+			applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
 			wfStatusRepo.save(applicationStatus);
-
-			WfStatus wfStatusCheckForNextState = getWfStatus(changeState, workFlowModel);
-
-			createWfAudit(wfRequest, rootOrg, changeState, !wfStatusCheckForNextState.getIsLastState(), wfId);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
 
 		} catch (IOException e) {
-			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
+			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
 		}
 		Response response = new Response();
 		HashMap<String, Object> data = new HashMap<>();
-		data.put(Constants.STATUS, changeState);
+		data.put(Constants.STATUS, nextState);
 		data.put(Constants.WF_ID_CONSTANT, wfId);
-		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeState);
+		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + nextState);
 		response.put(Constants.DATA, data);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
@@ -134,7 +134,9 @@ public class WorkflowServiceImpl implements Workflowservice {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
 		switch (searchCriteria.getServiceName()) {
+			//Below statement will work as OR condition.
 			case Constants.PROFILE_SERVICE_NAME:
+			case Constants.USER_PROFILE_FLAG_SERVICE:
 				wfApplicationSearchResponse = wfApplicationSearch(rootOrg, org, searchCriteria);
 				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((List<WfStatusEntity>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
 				response = new Response();
@@ -180,7 +182,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		if (!ObjectUtils.isEmpty(applicationStatus)) {
 			if (!wfRequest.getState().equalsIgnoreCase(applicationStatus.getCurrentStatus())) {
-				throw new ApplicationException("Application is in " + applicationStatus.getCurrentStatus()
+				throw new BadRequestException("Application is in " + applicationStatus.getCurrentStatus()
 						+ " State but trying to be move in " + wfRequest.getState() + " state!");
 			}
 		}
@@ -209,7 +211,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicableAction = mapper.writeValueAsString(nextActionArray);
 			}
 		} catch (IOException e) {
-			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
+			throw new ApplicationException(Constants.JSON_PARSING_ERROR, e);
 		}
 		return applicableAction;
 	}
@@ -229,7 +231,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		boolean roleFound = actorRoles.stream().anyMatch(role -> actionRoles.contains(role));
 		if (!roleFound) {
-			throw new ApplicationException(Constants.WORKFLOW_ROLE_CHECK_ERROR);
+			throw new BadRequestException(Constants.WORKFLOW_ROLE_CHECK_ERROR);
 		}
 	}
 
@@ -243,7 +245,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	private WfAction getWfAction(String action, WfStatus wfStatus) {
 		WfAction wfAction = null;
 		if (ObjectUtils.isEmpty(wfStatus.getActions())) {
-			throw new ApplicationException(Constants.WORKFLOW_ACTION_ERROR);
+			throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
 		}
 		for (WfAction filterAction : wfStatus.getActions()) {
 			if (action.equals(filterAction.getAction())) {
@@ -251,7 +253,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			}
 		}
 		if (ObjectUtils.isEmpty(wfAction)) {
-			throw new ApplicationException(Constants.WORKFLOW_ACTION_ERROR);
+			throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
 		}
 		return wfAction;
 	}
@@ -271,7 +273,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			}
 		}
 		if (ObjectUtils.isEmpty(wfStatus)) {
-			throw new ApplicationException(Constants.WORKFLOW_STATE_CHECK_ERROR);
+			throw new BadRequestException(Constants.WORKFLOW_STATE_CHECK_ERROR);
 		}
 		return wfStatus;
 	}
@@ -284,31 +286,31 @@ public class WorkflowServiceImpl implements Workflowservice {
 	private void validateWfRequest(WfRequest wfRequest) {
 
 		if (StringUtils.isEmpty(wfRequest.getState())) {
-			throw new ApplicationException(Constants.STATE_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.STATE_VALIDATION_ERROR);
 		}
 
 		if (StringUtils.isEmpty(wfRequest.getApplicationId())) {
-			throw new ApplicationException(Constants.APPLICATION_ID_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.APPLICATION_ID_VALIDATION_ERROR);
 		}
 
 		if (StringUtils.isEmpty(wfRequest.getActorUserId())) {
-			throw new ApplicationException(Constants.ACTOR_UUID_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.ACTOR_UUID_VALIDATION_ERROR);
 		}
 
 		if (StringUtils.isEmpty(wfRequest.getUserId())) {
-			throw new ApplicationException(Constants.USER_UUID_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.USER_UUID_VALIDATION_ERROR);
 		}
 
 		if (StringUtils.isEmpty(wfRequest.getAction())) {
-			throw new ApplicationException(Constants.ACTION_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.ACTION_VALIDATION_ERROR);
 		}
 
 		if (CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
-			throw new ApplicationException(Constants.FIELD_VALUE_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.FIELD_VALUE_VALIDATION_ERROR);
 		}
 
 		if (StringUtils.isEmpty(wfRequest.getServiceName())) {
-			throw new ApplicationException(Constants.WORKFLOW_SERVICENAME_VALIDATION_ERROR);
+			throw new InvalidDataInputException(Constants.WORKFLOW_SERVICENAME_VALIDATION_ERROR);
 		}
 
 	}
@@ -344,7 +346,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 */
 	public Response wfApplicationSearch(String rootOrg, String org, SearchCriteria criteria) {
 		if (criteria.isEmpty()) {
-			throw new ApplicationException(Constants.SEARCH_CRITERIA_VALIDATION);
+			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
 		}
 		Integer limit = configuration.getDefaultLimit();
 		Integer offset = configuration.getDefaultOffset();
@@ -368,47 +370,16 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	/**
-	 * Save the audit of workflow
-	 *
-	 * @param wfRequest
-	 * @param rootOrg
-	 * @param nextStatus
-	 * @param workflowStatus
-	 * @param wfId
-	 */
-	public void createWfAudit(WfRequest wfRequest, String rootOrg, String nextStatus,
-							  boolean workflowStatus, String wfId) {
-		try {
-			WfAuditEntity wfAuditEntity = new WfAuditEntity();
-			wfAuditEntity.setActorUUID(wfRequest.getActorUserId());
-			wfAuditEntity.setComment(wfRequest.getComment());
-			wfAuditEntity.setCreatedOn(new Date());
-			wfAuditEntity.setCurrentStatus(nextStatus);
-			wfAuditEntity.setRootOrg(rootOrg);
-			wfAuditEntity.setUserId(wfRequest.getUserId());
-			wfAuditEntity.setInWorkflow(workflowStatus);
-			wfAuditEntity.setWfId(wfId);
-			wfAuditEntity.setApplicationId(wfRequest.getApplicationId());
-			wfAuditEntity.setServiceName(wfRequest.getServiceName());
-			wfAuditEntity.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-			wfAuditRepo.save(wfAuditEntity);
-		} catch (JsonProcessingException e) {
-			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
-		}
-
-	}
-
-	/**
 	 *
 	 * @param rootOrg
 	 * @param wfId
-	 * @param userId
+	 * @param applicationId
 	 * @return
 	 */
-	public Response getApplicationHistoryOnWfId(String rootOrg, String wfId, String userId) {
+	public Response getApplicationHistoryOnWfId(String rootOrg, String wfId, String applicationId) {
 		Response response = new Response();
-		List<WfAuditEntity> wfAuditEntityList = wfAuditRepo.findByRootOrgAndApplicationIdAndWfId(rootOrg,
-				userId, wfId);
+		List<WfAuditEntity> wfAuditEntityList = wfAuditRepo.findByRootOrgAndApplicationIdAndWfIdOrderByCreatedOnDesc(rootOrg,
+				applicationId, wfId);
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 		response.put(Constants.DATA, wfAuditEntityList);
 		response.put(Constants.STATUS, HttpStatus.OK);
@@ -444,7 +415,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			response.put(Constants.DATA, nextActionArray);
 			response.put(Constants.STATUS, HttpStatus.OK);
 		} catch (IOException e) {
-			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
+			throw new ApplicationException(Constants.JSON_PARSING_ERROR, e);
 		}
 		return response;
 	}
@@ -456,7 +427,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		WorkFlowModel workFlowModel = mapper.readValue(workFlow.getConfiguration(), WorkFlowModel.class);
 		wfStatus = getWfStatus(state, workFlowModel);
 		} catch (IOException e) {
-			throw new ApplicationException(Constants.JSON_PARSING_ERROR + e.toString());
+			throw new ApplicationException(Constants.JSON_PARSING_ERROR, e);
 		}
 		return wfStatus;
 	}
@@ -469,7 +440,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 */
 	public Response getApplicationWfHistory(String rootOrg, String applicationId) {
 		Response response = new Response();
-		List<WfAuditEntity> wfAuditEntityList = wfAuditRepo.findByRootOrgAndApplicationId(rootOrg,
+		List<WfAuditEntity> wfAuditEntityList = wfAuditRepo.findByRootOrgAndApplicationIdOrderByCreatedOnDesc(rootOrg,
 				applicationId);
 		HashMap<String, List<WfAuditEntity>> history = new HashMap<>();
 
@@ -497,7 +468,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		StringBuilder builder = new StringBuilder();
 		String endPoint = configuration.getUserRoleSearchEndpoint().replace("{user_id}", userId);
 		builder.append(configuration.getLexCoreServiceHost()).append(endPoint);
-		Map<String, Object> response = (Map<String, Object>) requestService.fetchResultUsingGet(builder);
+		Map<String, Object> response = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(builder);
 		List<String> defaultRoles = new ArrayList<>();
 		List<String> userRoles = new ArrayList<>();
 		if (!ObjectUtils.isEmpty(response.get("default_roles"))) {

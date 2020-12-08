@@ -111,7 +111,7 @@ public class WfStatusEntity {
         this.wfId = wfId;
     }
 
-    public boolean isInWorkflow() {
+    public boolean getInWorkflow() {
         return inWorkflow;
     }
 

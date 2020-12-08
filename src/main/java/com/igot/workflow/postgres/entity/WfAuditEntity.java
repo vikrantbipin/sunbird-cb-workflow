@@ -37,8 +37,11 @@ public class WfAuditEntity {
     @Column(name = "comment")
     private String comment;
 
-    @Column(name = "current_status")
-    private String currentStatus;
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "action")
+    private String action;
 
     @Column(name = "actor_uuid")
     private String actorUUID;
@@ -78,14 +81,6 @@ public class WfAuditEntity {
 
     public void setComment(String comment) {
         this.comment = comment;
-    }
-
-    public String getCurrentStatus() {
-        return currentStatus;
-    }
-
-    public void setCurrentStatus(String currentStatus) {
-        this.currentStatus = currentStatus;
     }
 
     public String getActorUUID() {
@@ -142,5 +137,21 @@ public class WfAuditEntity {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 }
