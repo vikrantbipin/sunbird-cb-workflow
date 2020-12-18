@@ -71,8 +71,37 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 */
 
 	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+		HashMap<String, String> changeStatusResponse;
+		List<String> wfIds = new ArrayList<>();
+		String changedStatus = null;
+		if (configuration.getMultipleWfCreationEnable() && !CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
+			String wfId = wfRequest.getWfId();
+			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
+				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
+				wfRequest.setWfId(wfId);
+				changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+				wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
+				changedStatus = changeStatusResponse.get(Constants.STATUS);
+			}
+		} else {
+			changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
+			changedStatus = changeStatusResponse.get(Constants.STATUS);
+		}
+		Response response = new Response();
+		HashMap<String, Object> data = new HashMap<>();
+		data.put(Constants.STATUS, changedStatus);
+		data.put(Constants.WF_IDS_CONSTANT, wfIds);
+		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changedStatus);
+		response.put(Constants.DATA, data);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
+	private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest){
 		String wfId = wfRequest.getWfId();
 		String nextState = null;
+		HashMap<String, String> data = new HashMap<>();
 		try {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
@@ -113,14 +142,9 @@ public class WorkflowServiceImpl implements Workflowservice {
 		} catch (IOException e) {
 			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
 		}
-		Response response = new Response();
-		HashMap<String, Object> data = new HashMap<>();
 		data.put(Constants.STATUS, nextState);
 		data.put(Constants.WF_ID_CONSTANT, wfId);
-		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + nextState);
-		response.put(Constants.DATA, data);
-		response.put(Constants.STATUS, HttpStatus.OK);
-		return response;
+		return data;
 	}
 
 	/**
@@ -137,15 +161,15 @@ public class WorkflowServiceImpl implements Workflowservice {
 			//Below statement will work as OR condition.
 			case Constants.PROFILE_SERVICE_NAME:
 			case Constants.USER_PROFILE_FLAG_SERVICE:
-				wfApplicationSearchResponse = wfApplicationSearch(rootOrg, org, searchCriteria);
-				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((List<WfStatusEntity>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
+				wfApplicationSearchResponse = applicationSerachOnApplicationIdGrup(rootOrg, org, searchCriteria);
+				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
 				response = new Response();
 				response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 				response.put(Constants.DATA, userProfiles);
 				response.put(Constants.STATUS, HttpStatus.OK);
 				break;
 			default:
-				response = wfApplicationSearch(rootOrg, org, searchCriteria);
+				response = applicationSerachOnApplicationIdGrup(rootOrg, org, searchCriteria);
 				break;
 		}
 		return response;
@@ -481,5 +505,31 @@ public class WorkflowServiceImpl implements Workflowservice {
 				.distinct()
 				.collect(Collectors.toList());
 		return roleList;
+	}
+
+	public Response applicationSerachOnApplicationIdGrup(String rootOrg, String org, SearchCriteria criteria) {
+		if (criteria.isEmpty()) {
+			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
+		}
+		Integer limit = configuration.getDefaultLimit();
+		Integer offset = configuration.getDefaultOffset();
+		if (criteria.getLimit() == null && criteria.getOffset() == null)
+			limit = configuration.getMaxLimit();
+		if (criteria.getLimit() != null && criteria.getLimit() <= configuration.getDefaultLimit())
+			limit = criteria.getLimit();
+		if (criteria.getLimit() != null && criteria.getLimit() > configuration.getDefaultLimit())
+			limit = configuration.getDefaultLimit();
+		if (criteria.getOffset() != null)
+			offset = criteria.getOffset();
+		Pageable pageable = PageRequest.of(offset, limit + offset);
+
+		List<String> applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
+        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByApplicationIdIn(applicationIds);
+		Map<String, List<WfStatusEntity>> wfInfos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
+        Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, wfInfos);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
 	}
 }

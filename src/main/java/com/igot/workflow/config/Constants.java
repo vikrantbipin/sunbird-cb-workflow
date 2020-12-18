@@ -18,6 +18,8 @@ public class Constants {
 
 	public static final String WF_ID_CONSTANT = "wfId";
 
+	public static final String WF_IDS_CONSTANT = "wfIds";
+
 	public static final String SUCCESSFUL = "Successful";
 
 	public static final String STATUS_CHANGE_MESSAGE = "Application status changed to ";

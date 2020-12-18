@@ -65,17 +65,18 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         requestServiceImpl.fetchResult(builder, wfRequest.getUpdateFieldValues(), Map.class);
     }
 
+
     /**
      *
-     * @param statusEntities
+     * @param wfInfos
      * @param rootOrg
      * @return
      */
-    public List<Map<String, Object>> enrichUserData(List<WfStatusEntity> statusEntities, String rootOrg) {
+    public List<Map<String, Object>> enrichUserData(Map<String, List<WfStatusEntity>> wfInfos, String rootOrg) {
         List<Map<String, Object>> wfDetails = new ArrayList<>();
-        HashMap<String, Object> responseMap = new HashMap<>();
+        HashMap<String, Object> responseMap;
         HashMap<String, Object> userResult = new HashMap<>();
-        Set<String> userIds = statusEntities.stream().map(WfStatusEntity::getApplicationId).collect(Collectors.toSet());
+        Set<String> userIds = wfInfos.keySet();
         if(!CollectionUtils.isEmpty(userIds)){
             List<String> sources = new ArrayList<>(Constants.USER_DEFAULT_FIELDS);
             if (!sources.contains(Constants.UUID)) {
@@ -102,10 +103,10 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
                 throw new ApplicationException("PID ERROR: ", e);
             }
         }
-        for (WfStatusEntity wfStatusEntity : statusEntities) {
+        for (Map.Entry<String, List<WfStatusEntity>> wfStatusEntity : wfInfos.entrySet()) {
             responseMap = new HashMap<>();
-            responseMap.put("wfInfo", wfStatusEntity);
-            responseMap.put("userInfo", userResult.get(wfStatusEntity.getApplicationId()));
+            responseMap.put("wfInfo", wfStatusEntity.getValue());
+            responseMap.put("userInfo", userResult.get(wfStatusEntity.getKey()));
             wfDetails.add(responseMap);
         }
         return wfDetails;

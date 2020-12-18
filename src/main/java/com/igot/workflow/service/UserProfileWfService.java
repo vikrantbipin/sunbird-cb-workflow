@@ -11,5 +11,5 @@ public interface UserProfileWfService {
 
     public void updateUserProfile(WfRequest wfRequest);
 
-    public List<Map<String, Object>> enrichUserData(List<WfStatusEntity> statusEntities, String rootOrg);
+    public List<Map<String, Object>> enrichUserData(Map<String, List<WfStatusEntity>> statusEntities, String rootOrg);
 }

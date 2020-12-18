@@ -36,6 +36,9 @@ public class Configuration {
     @Value("${kafka.topics.workflow.request}")
     private String workflowApplicationTopic;
 
+    @Value("${multiple-workflow-creation}")
+    private boolean multipleWfCreationEnable;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -114,5 +117,13 @@ public class Configuration {
 
     public void setWorkflowApplicationTopic(String workflowApplicationTopic) {
         this.workflowApplicationTopic = workflowApplicationTopic;
+    }
+
+    public boolean getMultipleWfCreationEnable() {
+        return multipleWfCreationEnable;
+    }
+
+    public void setMultipleWfCreationEnable(boolean multipleWfCreationEnable) {
+        this.multipleWfCreationEnable = multipleWfCreationEnable;
     }
 }

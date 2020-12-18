@@ -11,6 +11,4 @@ public interface WfAuditRepo extends JpaRepository<WfAuditEntity, Integer> {
 
     List<WfAuditEntity> findByRootOrgAndApplicationIdOrderByCreatedOnDesc(String rootOrg, String applicationId);
 
-
-
 }
