@@ -524,7 +524,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		Pageable pageable = PageRequest.of(offset, limit + offset);
 
 		List<String> applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
-        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByApplicationIdIn(applicationIds);
+        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
 		Map<String, List<WfStatusEntity>> wfInfos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
         Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
