@@ -2,11 +2,15 @@ package com.igot.workflow.models;
 
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 public class SearchCriteria {
 
     private String serviceName;
 
     private String applicationStatus;
+
+    private List<String> applicationIds;
 
     private Integer limit;
 
@@ -46,5 +50,13 @@ public class SearchCriteria {
 
     public boolean isEmpty() {
         return (StringUtils.isEmpty(this.applicationStatus) && StringUtils.isEmpty(this.serviceName));
+    }
+
+    public List<String> getApplicationIds() {
+        return applicationIds;
+    }
+
+    public void setApplicationIds(List<String> applicationIds) {
+        this.applicationIds = applicationIds;
     }
 }

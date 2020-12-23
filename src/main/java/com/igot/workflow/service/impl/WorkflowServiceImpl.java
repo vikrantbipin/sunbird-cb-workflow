@@ -58,9 +58,6 @@ public class WorkflowServiceImpl implements Workflowservice {
 	@Autowired
 	private Producer producer;
 
-	public WorkflowServiceImpl() {
-	}
-
 	/**
 	 *Change the status of workflow application
 	 *
@@ -523,12 +520,15 @@ public class WorkflowServiceImpl implements Workflowservice {
 			offset = criteria.getOffset();
 		Pageable pageable = PageRequest.of(offset, limit + offset);
 
-		List<String> applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
-        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
-		Map<String, List<WfStatusEntity>> wfInfos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
+		List<String> applicationIds = criteria.getApplicationIds();
+        if(CollectionUtils.isEmpty(applicationIds)){
+			applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
+		}
+		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+		Map<String, List<WfStatusEntity>> infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
         Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-		response.put(Constants.DATA, wfInfos);
+		response.put(Constants.DATA, infos);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}

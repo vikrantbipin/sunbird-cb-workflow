@@ -6,6 +6,9 @@ import java.util.List;
 
 public class Constants {
 
+	private Constants() {
+	}
+
 	public static final String ROOT_ORG = "igot";
 
 	public static final String ORG = "dopt";

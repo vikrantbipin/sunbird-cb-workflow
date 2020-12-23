@@ -18,7 +18,7 @@ public class WorkFlowController {
     private Workflowservice workflowService;
 
     @PostMapping("/transition")
-    public ResponseEntity<Response> WfTransition(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody WfRequest wfRequest) {
+    public ResponseEntity<Response> wfTransition(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody WfRequest wfRequest) {
         Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
