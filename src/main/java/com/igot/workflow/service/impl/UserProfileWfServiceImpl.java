@@ -18,7 +18,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class UserProfileWfServiceImpl implements UserProfileWfService {
@@ -82,10 +81,10 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             if (!sources.contains(Constants.UUID)) {
                 sources.add(Constants.UUID);
             }
-            Map<String, Object> pidRequestMap = new HashMap<String, Object>();
+            Map<String, Object> pidRequestMap = new HashMap<>();
             pidRequestMap.put("source_fields", sources);
             pidRequestMap.put("values", userIds);
-            Map<String, String> conditions = new HashMap<String, String>();
+            Map<String, String> conditions = new HashMap<>();
             conditions.put("root_org", rootOrg);
             pidRequestMap.put("conditions", conditions);
             try {

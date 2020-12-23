@@ -158,7 +158,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			//Below statement will work as OR condition.
 			case Constants.PROFILE_SERVICE_NAME:
 			case Constants.USER_PROFILE_FLAG_SERVICE:
-				wfApplicationSearchResponse = applicationSerachOnApplicationIdGrup(rootOrg, org, searchCriteria);
+				wfApplicationSearchResponse = applicationSerachOnApplicationIdGrup(rootOrg, searchCriteria);
 				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
 				response = new Response();
 				response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
@@ -166,7 +166,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				response.put(Constants.STATUS, HttpStatus.OK);
 				break;
 			default:
-				response = applicationSerachOnApplicationIdGrup(rootOrg, org, searchCriteria);
+				response = applicationSerachOnApplicationIdGrup(rootOrg, searchCriteria);
 				break;
 		}
 		return response;
@@ -201,13 +201,10 @@ public class WorkflowServiceImpl implements Workflowservice {
 		if (StringUtils.isEmpty(wfRequest.getWfId()) && !wfStatus.getStartState()) {
 			throw new ApplicationException(Constants.WORKFLOW_ID_ERROR_MESSAGE);
 		}
-		if (!ObjectUtils.isEmpty(applicationStatus)) {
-			if (!wfRequest.getState().equalsIgnoreCase(applicationStatus.getCurrentStatus())) {
+		if ((!ObjectUtils.isEmpty(applicationStatus)) && (!wfRequest.getState().equalsIgnoreCase(applicationStatus.getCurrentStatus()))) {
 				throw new BadRequestException("Application is in " + applicationStatus.getCurrentStatus()
 						+ " State but trying to be move in " + wfRequest.getState() + " state!");
-			}
 		}
-
 	}
 
 	/**
@@ -250,7 +247,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		if (CollectionUtils.isEmpty(actorRoles)) {
 			throw new ApplicationException(Constants.WORKFLOW_ROLE_ERROR);
 		}
-		boolean roleFound = actorRoles.stream().anyMatch(role -> actionRoles.contains(role));
+		boolean roleFound = actorRoles.stream().anyMatch(actionRoles::contains);
 		if (!roleFound) {
 			throw new BadRequestException(Constants.WORKFLOW_ROLE_CHECK_ERROR);
 		}
@@ -485,7 +482,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @return list of roles for user
 	 */
 	private List<String> getUserRoles(String userId) {
-		List<String> roleList = new ArrayList<>();
+		List<String> roleList;
 		StringBuilder builder = new StringBuilder();
 		String endPoint = configuration.getUserRoleSearchEndpoint().replace("{user_id}", userId);
 		builder.append(configuration.getLexCoreServiceHost()).append(endPoint);
@@ -504,7 +501,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return roleList;
 	}
 
-	public Response applicationSerachOnApplicationIdGrup(String rootOrg, String org, SearchCriteria criteria) {
+	public Response applicationSerachOnApplicationIdGrup(String rootOrg, SearchCriteria criteria) {
 		if (criteria.isEmpty()) {
 			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
 		}
