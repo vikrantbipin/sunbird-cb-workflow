@@ -108,7 +108,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
 			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
 			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
-			
+
 			// actor has proper role to take the workflow action
 
 			nextState = wfAction.getNextState();
@@ -503,6 +503,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	private Pageable getPageReqForApplicationSearch(SearchCriteria criteria){
+		Pageable pageable;
 		if (criteria.isEmpty()) {
 			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
 		}
@@ -516,6 +517,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			limit = configuration.getDefaultLimit();
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
-		 return  PageRequest.of(offset, limit + offset);
+		pageable = PageRequest.of(offset, limit + offset);
+		return pageable;
 	}
 }
