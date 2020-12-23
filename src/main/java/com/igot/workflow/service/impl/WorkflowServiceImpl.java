@@ -108,8 +108,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
 			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
 			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
-
-			// TODO get the actor roles and call the validateRoles method to check that
+			
 			// actor has proper role to take the workflow action
 
 			nextState = wfAction.getNextState();
@@ -363,21 +362,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @return workflow applications
 	 */
 	public Response wfApplicationSearch(String rootOrg, String org, SearchCriteria criteria) {
-		if (criteria.isEmpty()) {
-			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
-		}
-		Integer limit = configuration.getDefaultLimit();
-		Integer offset = configuration.getDefaultOffset();
-		if (criteria.getLimit() == null && criteria.getOffset() == null)
-			limit = configuration.getMaxLimit();
-		if (criteria.getLimit() != null && criteria.getLimit() <= configuration.getDefaultLimit())
-			limit = criteria.getLimit();
-		if (criteria.getLimit() != null && criteria.getLimit() > configuration.getDefaultLimit())
-			limit = configuration.getDefaultLimit();
-		if (criteria.getOffset() != null)
-			offset = criteria.getOffset();
-		Pageable pageable = PageRequest.of(offset, limit + offset);
-
+		Pageable pageable = getPageReqForApplicationSearch(criteria);
 		Page<WfStatusEntity> statePage = wfStatusRepo.findByRootOrgAndOrgAndServiceNameAndCurrentStatus(rootOrg,
 				org, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
 		Response response = new Response();
@@ -502,6 +487,22 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	public Response applicationSerachOnApplicationIdGrup(String rootOrg, SearchCriteria criteria) {
+		Pageable pageable = getPageReqForApplicationSearch(criteria);
+
+		List<String> applicationIds = criteria.getApplicationIds();
+        if(CollectionUtils.isEmpty(applicationIds)){
+			applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
+		}
+		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+		Map<String, List<WfStatusEntity>> infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
+        Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, infos);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
+	private Pageable getPageReqForApplicationSearch(SearchCriteria criteria){
 		if (criteria.isEmpty()) {
 			throw new BadRequestException(Constants.SEARCH_CRITERIA_VALIDATION);
 		}
@@ -515,18 +516,6 @@ public class WorkflowServiceImpl implements Workflowservice {
 			limit = configuration.getDefaultLimit();
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
-		Pageable pageable = PageRequest.of(offset, limit + offset);
-
-		List<String> applicationIds = criteria.getApplicationIds();
-        if(CollectionUtils.isEmpty(applicationIds)){
-			applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
-		}
-		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
-		Map<String, List<WfStatusEntity>> infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
-        Response response = new Response();
-		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-		response.put(Constants.DATA, infos);
-		response.put(Constants.STATUS, HttpStatus.OK);
-		return response;
+		 return  PageRequest.of(offset, limit + offset);
 	}
 }
