@@ -89,4 +89,6 @@ public class Constants {
 	public static final String CBP_WF_SERVICE_NAME = "cbp-content";
 
 	public static final String USER_PROFILE_FLAG_SERVICE = "userprofile_flag_service";
+
+	public static final String APPROVE_STATE = "APPROVE";
 }

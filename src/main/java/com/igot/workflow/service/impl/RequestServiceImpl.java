@@ -1,5 +1,6 @@
 package com.igot.workflow.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -32,13 +33,10 @@ public class RequestServiceImpl {
         try {
             str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
             log.debug(str.toString());
-            response = restTemplate.postForObject(uri.toString(), request, classType);
-        } catch (HttpClientErrorException e) {
-            log.error("External Service threw an Exception: ", e);
-        } catch (Exception e) {
-            log.error("Exception while fetching from external service: ", e);
+        } catch (JsonProcessingException e) {
+            log.error("Json processing exception occured: ", e);
         }
-        return response;
+        return restTemplate.postForObject(uri.toString(), request, classType);
     }
 
     public Object fetchResultUsingGet(StringBuilder uri) {

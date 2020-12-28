@@ -58,4 +58,10 @@ public class WorkFlowController {
         Response response = workflowService.getWorkflowProcess(rootOrg, wfId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping(path = "/updateUserProfileWF", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> getWorkflowProcess(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody WfRequest wfRequest) {
+        Response response = workflowService.updateUserProfileWF(rootOrg, org, wfRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
