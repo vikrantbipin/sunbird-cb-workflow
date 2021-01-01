@@ -39,6 +39,16 @@ public class Configuration {
     @Value("${multiple-workflow-creation}")
     private boolean multipleWfCreationEnable;
 
+    @Value("${notify.service.host}")
+    private String notifyServiceHost;
+
+    @Value("${notify.service.path}")
+    private String notifyServicePath;
+
+    @Value("${hub.notification.rootOrg}")
+    private String hubRootOrg;
+
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -125,5 +135,33 @@ public class Configuration {
 
     public void setMultipleWfCreationEnable(boolean multipleWfCreationEnable) {
         this.multipleWfCreationEnable = multipleWfCreationEnable;
+    }
+
+    public boolean isMultipleWfCreationEnable() {
+        return multipleWfCreationEnable;
+    }
+
+    public String getNotifyServiceHost() {
+        return notifyServiceHost;
+    }
+
+    public void setNotifyServiceHost(String notifyServiceHost) {
+        this.notifyServiceHost = notifyServiceHost;
+    }
+
+    public String getNotifyServicePath() {
+        return notifyServicePath;
+    }
+
+    public void setNotifyServicePath(String notifyServicePath) {
+        this.notifyServicePath = notifyServicePath;
+    }
+
+    public String getHubRootOrg() {
+        return hubRootOrg;
+    }
+
+    public void setHubRootOrg(String hubRootOrg) {
+        this.hubRootOrg = hubRootOrg;
     }
 }

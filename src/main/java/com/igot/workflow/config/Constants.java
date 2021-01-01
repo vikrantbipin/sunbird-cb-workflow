@@ -91,4 +91,7 @@ public class Constants {
 	public static final String USER_PROFILE_FLAG_SERVICE = "userprofile_flag_service";
 
 	public static final String APPROVE_STATE = "APPROVE";
+
+	public static final String ROOT_ORG_CONSTANT = "rootOrg";
+
 }
