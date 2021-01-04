@@ -1,5 +1,6 @@
 package com.igot.workflow.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.consumer.ApplicationProcessingConsumer;
@@ -64,7 +65,14 @@ public class NotificationServiceImpl {
     public void sendNotification(WfRequest wfRequest){
         WfStatusEntity wfStatusEntity = wfStatusRepo.findByApplicationIdAndWfId(wfRequest.getApplicationId(), wfRequest.getWfId());
         WfStatus wfStatus = workflowservice.getWorkflowStates(wfStatusEntity.getRootOrg(), wfStatusEntity.getOrg(), wfStatusEntity.getServiceName(), wfStatusEntity.getCurrentStatus());
+        try {
+            logger.info("Notification workflow status entity, {}", mapper.writeValueAsString(wfStatusEntity));
+            logger.info("Notification workflow status model, {}", mapper.writeValueAsString(wfStatus));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         if(!ObjectUtils.isEmpty(wfStatus.getNotificationEnable()) && wfStatus.getNotificationEnable()){
+            logger.info("Enter's in the notification block");
             Map<String, Object> tagValues = new HashMap<>();
             Map<String, List<String>> recipients = new HashMap<>();
             NotificationEvent nEvent = new NotificationEvent();

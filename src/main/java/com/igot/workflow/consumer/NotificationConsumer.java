@@ -27,7 +27,7 @@ public class NotificationConsumer {
         try {
             String message = String.valueOf(data.value());
             wfRequest = mapper.readValue(message, WfRequest.class);
-            logger.info("Recevied data in user profile consumer : {}", mapper.writeValueAsString(wfRequest));
+            logger.info("Recevied data in notification consumer : {}", mapper.writeValueAsString(wfRequest));
         } catch (Exception ex) {
             logger.error("Error while deserialization the object value", ex);
         }

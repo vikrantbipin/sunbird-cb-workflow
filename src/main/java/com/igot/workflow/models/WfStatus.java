@@ -15,6 +15,7 @@ public class WfStatus {
 
     private Boolean isLastState;
 
+    @JsonProperty(value = "isNotificationEnable")
     private Boolean isNotificationEnable;
 
     private List<WfAction> actions;
