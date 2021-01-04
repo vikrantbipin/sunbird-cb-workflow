@@ -15,6 +15,8 @@ public class WfStatus {
 
     private Boolean isLastState;
 
+    private Boolean isNotificationEnable;
+
     private List<WfAction> actions;
 
     public String getState() {
@@ -47,5 +49,13 @@ public class WfStatus {
 
     public void setStartState(Boolean startState) {
         isStartState = startState;
+    }
+
+    public Boolean getNotificationEnable() {
+        return isNotificationEnable;
+    }
+
+    public void setNotificationEnable(Boolean notificationEnable) {
+        isNotificationEnable = notificationEnable;
     }
 }
