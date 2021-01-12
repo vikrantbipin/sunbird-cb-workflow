@@ -1,4 +1,4 @@
-package com.igot.workflow.models;
+package org.sunbird.workflow.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
