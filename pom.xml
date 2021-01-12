@@ -8,7 +8,7 @@
         <version>2.1.4.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.igot</groupId>
+    <groupId>org.sunbird</groupId>
     <artifactId>sb-workflow-handler</artifactId>
     <version>1.0.0</version>
     <name>sb-workflow-handler</name>

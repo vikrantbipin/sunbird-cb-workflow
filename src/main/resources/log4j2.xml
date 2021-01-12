@@ -7,7 +7,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.igot.workflow" level="debug" additivity="false">
+        <Logger name="org.sunbird.workflow" level="debug" additivity="false">
             <AppenderRef ref="Console" />
         </Logger>
         <Root level="info">
