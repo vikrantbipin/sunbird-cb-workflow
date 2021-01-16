@@ -535,7 +535,7 @@ public class WorkflowServiceImpl implements Workflowservice {
         applicationStatus.setLastUpdatedOn(new Date());
         applicationStatus.setCurrentStatus(Constants.APPROVED_STATE);
         applicationStatus.setActorUUID(wfRequest.getActorUserId());
-        applicationStatus.setDeptName(wfRequest.getUpdateFieldValues());
+        applicationStatus.setDeptName(getDepartmentDetails(wfRequest.getUpdateFieldValues().stream().findFirst().get()));
         wfRequest.setWfId(wfId);
         wfRequest.setAction(Constants.APPROVE_STATE);
         wfRequest.setState(Constants.APPROVED_STATE);
@@ -555,5 +555,10 @@ public class WorkflowServiceImpl implements Workflowservice {
         response.put(Constants.DATA, data);
         response.put(Constants.STATUS, HttpStatus.OK);
         return response;
+    }
+
+    private String getDepartmentDetails(HashMap<String, Object> updatedDeptvalue){
+        HashMap<String, String> toValue = (HashMap<String, String>)updatedDeptvalue.get("toValue");
+        return  toValue.get("departmentName").isEmpty() ? "" : toValue.get("departmentName");
     }
 }
