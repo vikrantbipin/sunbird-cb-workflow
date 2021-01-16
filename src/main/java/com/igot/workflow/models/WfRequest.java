@@ -23,6 +23,8 @@ public class WfRequest {
 
     private String serviceName;
 
+    private String deptName;
+
     public String getState() {
         return state;
     }
@@ -93,5 +95,13 @@ public class WfRequest {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public String getDeptName() {
+        return deptName;
+    }
+
+    public void setDeptName(String deptName) {
+        this.deptName = deptName;
     }
 }

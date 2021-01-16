@@ -47,6 +47,9 @@ public class WfStatusEntity {
     @Column(name = "update_field_values")
     private String updateFieldValues;
 
+    @Column(name = "dept_name")
+    private String deptName;
+
     public String getUserId() {
         return userId;
     }
@@ -141,5 +144,13 @@ public class WfStatusEntity {
 
     public void setUpdateFieldValues(String updateFieldValues) {
         this.updateFieldValues = updateFieldValues;
+    }
+
+    public String getDeptName() {
+        return deptName;
+    }
+
+    public void setDeptName(String deptName) {
+        this.deptName = deptName;
     }
 }
