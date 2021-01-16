@@ -12,6 +12,8 @@ public class SearchCriteria {
 
     private List<String> applicationIds;
 
+    private String deptName;
+
     private Integer limit;
 
     private Integer offset;
@@ -58,5 +60,13 @@ public class SearchCriteria {
 
     public void setApplicationIds(List<String> applicationIds) {
         this.applicationIds = applicationIds;
+    }
+
+    public String getDeptName() {
+        return deptName;
+    }
+
+    public void setDeptName(String deptName) {
+        this.deptName = deptName;
     }
 }

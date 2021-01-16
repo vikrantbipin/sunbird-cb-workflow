@@ -133,6 +133,7 @@ public class WorkflowServiceImpl implements Workflowservice {
             applicationStatus.setActorUUID(wfRequest.getActorUserId());
             applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
             applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+            applicationStatus.setDeptName(wfRequest.getDeptName());
             wfStatusRepo.save(applicationStatus);
             producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
 
@@ -157,7 +158,7 @@ public class WorkflowServiceImpl implements Workflowservice {
             //Below statement will work as OR condition.
             case Constants.PROFILE_SERVICE_NAME:
             case Constants.USER_PROFILE_FLAG_SERVICE:
-                wfApplicationSearchResponse = applicationSerachOnApplicationIdGrup(rootOrg, searchCriteria);
+                wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria);
                 List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData((Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
                 response = new Response();
                 response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
@@ -165,7 +166,7 @@ public class WorkflowServiceImpl implements Workflowservice {
                 response.put(Constants.STATUS, HttpStatus.OK);
                 break;
             default:
-                response = applicationSerachOnApplicationIdGrup(rootOrg, searchCriteria);
+                response = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria);
                 break;
         }
         return response;
@@ -481,11 +482,14 @@ public class WorkflowServiceImpl implements Workflowservice {
         return roleList;
     }
 
-    public Response applicationSerachOnApplicationIdGrup(String rootOrg, SearchCriteria criteria) {
+    public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria) {
         Pageable pageable = getPageReqForApplicationSearch(criteria);
 
         List<String> applicationIds = criteria.getApplicationIds();
-        if (CollectionUtils.isEmpty(applicationIds)) {
+        if (CollectionUtils.isEmpty(applicationIds) && !(StringUtils.isEmpty(criteria.getDeptName()))) {
+            applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
+        }
+        if (CollectionUtils.isEmpty(applicationIds) && (StringUtils.isEmpty(criteria.getDeptName()))) {
             applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
         }
         List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
@@ -531,6 +535,7 @@ public class WorkflowServiceImpl implements Workflowservice {
         applicationStatus.setLastUpdatedOn(new Date());
         applicationStatus.setCurrentStatus(Constants.APPROVED_STATE);
         applicationStatus.setActorUUID(wfRequest.getActorUserId());
+        applicationStatus.setDeptName(wfRequest.getUpdateFieldValues());
         wfRequest.setWfId(wfId);
         wfRequest.setAction(Constants.APPROVE_STATE);
         wfRequest.setState(Constants.APPROVED_STATE);

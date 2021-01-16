@@ -50,6 +50,9 @@ public class WfAuditEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdOn;
 
+    @Column(name = "dept_name")
+    private String deptName;
+
 
     public int getId() {
         return id;
@@ -153,5 +156,13 @@ public class WfAuditEntity {
 
     public void setAction(String action) {
         this.action = action;
+    }
+
+    public String getDeptName() {
+        return deptName;
+    }
+
+    public void setDeptName(String deptName) {
+        this.deptName = deptName;
     }
 }
