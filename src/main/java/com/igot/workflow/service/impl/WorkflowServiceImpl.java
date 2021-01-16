@@ -484,16 +484,17 @@ public class WorkflowServiceImpl implements Workflowservice {
 
     public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria) {
         Pageable pageable = getPageReqForApplicationSearch(criteria);
-
         List<String> applicationIds = criteria.getApplicationIds();
-        if (CollectionUtils.isEmpty(applicationIds) && !(StringUtils.isEmpty(criteria.getDeptName()))) {
-            applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
+        Map<String, List<WfStatusEntity>> infos = null;
+        if (!(StringUtils.isEmpty(criteria.getDeptName()))) {
+            if (CollectionUtils.isEmpty(applicationIds)) {
+                applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
+            }
+            List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+            infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
+        } else {
+            infos = Collections.emptyMap();
         }
-        if (CollectionUtils.isEmpty(applicationIds) && (StringUtils.isEmpty(criteria.getDeptName()))) {
-            applicationIds = wfStatusRepo.getListOfDistinctApplication(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), pageable);
-        }
-        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
-        Map<String, List<WfStatusEntity>> infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
         Response response = new Response();
         response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
         response.put(Constants.DATA, infos);
