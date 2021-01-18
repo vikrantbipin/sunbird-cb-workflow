@@ -486,15 +486,16 @@ public class WorkflowServiceImpl implements Workflowservice {
         Pageable pageable = getPageReqForApplicationSearch(criteria);
         List<String> applicationIds = criteria.getApplicationIds();
         Map<String, List<WfStatusEntity>> infos = null;
-        if (!(StringUtils.isEmpty(criteria.getDeptName()))) {
-            if (CollectionUtils.isEmpty(applicationIds)) {
-                applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
-            }
-            List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
-            infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
-        } else {
-            infos = Collections.emptyMap();
+        if (CollectionUtils.isEmpty(applicationIds)) {
+            applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(rootOrg, criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
         }
+        List<WfStatusEntity> wfStatusEntities = null;
+        if(!StringUtils.isEmpty(criteria.getDeptName())) {
+        	wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+        } else {
+        	wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+        }
+        infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
         Response response = new Response();
         response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
         response.put(Constants.DATA, infos);
