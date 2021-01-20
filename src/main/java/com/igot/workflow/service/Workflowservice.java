@@ -26,4 +26,6 @@ public interface Workflowservice {
     public Response getWorkflowProcess(String rootOrg, String wfId);
 
     public Response updateUserProfileWF(String rootOrg, String org, WfRequest wfRequest);
+
+    public Response getUserWf(String rootOrg, String org, String wid, SearchCriteria criteria);
 }
