@@ -563,4 +563,15 @@ public class WorkflowServiceImpl implements Workflowservice {
         HashMap<String, String> toValue = (HashMap<String, String>)updatedDeptvalue.get("toValue");
         return  toValue.get("departmentName").isEmpty() ? "" : toValue.get("departmentName");
     }
+
+    @Override
+    public Response getUserWf(String rootOrg, String org, String wid, SearchCriteria criteria) {
+        List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByRootOrgAndOrgAndServiceNameAndCurrentStatusAndUserId(rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);
+        Response response = new Response();
+        response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+        response.put(Constants.DATA, wfStatusEntities);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
+    }
+
 }
