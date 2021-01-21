@@ -70,4 +70,10 @@ public class WorkFlowController {
         Response response = workflowService.getUserWf(rootOrg, org, wid, searchCriteria);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping(path = "/getUserWFApplicationFields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> getUserWFApplicationFields(@RequestHeader String rootOrg, @RequestHeader String org, @RequestHeader String wid, @RequestBody SearchCriteria searchCriteria) {
+        Response response = workflowService.getUserWFApplicationFields(rootOrg, org, wid, searchCriteria);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

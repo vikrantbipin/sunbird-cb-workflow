@@ -1,6 +1,7 @@
 package com.igot.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
 import com.igot.workflow.config.Constants;
@@ -17,6 +18,8 @@ import com.igot.workflow.producer.Producer;
 import com.igot.workflow.repository.cassandra.bodhi.WfRepo;
 import com.igot.workflow.service.UserProfileWfService;
 import com.igot.workflow.service.Workflowservice;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +61,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 
     @Autowired
     private Producer producer;
+
+    Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
     /**
      * Change the status of workflow application
@@ -570,6 +575,41 @@ public class WorkflowServiceImpl implements Workflowservice {
         Response response = new Response();
         response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
         response.put(Constants.DATA, wfStatusEntities);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
+    }
+
+    /**
+     *
+     * @param rootOrg root org
+     * @param org org
+     * @param wid user id of user
+     * @param criteria search criteria
+     * @return list of workflow fields
+     */
+    @Override
+    public Response getUserWFApplicationFields(String rootOrg, String org, String wid, SearchCriteria criteria) {
+        List<String> updatedFieldValues = wfStatusRepo.findWfFieldsForUser(rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);
+        TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {
+        };
+        Set<String> fieldsSet = new HashSet<>();
+        for (String fields : updatedFieldValues) {
+            if (!StringUtils.isEmpty(fields)) {
+                try {
+                    List<HashMap<String, Object>> values = mapper.readValue(fields, typeRef);
+                    for (HashMap<String, Object> wffieldReq : values) {
+                        HashMap<String, Object> toValueMap = (HashMap<String, Object>) wffieldReq.get("toValue");
+                        fieldsSet.add(toValueMap.entrySet().iterator().next().getKey());
+                    }
+                } catch (IOException e) {
+                    log.error("Excepiton occured while parsing wf fields!");
+                    log.error(e.toString());
+                }
+            }
+        }
+        Response response = new Response();
+        response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+        response.put(Constants.DATA, fieldsSet);
         response.put(Constants.STATUS, HttpStatus.OK);
         return response;
     }
