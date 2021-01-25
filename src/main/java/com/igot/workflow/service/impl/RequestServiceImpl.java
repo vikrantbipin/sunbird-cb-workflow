@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -69,7 +70,7 @@ public class RequestServiceImpl {
      * @return
      * @throws Exception
      */
-    public Object fetchResultUsingPost(StringBuilder uri, Object request, Class objectType) {
+    public Object fetchResultUsingPost(StringBuilder uri, Object request, Class objectType, HashMap<String, String> headersValue) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         Object response = null;
@@ -81,7 +82,11 @@ public class RequestServiceImpl {
             String message = str.toString();
             log.info(message);
             HttpHeaders headers = new HttpHeaders();
-            headers.set(Constants.ROOT_ORG_CONSTANT, configuration.getHubRootOrg());
+            if (!headersValue.isEmpty()) {
+                for (Map.Entry<String, String> map : headersValue.entrySet()) {
+                    headers.set(map.getKey(), map.getValue());
+                }
+            }
             HttpEntity<Object> entity = new HttpEntity<>(request, headers);
             response = restTemplate.postForObject(uri.toString(), entity, objectType);
         } catch (HttpClientErrorException e) {

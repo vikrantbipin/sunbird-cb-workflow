@@ -48,6 +48,9 @@ public class Configuration {
     @Value("${hub.notification.rootOrg}")
     private String hubRootOrg;
 
+    @Value("${portal.departmentupdate.path}")
+    private String departmentUpdatePath;
+
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -163,5 +166,13 @@ public class Configuration {
 
     public void setHubRootOrg(String hubRootOrg) {
         this.hubRootOrg = hubRootOrg;
+    }
+
+    public String getDepartmentUpdatePath() {
+        return departmentUpdatePath;
+    }
+
+    public void setDepartmentUpdatePath(String departmentUpdatePath) {
+        this.departmentUpdatePath = departmentUpdatePath;
     }
 }

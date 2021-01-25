@@ -62,6 +62,15 @@ public class WorkflowServiceImpl implements Workflowservice {
     @Autowired
     private Producer producer;
 
+    @Autowired
+    private ApplicationProcessingServiceImpl applicationProcessingServiceImpl;
+
+    @Autowired
+    private WorkflowAuditProcessingServiceImpl workflowAuditProcessingService;
+
+    @Autowired
+    private NotificationServiceImpl notificationService;
+
     Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
     /**
@@ -529,38 +538,45 @@ public class WorkflowServiceImpl implements Workflowservice {
 
     @Override
     public Response updateUserProfileWF(String rootOrg, String org, WfRequest wfRequest) {
-        String wfId;
-        WfStatusEntity applicationStatus = new WfStatusEntity();
-        wfId = UUID.randomUUID().toString();
-        applicationStatus.setWfId(wfId);
-        applicationStatus.setServiceName(wfRequest.getServiceName());
-        applicationStatus.setUserId(wfRequest.getUserId());
-        applicationStatus.setApplicationId(wfRequest.getApplicationId());
-        applicationStatus.setRootOrg(rootOrg);
-        applicationStatus.setOrg(org);
-        applicationStatus.setCreatedOn(new Date());
-        applicationStatus.setLastUpdatedOn(new Date());
-        applicationStatus.setCurrentStatus(Constants.APPROVED_STATE);
-        applicationStatus.setActorUUID(wfRequest.getActorUserId());
-        applicationStatus.setDeptName(getDepartmentDetails(wfRequest.getUpdateFieldValues().stream().findFirst().get()));
-        wfRequest.setWfId(wfId);
-        wfRequest.setAction(Constants.APPROVE_STATE);
-        wfRequest.setState(Constants.APPROVED_STATE);
-        try {
-            applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-        } catch (JsonProcessingException e) {
-            throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
-        }
-        applicationStatus.setInWorkflow(false);
-        wfStatusRepo.save(applicationStatus);
-        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
         Response response = new Response();
-        HashMap<String, Object> data = new HashMap<>();
-        data.put(Constants.STATUS, Constants.APPROVED_STATE);
-        data.put(Constants.WF_IDS_CONSTANT, Arrays.asList(wfId));
-        response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.APPROVED_STATE);
-        response.put(Constants.DATA, data);
-        response.put(Constants.STATUS, HttpStatus.OK);
+        try {
+            String wfId;
+            WfStatusEntity applicationStatus = new WfStatusEntity();
+            wfId = UUID.randomUUID().toString();
+            applicationStatus.setWfId(wfId);
+            applicationStatus.setServiceName(wfRequest.getServiceName());
+            applicationStatus.setUserId(wfRequest.getUserId());
+            applicationStatus.setApplicationId(wfRequest.getApplicationId());
+            applicationStatus.setRootOrg(rootOrg);
+            applicationStatus.setOrg(org);
+            applicationStatus.setCreatedOn(new Date());
+            applicationStatus.setLastUpdatedOn(new Date());
+            applicationStatus.setCurrentStatus(Constants.APPROVED_STATE);
+            applicationStatus.setActorUUID(wfRequest.getActorUserId());
+            applicationStatus.setDeptName(getDepartmentDetails(wfRequest.getUpdateFieldValues().stream().findFirst().get()));
+            wfRequest.setWfId(wfId);
+            wfRequest.setAction(Constants.APPROVE_STATE);
+            wfRequest.setState(Constants.APPROVED_STATE);
+            try {
+                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+            } catch (JsonProcessingException e) {
+                throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+            }
+            applicationStatus.setInWorkflow(false);
+            wfStatusRepo.save(applicationStatus);
+            applicationProcessingServiceImpl.processWfApplicationRequest(wfRequest);
+            workflowAuditProcessingService.createAudit(wfRequest);
+            notificationService.sendNotification(wfRequest);
+            HashMap<String, Object> data = new HashMap<>();
+            data.put(Constants.STATUS, Constants.APPROVED_STATE);
+            data.put(Constants.WF_IDS_CONSTANT, Arrays.asList(wfId));
+            response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.APPROVED_STATE);
+            response.put(Constants.DATA, data);
+            response.put(Constants.STATUS, HttpStatus.OK);
+        } catch (Exception ex) {
+            log.error("Some exception occured !" + ex.toString());
+        }
+
         return response;
     }
 

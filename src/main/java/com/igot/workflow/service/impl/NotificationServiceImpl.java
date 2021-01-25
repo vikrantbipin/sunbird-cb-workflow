@@ -3,6 +3,7 @@ package com.igot.workflow.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.workflow.config.Configuration;
+import com.igot.workflow.config.Constants;
 import com.igot.workflow.consumer.ApplicationProcessingConsumer;
 import com.igot.workflow.models.WfRequest;
 import com.igot.workflow.models.WfStatus;
@@ -103,7 +104,9 @@ public class NotificationServiceImpl {
         StringBuilder builder = new StringBuilder();
         builder.append(configuration.getNotifyServiceHost()).append(configuration.getNotifyServicePath());
         try {
-            requestService.fetchResultUsingPost(builder, nEvent, Map.class);
+            HashMap<String, String> headers = new HashMap<>();
+            headers.put(Constants.ROOT_ORG_CONSTANT, configuration.getHubRootOrg());
+            requestService.fetchResultUsingPost(builder, nEvent, Map.class, headers);
         } catch (Exception e) {
             logger.error("Exception while posting the data in notification service: ", e);
         }
