@@ -6,57 +6,67 @@ import java.util.List;
 
 public class SearchCriteria {
 
-    private String serviceName;
+	private String serviceName;
 
-    private String applicationStatus;
+	private String applicationStatus;
 
-    private List<String> applicationIds;
+	private List<String> applicationIds;
 
-    private Integer limit;
+	private Integer limit;
 
-    private Integer offset;
+	private Integer offset;
 
-    public String getServiceName() {
-        return serviceName;
-    }
+	private String deptName;
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
+	public String getServiceName() {
+		return serviceName;
+	}
 
-    public String getApplicationStatus() {
-        return applicationStatus;
-    }
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}
 
-    public void setApplicationStatus(String applicationStatus) {
-        this.applicationStatus = applicationStatus;
-    }
+	public String getApplicationStatus() {
+		return applicationStatus;
+	}
 
-    public Integer getLimit() {
-        return limit;
-    }
+	public void setApplicationStatus(String applicationStatus) {
+		this.applicationStatus = applicationStatus;
+	}
 
-    public void setLimit(Integer limit) {
-        this.limit = limit;
-    }
+	public Integer getLimit() {
+		return limit;
+	}
 
-    public Integer getOffset() {
-        return offset;
-    }
+	public void setLimit(Integer limit) {
+		this.limit = limit;
+	}
 
-    public void setOffset(Integer offset) {
-        this.offset = offset;
-    }
+	public Integer getOffset() {
+		return offset;
+	}
 
-    public boolean isEmpty() {
-        return (StringUtils.isEmpty(this.applicationStatus) && StringUtils.isEmpty(this.serviceName));
-    }
+	public void setOffset(Integer offset) {
+		this.offset = offset;
+	}
 
-    public List<String> getApplicationIds() {
-        return applicationIds;
-    }
+	public boolean isEmpty() {
+		return (StringUtils.isEmpty(this.applicationStatus) && StringUtils.isEmpty(this.serviceName));
+	}
 
-    public void setApplicationIds(List<String> applicationIds) {
-        this.applicationIds = applicationIds;
-    }
+	public List<String> getApplicationIds() {
+		return applicationIds;
+	}
+
+	public void setApplicationIds(List<String> applicationIds) {
+		this.applicationIds = applicationIds;
+	}
+
+	public String getDeptName() {
+		return deptName;
+	}
+
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
 }

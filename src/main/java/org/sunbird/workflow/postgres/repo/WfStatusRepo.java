@@ -23,7 +23,17 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
 
     @Query(value = "select application_id from wingspan.wf_status where root_org= ?1 and service_name = ?2 and current_status = ?3 group by application_id", countQuery = "select count(application_id) from wingspan.wf_status where root_org= ?1 and service_name = ?2 and current_status = ?3 group by application_id", nativeQuery = true)
     List<String> getListOfDistinctApplication(String rootOrg, String serviceName, String currentStatus, Pageable pageable);
-
+    
+    @Query(value = "select application_id from wingspan.wf_status where root_org= ?1 and service_name = ?2 and current_status = ?3 and dept_name = ?4 group by application_id", countQuery = "select count(application_id) from wingspan.wf_status where root_org= ?1 and service_name = ?2 and current_status = ?3 group by application_id", nativeQuery = true)
+    List<String> getListOfDistinctApplicationUsingDept(String rootOrg, String serviceName, String currentStatus, String deptName, Pageable pageable);
+    
     List<WfStatusEntity> findByServiceNameAndCurrentStatusAndApplicationIdIn(String serviceName, String currentStatus, List<String> applicationId);
+    
+    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(String serviceName, String currentStatus, String deptName, List<String> applicationId);
+
+    List<WfStatusEntity> findByRootOrgAndOrgAndServiceNameAndCurrentStatusAndUserId(String rootOrg, String org, String servicename , String status, String userId);
+    
+    @Query(value = "select update_field_values from wingspan.wf_status where root_org= ?1 and org = ?2 and service_name = ?3 and current_status = ?4 and userid = ?5", nativeQuery = true)	
+    List<String> findWfFieldsForUser(String rootOrg, String org, String servicename , String status, String userId);
 
 }

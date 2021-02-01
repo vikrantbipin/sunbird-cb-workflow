@@ -5,93 +5,104 @@ import java.util.List;
 
 public class WfRequest {
 
-    private String state;
+	private String state;
 
-    private String action;
+	private String action;
 
-    private String applicationId;
+	private String applicationId;
 
-    private String userId;
+	private String userId;
 
-    private String actorUserId;
+	private String actorUserId;
 
-    private String wfId;
+	private String wfId;
 
-    private List<HashMap<String, Object>> updateFieldValues;
+	private List<HashMap<String, Object>> updateFieldValues;
 
-    private String comment;
+	private String comment;
 
-    private String serviceName;
+	private String serviceName;
 
-    public String getState() {
-        return state;
-    }
+	private String deptName;
 
-    public void setState(String state) {
-        this.state = state;
-    }
+	public String getState() {
+		return state;
+	}
 
-    public String getAction() {
-        return action;
-    }
+	public void setState(String state) {
+		this.state = state;
+	}
 
-    public void setAction(String action) {
-        this.action = action;
-    }
+	public String getAction() {
+		return action;
+	}
 
-    public String getUserId() {
-        return userId;
-    }
+	public void setAction(String action) {
+		this.action = action;
+	}
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+	public String getUserId() {
+		return userId;
+	}
 
-    public String getActorUserId() {
-        return actorUserId;
-    }
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
 
-    public void setActorUserId(String actorUserId) {
-        this.actorUserId = actorUserId;
-    }
+	public String getActorUserId() {
+		return actorUserId;
+	}
 
-    public String getComment() {
-        return comment;
-    }
+	public void setActorUserId(String actorUserId) {
+		this.actorUserId = actorUserId;
+	}
 
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+	public String getComment() {
+		return comment;
+	}
 
-    public String getWfId() {
-        return wfId;
-    }
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
 
-    public void setWfId(String wfId) {
-        this.wfId = wfId;
-    }
+	public String getWfId() {
+		return wfId;
+	}
 
-    public List<HashMap<String, Object>> getUpdateFieldValues() {
-        return updateFieldValues;
-    }
+	public void setWfId(String wfId) {
+		this.wfId = wfId;
+	}
 
-    public void setUpdateFieldValues(List<HashMap<String, Object>> updateFieldValues) {
-        this.updateFieldValues = updateFieldValues;
-    }
+	public List<HashMap<String, Object>> getUpdateFieldValues() {
+		return updateFieldValues;
+	}
 
-    public String getApplicationId() {
-        return applicationId;
-    }
+	public void setUpdateFieldValues(List<HashMap<String, Object>> updateFieldValues) {
+		this.updateFieldValues = updateFieldValues;
+	}
 
-    public void setApplicationId(String applicationId) {
-        this.applicationId = applicationId;
-    }
+	public String getApplicationId() {
+		return applicationId;
+	}
 
-    public String getServiceName() {
-        return serviceName;
-    }
+	public void setApplicationId(String applicationId) {
+		this.applicationId = applicationId;
+	}
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
+	public String getServiceName() {
+		return serviceName;
+	}
+
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}
+
+	public String getDeptName() {
+		return deptName;
+	}
+
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+
 }

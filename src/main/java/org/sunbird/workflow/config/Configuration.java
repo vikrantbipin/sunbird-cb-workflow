@@ -6,162 +6,172 @@ import org.springframework.stereotype.Component;
 @Component
 public class Configuration {
 
-    @Value("${workflow.pagination.default.limit}")
-    private Integer defaultLimit;
+	@Value("${workflow.pagination.default.limit}")
+	private Integer defaultLimit;
 
-    @Value("${workflow.pagination.default.offset}")
-    private Integer defaultOffset;
+	@Value("${workflow.pagination.default.offset}")
+	private Integer defaultOffset;
 
-    @Value("${workflow.pagination.max.limit}")
-    private Integer maxLimit;
+	@Value("${workflow.pagination.max.limit}")
+	private Integer maxLimit;
 
-    @Value("${hub.service.host}")
-    private String hubServiceHost;
+	@Value("${hub.service.host}")
+	private String hubServiceHost;
 
-    @Value("${hub.profile.update}")
-    private String hubProfileUpdateEndPoint;
+	@Value("${hub.profile.update}")
+	private String hubProfileUpdateEndPoint;
 
-    @Value("${pid.service.host}")
-    private String pidServiceHost;
+	@Value("${pid.service.host}")
+	private String pidServiceHost;
 
-    @Value("${pid.multiplesearch.endpoint}")
-    private String multipleSearchEndPoint;
+	@Value("${pid.multiplesearch.endpoint}")
+	private String multipleSearchEndPoint;
 
-    @Value("${lexcore.service.host}")
-    private String lexCoreServiceHost;
+	@Value("${lexcore.service.host}")
+	private String lexCoreServiceHost;
 
-    @Value("${userrole.search.endpoint}")
-    private String userRoleSearchEndpoint;
+	@Value("${userrole.search.endpoint}")
+	private String userRoleSearchEndpoint;
 
-    @Value("${kafka.topics.workflow.request}")
-    private String workflowApplicationTopic;
+	@Value("${kafka.topics.workflow.request}")
+	private String workflowApplicationTopic;
 
-    @Value("${multiple-workflow-creation}")
-    private boolean multipleWfCreationEnable;
+	@Value("${multiple-workflow-creation}")
+	private boolean multipleWfCreationEnable;
 
-    @Value("${notify.service.host}")
-    private String notifyServiceHost;
+	@Value("${notify.service.host}")
+	private String notifyServiceHost;
 
-    @Value("${notify.service.path}")
-    private String notifyServicePath;
+	@Value("${notify.service.path}")
+	private String notifyServicePath;
 
-    @Value("${hub.notification.rootOrg}")
-    private String hubRootOrg;
+	@Value("${hub.notification.rootOrg}")
+	private String hubRootOrg;
 
+	@Value("${portal.departmentupdate.path}")
+	private String departmentUpdatePath;
 
-    public Integer getDefaultLimit() {
-        return defaultLimit;
-    }
+	public Integer getDefaultLimit() {
+		return defaultLimit;
+	}
 
-    public void setDefaultLimit(Integer defaultLimit) {
-        this.defaultLimit = defaultLimit;
-    }
+	public void setDefaultLimit(Integer defaultLimit) {
+		this.defaultLimit = defaultLimit;
+	}
 
-    public Integer getDefaultOffset() {
-        return defaultOffset;
-    }
+	public Integer getDefaultOffset() {
+		return defaultOffset;
+	}
 
-    public void setDefaultOffset(Integer defaultOffset) {
-        this.defaultOffset = defaultOffset;
-    }
+	public void setDefaultOffset(Integer defaultOffset) {
+		this.defaultOffset = defaultOffset;
+	}
 
-    public Integer getMaxLimit() {
-        return maxLimit;
-    }
+	public Integer getMaxLimit() {
+		return maxLimit;
+	}
 
-    public void setMaxLimit(Integer maxLimit) {
-        this.maxLimit = maxLimit;
-    }
+	public void setMaxLimit(Integer maxLimit) {
+		this.maxLimit = maxLimit;
+	}
 
-    public String getHubServiceHost() {
-        return hubServiceHost;
-    }
+	public String getHubServiceHost() {
+		return hubServiceHost;
+	}
 
-    public void setHubServiceHost(String hubServiceHost) {
-        this.hubServiceHost = hubServiceHost;
-    }
+	public void setHubServiceHost(String hubServiceHost) {
+		this.hubServiceHost = hubServiceHost;
+	}
 
-    public String getHubProfileUpdateEndPoint() {
-        return hubProfileUpdateEndPoint;
-    }
+	public String getHubProfileUpdateEndPoint() {
+		return hubProfileUpdateEndPoint;
+	}
 
-    public void setHubProfileUpdateEndPoint(String hubProfileUpdateEndPoint) {
-        this.hubProfileUpdateEndPoint = hubProfileUpdateEndPoint;
-    }
+	public void setHubProfileUpdateEndPoint(String hubProfileUpdateEndPoint) {
+		this.hubProfileUpdateEndPoint = hubProfileUpdateEndPoint;
+	}
 
-    public String getPidServiceHost() {
-        return pidServiceHost;
-    }
+	public String getPidServiceHost() {
+		return pidServiceHost;
+	}
 
-    public void setPidServiceHost(String pidServiceHost) {
-        this.pidServiceHost = pidServiceHost;
-    }
+	public void setPidServiceHost(String pidServiceHost) {
+		this.pidServiceHost = pidServiceHost;
+	}
 
-    public String getMultipleSearchEndPoint() {
-        return multipleSearchEndPoint;
-    }
+	public String getMultipleSearchEndPoint() {
+		return multipleSearchEndPoint;
+	}
 
-    public void setMultipleSearchEndPoint(String multipleSearchEndPoint) {
-        this.multipleSearchEndPoint = multipleSearchEndPoint;
-    }
+	public void setMultipleSearchEndPoint(String multipleSearchEndPoint) {
+		this.multipleSearchEndPoint = multipleSearchEndPoint;
+	}
 
-    public String getLexCoreServiceHost() {
-        return lexCoreServiceHost;
-    }
+	public String getLexCoreServiceHost() {
+		return lexCoreServiceHost;
+	}
 
-    public void setLexCoreServiceHost(String lexCoreServiceHost) {
-        this.lexCoreServiceHost = lexCoreServiceHost;
-    }
+	public void setLexCoreServiceHost(String lexCoreServiceHost) {
+		this.lexCoreServiceHost = lexCoreServiceHost;
+	}
 
-    public String getUserRoleSearchEndpoint() {
-        return userRoleSearchEndpoint;
-    }
+	public String getUserRoleSearchEndpoint() {
+		return userRoleSearchEndpoint;
+	}
 
-    public void setUserRoleSearchEndpoint(String userRoleSearchEndpoint) {
-        this.userRoleSearchEndpoint = userRoleSearchEndpoint;
-    }
+	public void setUserRoleSearchEndpoint(String userRoleSearchEndpoint) {
+		this.userRoleSearchEndpoint = userRoleSearchEndpoint;
+	}
 
-    public String getWorkflowApplicationTopic() {
-        return workflowApplicationTopic;
-    }
+	public String getWorkflowApplicationTopic() {
+		return workflowApplicationTopic;
+	}
 
-    public void setWorkflowApplicationTopic(String workflowApplicationTopic) {
-        this.workflowApplicationTopic = workflowApplicationTopic;
-    }
+	public void setWorkflowApplicationTopic(String workflowApplicationTopic) {
+		this.workflowApplicationTopic = workflowApplicationTopic;
+	}
 
-    public boolean getMultipleWfCreationEnable() {
-        return multipleWfCreationEnable;
-    }
+	public boolean getMultipleWfCreationEnable() {
+		return multipleWfCreationEnable;
+	}
 
-    public void setMultipleWfCreationEnable(boolean multipleWfCreationEnable) {
-        this.multipleWfCreationEnable = multipleWfCreationEnable;
-    }
+	public void setMultipleWfCreationEnable(boolean multipleWfCreationEnable) {
+		this.multipleWfCreationEnable = multipleWfCreationEnable;
+	}
 
-    public boolean isMultipleWfCreationEnable() {
-        return multipleWfCreationEnable;
-    }
+	public boolean isMultipleWfCreationEnable() {
+		return multipleWfCreationEnable;
+	}
 
-    public String getNotifyServiceHost() {
-        return notifyServiceHost;
-    }
+	public String getNotifyServiceHost() {
+		return notifyServiceHost;
+	}
 
-    public void setNotifyServiceHost(String notifyServiceHost) {
-        this.notifyServiceHost = notifyServiceHost;
-    }
+	public void setNotifyServiceHost(String notifyServiceHost) {
+		this.notifyServiceHost = notifyServiceHost;
+	}
 
-    public String getNotifyServicePath() {
-        return notifyServicePath;
-    }
+	public String getNotifyServicePath() {
+		return notifyServicePath;
+	}
 
-    public void setNotifyServicePath(String notifyServicePath) {
-        this.notifyServicePath = notifyServicePath;
-    }
+	public void setNotifyServicePath(String notifyServicePath) {
+		this.notifyServicePath = notifyServicePath;
+	}
 
-    public String getHubRootOrg() {
-        return hubRootOrg;
-    }
+	public String getHubRootOrg() {
+		return hubRootOrg;
+	}
 
-    public void setHubRootOrg(String hubRootOrg) {
-        this.hubRootOrg = hubRootOrg;
-    }
+	public void setHubRootOrg(String hubRootOrg) {
+		this.hubRootOrg = hubRootOrg;
+	}
+
+	public String getDepartmentUpdatePath() {
+		return departmentUpdatePath;
+	}
+
+	public void setDepartmentUpdatePath(String departmentUpdatePath) {
+		this.departmentUpdatePath = departmentUpdatePath;
+	}
 }

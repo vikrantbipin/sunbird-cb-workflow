@@ -40,6 +40,7 @@ public class ApplicationProcessingConsumer {
         }
         applicationProcessingServiceImpl.processWfApplicationRequest(wfRequest);
         workflowAuditProcessingService.createAudit(wfRequest);
+        applicationProcessingServiceImpl.updateDepartmentToPortalDBs(wfRequest);
     }
 }
 
