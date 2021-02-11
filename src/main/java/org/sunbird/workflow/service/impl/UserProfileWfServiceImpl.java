@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -92,13 +93,17 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             request.put("limit", userIds.size());
             request.put("offset", 0);
             request.put("filters", filters);
-            HashMap<String, String> headers = new HashMap<>();
-            headers.put("Content-Type", "application/json");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, Object> record;
             try {
+                String reqBodyData = new ObjectMapper().writeValueAsString(request);
+                HttpEntity<String> requestEnty = new HttpEntity<>(reqBodyData, headers);
                 StringBuilder builder = new StringBuilder();
                 builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
-                Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headers);
+                Map<String, Object> openSaberApiResp = restTemplate.postForObject(builder.toString(), requestEnty,
+                        Map.class);
+               // Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headers);
                 if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
                     Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
                     List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");

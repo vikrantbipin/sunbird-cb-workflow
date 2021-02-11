@@ -94,7 +94,7 @@ public class RequestServiceImpl {
 		} catch (HttpClientErrorException e) {
 			log.error("External Service threw an Exception: ", e);
 		} catch (Exception e) {
-			log.error("Exception while posting the data in notification service: ", e);
+			log.error("Exception occured while calling the exteranl service: ", e);
 		}
 		return response;
 	}
