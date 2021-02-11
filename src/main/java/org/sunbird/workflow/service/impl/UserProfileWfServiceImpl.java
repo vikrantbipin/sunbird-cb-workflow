@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
@@ -93,17 +94,13 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             request.put("limit", userIds.size());
             request.put("offset", 0);
             request.put("filters", filters);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, Object> record;
+            HashMap<String, String> headersValue = new HashMap<>();
+            headersValue.put("Content-Type", "application/json");
             try {
-                String reqBodyData = new ObjectMapper().writeValueAsString(request);
-                HttpEntity<String> requestEnty = new HttpEntity<>(reqBodyData, headers);
                 StringBuilder builder = new StringBuilder();
                 builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
-                Map<String, Object> openSaberApiResp = restTemplate.postForObject(builder.toString(), requestEnty,
-                        Map.class);
-               // Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headers);
+                Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
                 if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
                     Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
                     List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");
