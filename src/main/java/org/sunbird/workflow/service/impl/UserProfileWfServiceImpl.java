@@ -118,9 +118,9 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
                             userResult.put(record.get("wid").toString(), record);
                         }
                     }
-
                 }
             } catch (Exception e) {
+                logger.error(e);
                 throw new ApplicationException("Hub Service ERROR: ", e);
             }
         }
