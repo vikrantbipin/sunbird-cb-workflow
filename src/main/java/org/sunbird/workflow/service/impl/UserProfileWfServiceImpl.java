@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -77,30 +79,44 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         HashMap<String, Object> responseMap;
         HashMap<String, Object> userResult = new HashMap<>();
         Set<String> userIds = wfInfos.keySet();
-        if(!CollectionUtils.isEmpty(userIds)){
+        if (!CollectionUtils.isEmpty(userIds)) {
             List<String> sources = new ArrayList<>(Constants.USER_DEFAULT_FIELDS);
             if (!sources.contains(Constants.UUID)) {
                 sources.add(Constants.UUID);
             }
-            Map<String, Object> pidRequestMap = new HashMap<>();
-            pidRequestMap.put("source_fields", sources);
-            pidRequestMap.put("values", userIds);
-            Map<String, String> conditions = new HashMap<>();
-            conditions.put("root_org", rootOrg);
-            pidRequestMap.put("conditions", conditions);
+            Map<String, Object> request = new HashMap<>();
+            Map<String, Object> filters = new HashMap<>();
+            Map<String, Object> idKeyword = new HashMap<>();
+            idKeyword.put("or", userIds);
+            filters.put("id.keyword", idKeyword);
+            request.put("limit", userIds.size());
+            request.put("offset", 0);
+            request.put("filters", filters);
+            HashMap<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            Map<String, Object> record;
             try {
                 StringBuilder builder = new StringBuilder();
-                builder.append(configuration.getPidServiceHost()).append(configuration.getMultipleSearchEndPoint());
-                List<Map<String, Object>> pidResponse = (List<Map<String, Object>>) requestServiceImpl.fetchResult(builder, pidRequestMap, List.class);
-                logger.info("PID SERVICE RESPONSE : {}", mapper.writeValueAsString(pidResponse));
-                for (Map<String, Object> record : pidResponse) {
-                    if (record.get("wid") != null && userIds.contains(record.get("wid"))) {
-                        userResult.put(record.get("wid").toString(), record);
+                builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
+                Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headers);
+                if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
+                    Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
+                    List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");
+                    if (!CollectionUtils.isEmpty(userProfiles)) {
+                        for (Map<String, Object> userProfile : userProfiles) {
+                            HashMap<String, Object> personalDetails = (HashMap<String, Object>) userProfile.get("personalDetails");
+                            record = new HashMap<>();
+                            record.put("wid", userProfile.get("userId"));
+                            record.put("first_name", personalDetails.get("firstname"));
+                            record.put("last_name", personalDetails.get("surname"));
+                            record.put("email", personalDetails.get("primaryEmail"));
+                            userResult.put(record.get("wid").toString(), record);
+                        }
                     }
+
                 }
             } catch (Exception e) {
-                logger.error("PID ERROR", e);
-                throw new ApplicationException("PID ERROR: ", e);
+                throw new ApplicationException("Hub Service ERROR: ", e);
             }
         }
         for (Map.Entry<String, List<WfStatusEntity>> wfStatusEntity : wfInfos.entrySet()) {
