@@ -2,7 +2,6 @@ package org.sunbird.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +12,6 @@ import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.consumer.ApplicationProcessingConsumer;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.models.WfStatus;
-import org.sunbird.workflow.models.WorkFlowModel;
-import org.sunbird.workflow.models.cassandra.Workflow;
 import org.sunbird.workflow.models.notification.NotificationEvent;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
