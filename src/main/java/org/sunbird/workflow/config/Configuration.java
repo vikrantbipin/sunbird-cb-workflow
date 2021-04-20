@@ -54,6 +54,9 @@ public class Configuration {
     @Value("${hub.profile.search}")
     private String hubProfileSearchEndPoint;
 
+    @Value("${kafka.topics.workflow.notification}")
+    private String workFlowNotificationTopic;
+
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -185,5 +188,13 @@ public class Configuration {
 
     public void setHubProfileSearchEndPoint(String hubProfileSearchEndPoint) {
         this.hubProfileSearchEndPoint = hubProfileSearchEndPoint;
+    }
+
+    public String getWorkFlowNotificationTopic() {
+        return workFlowNotificationTopic;
+    }
+
+    public void setWorkFlowNotificationTopic(String workFlowNotificationTopic) {
+        this.workFlowNotificationTopic = workFlowNotificationTopic;
     }
 }

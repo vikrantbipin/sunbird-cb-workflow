@@ -22,7 +22,7 @@ public class NotificationConsumer {
     @Autowired
     private NotificationServiceImpl notificationService;
 
-    @KafkaListener(id = "id2", groupId = "workflowContentTopic-consumer", topicPartitions = {@TopicPartition(topic = "${kafka.topics.workflow.request}", partitions = {"0", "1", "2", "3"})})
+    @KafkaListener(id = "id2", groupId = "workflowNotificationTopic-consumer", topicPartitions = {@TopicPartition(topic = "${kafka.topics.workflow.notification}", partitions = {"0", "1", "2", "3"})})
     public void processMessage(ConsumerRecord<String, String> data) {
         WfRequest wfRequest = null;
         try {
