@@ -103,6 +103,7 @@ public class NotificationServiceImpl {
 				params.put("body", MAIL_BODY.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus()).replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey())
 				.replace(TO_VALUE_TAG, (String)toValue.entrySet().iterator().next().getValue()));
 			}
+			params.put("orgImageUrl", null);
 			template.setParams(params);
 			Config config = new Config();
 			config.setSubject(MAIL_SUBJECT.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus()));
