@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.workflow.config.Configuration;
@@ -83,7 +84,7 @@ public class RequestServiceImpl {
 			String message = str.toString();
 			log.info(message);
 			HttpHeaders headers = new HttpHeaders();
-			if (!headersValue.isEmpty()) {
+			if (!CollectionUtils.isEmpty(headersValue)) {
 				for (Map.Entry<String, String> map : headersValue.entrySet()) {
 					headers.set(map.getKey(), map.getValue());
 				}

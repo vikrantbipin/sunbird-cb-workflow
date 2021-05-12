@@ -8,11 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.sunbird.workflow.config.Configuration;
-import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.consumer.ApplicationProcessingConsumer;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.models.WfStatus;
-import org.sunbird.workflow.models.notification.NotificationEvent;
+import org.sunbird.workflow.models.notification.Config;
+import org.sunbird.workflow.models.notification.NotificationRequest;
+import org.sunbird.workflow.models.notification.Template;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.repository.cassandra.bodhi.WfRepo;
@@ -23,6 +24,7 @@ import java.util.*;
 @Service
 public class NotificationServiceImpl {
 
+	public static final String EMAILTEMPLATE = "emailtemplate";
 	Logger logger = LogManager.getLogger(ApplicationProcessingConsumer.class);
 
 	@Autowired
@@ -41,6 +43,9 @@ public class NotificationServiceImpl {
 	private Workflowservice workflowservice;
 
 	@Autowired
+	private UserProfileWfServiceImpl userProfileWfService;
+
+	@Autowired
 	private WfRepo wfRepo;
 
 	private static final String WORK_FLOW_EVENT_NAME = "workflow_service_notification";
@@ -56,6 +61,10 @@ public class NotificationServiceImpl {
 	private static final String TO_VALUE_TAG = "#toValue";
 
 	private static final String TO_VALUE_CONST = "toValue";
+
+	private static final String MAIL_SUBJECT = "Your request is #state";
+
+	private static final String MAIL_BODY = "Your request to update #fieldKey to #toValue is #state.";
 
 	/**
 	 * Send notification to the user based on state of application
@@ -75,40 +84,46 @@ public class NotificationServiceImpl {
 		}
 		if (!ObjectUtils.isEmpty(wfStatus.getNotificationEnable()) && wfStatus.getNotificationEnable()) {
 			logger.info("Enter's in the notification block");
-			Map<String, Object> tagValues = new HashMap<>();
-			Map<String, List<String>> recipients = new HashMap<>();
-			NotificationEvent nEvent = new NotificationEvent();
-			nEvent.setEventId(WORK_FLOW_EVENT_NAME);
-			tagValues.put(USER_NAME_TAG, wfRequest.getUserId());
-			tagValues.put(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus());
+            Set<String> usersId = new HashSet<>();
+            usersId.add(wfRequest.getActorUserId());
+			usersId.add(wfStatusEntity.getApplicationId());
+			HashMap<String, Object> usersObj = userProfileWfService.getUsersResult(usersId);
+			Map<String, Object> recipientInfo = (Map<String, Object>)usersObj.get(wfStatusEntity.getApplicationId());
+			Map<String, Object> senderInfo = (Map<String, Object>)usersObj.get(wfRequest.getActorUserId());
+			Map<String, Object> params = new HashMap<>();
+			NotificationRequest request = new NotificationRequest();
+			request.setDeliveryType("message");
+			request.setIds(Arrays.asList((String)recipientInfo.get("email")));
+			request.setMode("email");
+			Template template = new Template();
+			template.setId(EMAILTEMPLATE);
 			Optional<HashMap<String, Object>> updatedFieldValue = wfRequest.getUpdateFieldValues().stream().findFirst();
 			if (updatedFieldValue.isPresent()) {
 				HashMap<String, Object> toValue = (HashMap<String, Object>) updatedFieldValue.get().get(TO_VALUE_CONST);
-				tagValues.put(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey());
-				tagValues.put(TO_VALUE_TAG, toValue.entrySet().iterator().next().getValue());
+				params.put("body", MAIL_BODY.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus()).replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey())
+				.replace(TO_VALUE_TAG, (String)toValue.entrySet().iterator().next().getValue()));
 			}
-			nEvent.setTagValues(tagValues);
-			nEvent.setRecipients(recipients);
-			List<String> userUUID = Collections.singletonList(wfRequest.getUserId());
-			recipients.put(USER_NAME_CONSTANT, userUUID);
-			sendNotification(nEvent);
+			template.setParams(params);
+			Config config = new Config();
+			config.setSubject(MAIL_SUBJECT.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus()));
+			config.setSender((String)senderInfo.get("email"));
+			Map<String, Object> req = new HashMap<>();
+			Map<String, List<NotificationRequest>> notificationMap = new HashMap<>();
+			notificationMap.put("notifications", Arrays.asList(request));
+			req.put("request", notificationMap);
+			sendNotification(req);
 		}
 	}
 
 	/**
 	 * Post to the Notification service
-	 *
-	 * @param nEvent
-	 * @throws Exception
+	 * @param request
 	 */
-	public void sendNotification(NotificationEvent nEvent) {
+	public void sendNotification(Map<String, Object> request) {
 		StringBuilder builder = new StringBuilder();
 		builder.append(configuration.getNotifyServiceHost()).append(configuration.getNotifyServicePath());
 		try {
-			HashMap<String, String> headers = new HashMap<>();
-			headers.put(Constants.ROOT_ORG_CONSTANT, configuration.getHubRootOrg());
-			requestService.fetchResultUsingPost(builder, nEvent, Map.class, headers);
-			// requestService.fetchResultUsingPost(builder, nEvent, Map.class);
+			requestService.fetchResultUsingPost(builder, request, Map.class, null);
 		} catch (Exception e) {
 			logger.error("Exception while posting the data in notification service: ", e);
 		}
