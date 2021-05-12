@@ -108,6 +108,8 @@ public class NotificationServiceImpl {
 			config.setSubject(MAIL_SUBJECT.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus()));
 			config.setSender((String)senderInfo.get("email"));
 			Map<String, Object> req = new HashMap<>();
+			request.setTemplate(template);
+			request.setConfig(config);
 			Map<String, List<NotificationRequest>> notificationMap = new HashMap<>();
 			notificationMap.put("notifications", Arrays.asList(request));
 			req.put("request", notificationMap);
