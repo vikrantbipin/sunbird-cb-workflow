@@ -105,26 +105,32 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         headersValue.put("Content-Type", "application/json");
         try {
             StringBuilder builder = new StringBuilder();
-            builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
-            Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
-            if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
-                Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
-                List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");
-                if (!CollectionUtils.isEmpty(userProfiles)) {
-                    for (Map<String, Object> userProfile : userProfiles) {
-                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) userProfile.get("personalDetails");
-                        record = new HashMap<>();
-                        record.put("wid", userProfile.get("userId"));
-                        record.put("first_name", personalDetails.get("firstname"));
-                        record.put("last_name", personalDetails.get("surname"));
-                        record.put("email", personalDetails.get("primaryEmail"));
-                        userResult.put(record.get("wid").toString(), record);
+            builder.append(configuration.getLmsServiceHost()).append(configuration.getLmsUserSearchEndpoint());
+            Map<String, Object> profileResponse = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
+            if (profileResponse != null && "OK".equalsIgnoreCase((String) profileResponse.get("responseCode"))) {
+                Map<String, Object> map = (Map<String, Object>) profileResponse.get("result");
+                if(map.get("response") != null){
+                    Map<String, Object> profiles = (Map<String, Object>) map.get("response");
+                    List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) profiles.get("content");
+                    if (!CollectionUtils.isEmpty(userProfiles)) {
+                        for (Map<String, Object> userProfile : userProfiles) {
+                            if(userProfile.get("profileDetails") != null){
+                                HashMap<String, Object> profileDetails =  (HashMap<String, Object>) userProfile.get("profileDetails");
+                                HashMap<String, Object> personalDetails = (HashMap<String, Object>)profileDetails.get("personalDetails");
+                                record = new HashMap<>();
+                                record.put("wid", userProfile.get("userId"));
+                                record.put("first_name", personalDetails.get("firstname"));
+                                record.put("last_name", personalDetails.get("surname"));
+                                record.put("email", personalDetails.get("primaryEmail"));
+                                userResult.put(record.get("wid").toString(), record);
+                            }
+                        }
                     }
                 }
             }
         } catch (Exception e) {
             logger.error(e);
-            throw new ApplicationException("Hub Service ERROR: ", e);
+            throw new ApplicationException("Some error occurred while fetching the user details: ", e);
         }
         return userResult;
     }
@@ -132,13 +138,12 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     private Map<String, Object> getSearchObject(Set<String> userIds) {
         Map<String, Object> request = new HashMap<>();
         Map<String, Object> filters = new HashMap<>();
-        Map<String, Object> idKeyword = new HashMap<>();
-        idKeyword.put("or", userIds);
-        filters.put("id.keyword", idKeyword);
-        request.put("limit", userIds.size());
-        request.put("offset", 0);
+        filters.put("userId", userIds);
         request.put("filters", filters);
-        return request;
+        request.put("query", "");
+        Map<String, Object> requestWrapper = new HashMap<>();
+        requestWrapper.put("request", request);
+        return requestWrapper;
     }
 
 }

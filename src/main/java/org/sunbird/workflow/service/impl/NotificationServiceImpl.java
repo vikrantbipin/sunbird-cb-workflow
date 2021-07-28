@@ -83,7 +83,7 @@ public class NotificationServiceImpl {
 			e.printStackTrace();
 		}
 		if (!ObjectUtils.isEmpty(wfStatus.getNotificationEnable()) && wfStatus.getNotificationEnable()) {
-			logger.info("Enter's in the notification block");
+			logger.info("Enters in the notification block");
             Set<String> usersId = new HashSet<>();
             usersId.add(wfRequest.getActorUserId());
 			usersId.add(wfStatusEntity.getApplicationId());

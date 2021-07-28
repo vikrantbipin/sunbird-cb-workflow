@@ -57,6 +57,11 @@ public class Configuration {
     @Value("${kafka.topics.workflow.notification}")
     private String workFlowNotificationTopic;
 
+    @Value("${sunbird.learner.service.host}")
+    private String learnerServiceHost;
+
+    @Value("${sunbird.user.search.endpoint}")
+    private String lmsUserSearchEndpoint;
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -196,5 +201,21 @@ public class Configuration {
 
     public void setWorkFlowNotificationTopic(String workFlowNotificationTopic) {
         this.workFlowNotificationTopic = workFlowNotificationTopic;
+    }
+
+    public String getLmsServiceHost() {
+        return learnerServiceHost;
+    }
+
+    public void setLmsServiceHost(String lmsServiceHost) {
+        this.learnerServiceHost = lmsServiceHost;
+    }
+
+    public String getLmsUserSearchEndpoint() {
+        return lmsUserSearchEndpoint;
+    }
+
+    public void setLmsUserSearchEndpoint(String lmsUserSearchEndpoint) {
+        this.lmsUserSearchEndpoint = lmsUserSearchEndpoint;
     }
 }
