@@ -2,11 +2,16 @@ package org.sunbird.workflow.service.impl;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
@@ -102,7 +107,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
             StringBuilder builder = new StringBuilder();
             builder.append(configuration.getLmsServiceHost()).append(configuration.getLmsUserSearchEndpoint());
             Map<String, Object> profileResponse = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
-            logger.info("profile response : {}", mapper.writeValueAsString(profileResponse));
             if (profileResponse != null && "OK".equalsIgnoreCase((String) profileResponse.get("responseCode"))) {
                 Map<String, Object> map = (Map<String, Object>) profileResponse.get("result");
                 if(map.get("response") != null){
@@ -124,7 +128,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
                     }
                 }
             }
-            logger.info("user result : {}", mapper.writeValueAsString(userResult));
         } catch (Exception e) {
             logger.error(e);
             throw new ApplicationException("Some error occurred while fetching the user details: ", e);
