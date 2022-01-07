@@ -21,6 +21,12 @@ public class Configuration {
     @Value("${hub.profile.update}")
     private String hubProfileUpdateEndPoint;
 
+    @Value("${lms.service.host}")
+    private String lmsServiceHost;
+
+    @Value("${lms.user.search}")
+    private String lmsUserSearchEndPoint;
+
     @Value("${pid.service.host}")
     private String pidServiceHost;
 
@@ -196,5 +202,16 @@ public class Configuration {
 
     public void setWorkFlowNotificationTopic(String workFlowNotificationTopic) {
         this.workFlowNotificationTopic = workFlowNotificationTopic;
+    }
+    public String getLmsServiceHost() { return lmsServiceHost; }
+
+    public void setLmsServiceHost(String lmsServiceHost) {
+        this.lmsServiceHost = lmsServiceHost;
+    }
+
+    public String getLmsUserSearchEndPoint() { return lmsUserSearchEndPoint; }
+
+    public void setLmsUserSearchEndPoint(String lmsUserSearchEndPoint) {
+        this.lmsUserSearchEndPoint = lmsUserSearchEndPoint;
     }
 }

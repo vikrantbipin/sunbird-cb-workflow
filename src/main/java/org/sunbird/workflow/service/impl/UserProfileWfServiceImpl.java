@@ -105,16 +105,18 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         headersValue.put("Content-Type", "application/json");
         try {
             StringBuilder builder = new StringBuilder();
-            builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
-            Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
-            if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
-                Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
-                List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");
-                if (!CollectionUtils.isEmpty(userProfiles)) {
-                    for (Map<String, Object> userProfile : userProfiles) {
-                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) userProfile.get("personalDetails");
+            builder.append(configuration.getLmsServiceHost()).append(configuration.getLmsUserSearchEndPoint());
+            Map<String, Object> searchProfileApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
+            if (searchProfileApiResp != null && "OK".equalsIgnoreCase((String) searchProfileApiResp.get("responseCode"))) {
+                Map<String, Object> map = (Map<String, Object>) searchProfileApiResp.get("result");
+                Map<String, Object> response = (Map<String, Object>) map.get("response");
+                List<Map<String, Object>> contents = (List<Map<String, Object>>) response.get("content");
+                if (!CollectionUtils.isEmpty(contents)) {
+                    for (Map<String, Object> content : contents) {
+                        HashMap<String, Object> profileDetails = (HashMap<String, Object>) content.get("profileDetails");
+                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) profileDetails.get("personalDetails");
                         record = new HashMap<>();
-                        record.put("wid", userProfile.get("userId"));
+                        record.put("wid", profileDetails.get("userId"));
                         record.put("first_name", personalDetails.get("firstname"));
                         record.put("last_name", personalDetails.get("surname"));
                         record.put("email", personalDetails.get("primaryEmail"));
