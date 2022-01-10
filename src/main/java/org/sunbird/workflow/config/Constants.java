@@ -94,4 +94,23 @@ public class Constants {
 
 	public static final String ROOT_ORG_CONSTANT = "rootOrg";
 
+	public static final String USER_ID = "userId";
+
+	public static final String FIRSTNAME = "firstname";
+
+	public static final String LASTNAME = "surname";
+
+	public static final String PRIMARY_EMAIL = "primaryEmail";
+
+	public static final String RESULT = "result";
+	public static final String RESPONSE_CODE = "responseCode";
+	public static final String RESPONSE = "response";
+	public static final String CONTENT = "content";
+	public static final String PROFILE_DETAILS = "profileDetails";
+	public static final String PERSONAL_DETAILS = "personalDetails";
+
+
+
+
+
 }
