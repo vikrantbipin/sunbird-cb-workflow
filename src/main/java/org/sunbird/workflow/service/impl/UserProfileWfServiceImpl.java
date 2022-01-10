@@ -105,20 +105,22 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
         headersValue.put("Content-Type", "application/json");
         try {
             StringBuilder builder = new StringBuilder();
-            builder.append(configuration.getHubServiceHost()).append(configuration.getHubProfileSearchEndPoint());
-            Map<String, Object> openSaberApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
-            if (openSaberApiResp != null && "OK".equalsIgnoreCase((String) openSaberApiResp.get("responseCode"))) {
-                Map<String, Object> map = (Map<String, Object>) openSaberApiResp.get("result");
-                List<Map<String, Object>> userProfiles = (List<Map<String, Object>>) map.get("UserProfile");
-                if (!CollectionUtils.isEmpty(userProfiles)) {
-                    for (Map<String, Object> userProfile : userProfiles) {
-                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) userProfile.get("personalDetails");
+            builder.append(configuration.getLmsServiceHost()).append(configuration.getLmsUserSearchEndPoint());
+            Map<String, Object> searchProfileApiResp = (Map<String, Object>) requestServiceImpl.fetchResultUsingPost(builder, request, Map.class, headersValue);
+            if (searchProfileApiResp != null && "OK".equalsIgnoreCase((String) searchProfileApiResp.get(Constants.RESPONSE_CODE))) {
+                Map<String, Object> map = (Map<String, Object>) searchProfileApiResp.get(Constants.RESULT);
+                Map<String, Object> response = (Map<String, Object>) map.get(Constants.RESPONSE);
+                List<Map<String, Object>> contents = (List<Map<String, Object>>) response.get(Constants.CONTENT);
+                if (!CollectionUtils.isEmpty(contents)) {
+                    for (Map<String, Object> content : contents) {
+                        HashMap<String, Object> profileDetails = (HashMap<String, Object>) content.get(Constants.PROFILE_DETAILS);
+                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) profileDetails.get(Constants.PERSONAL_DETAILS);
                         record = new HashMap<>();
-                        record.put("wid", userProfile.get("userId"));
-                        record.put("first_name", personalDetails.get("firstname"));
-                        record.put("last_name", personalDetails.get("surname"));
-                        record.put("email", personalDetails.get("primaryEmail"));
-                        userResult.put(record.get("wid").toString(), record);
+                        record.put(Constants.UUID, profileDetails.get(Constants.USER_ID));
+                        record.put(Constants.FIRST_NAME, personalDetails.get(Constants.FIRSTNAME));
+                        record.put(Constants.LAST_NAME, personalDetails.get(Constants.LASTNAME));
+                        record.put(Constants.EMAIL, personalDetails.get(Constants.PRIMARY_EMAIL));
+                        userResult.put(record.get(Constants.UUID).toString(), record);
                     }
                 }
             }
