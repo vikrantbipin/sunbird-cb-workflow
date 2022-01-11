@@ -132,15 +132,15 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     }
 
     private Map<String, Object> getSearchObject(Set<String> userIds) {
+        Map<String, Object> requestObject = new HashMap<>();
         Map<String, Object> request = new HashMap<>();
         Map<String, Object> filters = new HashMap<>();
-        Map<String, Object> idKeyword = new HashMap<>();
-        idKeyword.put("or", userIds);
-        filters.put("id.keyword", idKeyword);
+        filters.put("userId", userIds);
         request.put("limit", userIds.size());
         request.put("offset", 0);
         request.put("filters", filters);
-        return request;
+        requestObject.put("request",request);
+        return requestObject;
     }
 
 }
