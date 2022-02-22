@@ -122,7 +122,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 									.get(Constants.PERSONAL_DETAILS);
 							if (!CollectionUtils.isEmpty(personalDetails)) {
 								Map<String, Object> record = new HashMap<>();
-								record.put(Constants.UUID, profileDetails.get(Constants.USER_ID));
+								record.put(Constants.UUID, content.get(Constants.USER_ID));
 								record.put(Constants.FIRST_NAME, personalDetails.get(Constants.FIRSTNAME));
 								record.put(Constants.LAST_NAME, personalDetails.get(Constants.LASTNAME));
 								record.put(Constants.EMAIL, personalDetails.get(Constants.PRIMARY_EMAIL));
