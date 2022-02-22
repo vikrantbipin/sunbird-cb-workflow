@@ -1,17 +1,17 @@
 package org.sunbird.workflow.service.impl;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
@@ -22,7 +22,7 @@ import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
 
-import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class UserProfileWfServiceImpl implements UserProfileWfService {
@@ -100,7 +100,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
     public HashMap<String, Object> getUsersResult(Set<String> userIds) {
         HashMap<String, Object> userResult = new HashMap<>();
         Map<String, Object> request = getSearchObject(userIds);
-        Map<String, Object> record;
         HashMap<String, String> headersValue = new HashMap<>();
         headersValue.put("Content-Type", "application/json");
         try {
@@ -114,13 +113,18 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
                 if (!CollectionUtils.isEmpty(contents)) {
                     for (Map<String, Object> content : contents) {
                         HashMap<String, Object> profileDetails = (HashMap<String, Object>) content.get(Constants.PROFILE_DETAILS);
-                        HashMap<String, Object> personalDetails = (HashMap<String, Object>) profileDetails.get(Constants.PERSONAL_DETAILS);
-                        record = new HashMap<>();
-                        record.put(Constants.UUID, profileDetails.get(Constants.USER_ID));
-                        record.put(Constants.FIRST_NAME, personalDetails.get(Constants.FIRSTNAME));
-                        record.put(Constants.LAST_NAME, personalDetails.get(Constants.LASTNAME));
-                        record.put(Constants.EMAIL, personalDetails.get(Constants.PRIMARY_EMAIL));
-                        userResult.put(record.get(Constants.UUID).toString(), record);
+						if (!CollectionUtils.isEmpty(profileDetails)) {
+							HashMap<String, Object> personalDetails = (HashMap<String, Object>) profileDetails
+									.get(Constants.PERSONAL_DETAILS);
+							if (!CollectionUtils.isEmpty(personalDetails)) {
+								Map<String, Object> record = new HashMap<>();
+								record.put(Constants.UUID, profileDetails.get(Constants.USER_ID));
+								record.put(Constants.FIRST_NAME, personalDetails.get(Constants.FIRSTNAME));
+								record.put(Constants.LAST_NAME, personalDetails.get(Constants.LASTNAME));
+								record.put(Constants.EMAIL, personalDetails.get(Constants.PRIMARY_EMAIL));
+								userResult.put(record.get(Constants.UUID).toString(), record);
+							}
+						}
                     }
                 }
             }
