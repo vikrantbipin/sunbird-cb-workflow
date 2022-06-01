@@ -62,7 +62,9 @@ public class Configuration {
 
     @Value("${kafka.topics.workflow.notification}")
     private String workFlowNotificationTopic;
-
+    
+    @Value("${kafka.topics.user.registration.createUser}")
+    private String workflowCreateUserTopic;
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -214,4 +216,12 @@ public class Configuration {
     public void setLmsUserSearchEndPoint(String lmsUserSearchEndPoint) {
         this.lmsUserSearchEndPoint = lmsUserSearchEndPoint;
     }
+
+	public String getWorkflowCreateUserTopic() {
+		return workflowCreateUserTopic;
+	}
+
+	public void setWorkflowCreateUserTopic(String workflowCreateUserTopic) {
+		this.workflowCreateUserTopic = workflowCreateUserTopic;
+	}
 }

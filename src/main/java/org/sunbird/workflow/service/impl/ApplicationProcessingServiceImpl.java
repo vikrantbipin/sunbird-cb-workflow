@@ -1,25 +1,21 @@
 package org.sunbird.workflow.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
-import org.sunbird.workflow.config.Configuration;
-import org.sunbird.workflow.config.Constants;
-import org.sunbird.workflow.models.WfRequest;
-
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.sunbird.workflow.postgres.entity.WfStatusEntity;
-import org.sunbird.workflow.postgres.repo.WfStatusRepo;
-import org.sunbird.workflow.service.UserProfileWfService;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.sunbird.workflow.config.Configuration;
+import org.sunbird.workflow.config.Constants;
+import org.sunbird.workflow.models.WfRequest;
+import org.sunbird.workflow.postgres.entity.WfStatusEntity;
+import org.sunbird.workflow.postgres.repo.WfStatusRepo;
+import org.sunbird.workflow.producer.Producer;
+import org.sunbird.workflow.service.UserProfileWfService;
 
 @Service
 public class ApplicationProcessingServiceImpl {
@@ -33,6 +29,9 @@ public class ApplicationProcessingServiceImpl {
 	private RequestServiceImpl requestService;
 	@Autowired
 	private WfStatusRepo wfStatusRepo;
+	
+	@Autowired
+	private Producer producer;
 
 	Logger logger = LogManager.getLogger(ApplicationProcessingServiceImpl.class);
 
@@ -42,6 +41,9 @@ public class ApplicationProcessingServiceImpl {
 		case Constants.PROFILE_SERVICE_NAME:
 		case Constants.USER_PROFILE_FLAG_SERVICE:
 			userProfileWfService.updateUserProfile(wfRequest);
+			break;
+		case Constants.USER_REGISTRATION_SERVICE_NAME:
+			producer.push(configuration.getWorkflowCreateUserTopic(), wfRequest);
 			break;
 		default:
 			break;
