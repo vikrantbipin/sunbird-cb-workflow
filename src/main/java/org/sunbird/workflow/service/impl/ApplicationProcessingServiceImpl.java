@@ -14,8 +14,8 @@ import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
-import org.sunbird.workflow.producer.Producer;
 import org.sunbird.workflow.service.UserProfileWfService;
+import org.sunbird.workflow.service.UserRegistrationWfService;
 
 @Service
 public class ApplicationProcessingServiceImpl {
@@ -29,9 +29,9 @@ public class ApplicationProcessingServiceImpl {
 	private RequestServiceImpl requestService;
 	@Autowired
 	private WfStatusRepo wfStatusRepo;
-	
+
 	@Autowired
-	private Producer producer;
+	private UserRegistrationWfService userRegService;
 
 	Logger logger = LogManager.getLogger(ApplicationProcessingServiceImpl.class);
 
@@ -43,7 +43,7 @@ public class ApplicationProcessingServiceImpl {
 			userProfileWfService.updateUserProfile(wfRequest);
 			break;
 		case Constants.USER_REGISTRATION_SERVICE_NAME:
-			producer.push(configuration.getWorkflowCreateUserTopic(), wfRequest);
+			userRegService.processMessage(wfRequest);
 			break;
 		default:
 			break;
@@ -92,5 +92,4 @@ public class ApplicationProcessingServiceImpl {
 			logger.error("Exception while posting the data in portal service: ", e);
 		}
 	}
-
 }
