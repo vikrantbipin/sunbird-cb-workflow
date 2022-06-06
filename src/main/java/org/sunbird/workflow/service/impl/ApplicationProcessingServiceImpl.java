@@ -1,25 +1,21 @@
 package org.sunbird.workflow.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
-import org.sunbird.workflow.config.Configuration;
-import org.sunbird.workflow.config.Constants;
-import org.sunbird.workflow.models.WfRequest;
-
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+import org.sunbird.workflow.config.Configuration;
+import org.sunbird.workflow.config.Constants;
+import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.service.UserProfileWfService;
-
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.sunbird.workflow.service.UserRegistrationWfService;
 
 @Service
 public class ApplicationProcessingServiceImpl {
@@ -34,6 +30,9 @@ public class ApplicationProcessingServiceImpl {
 	@Autowired
 	private WfStatusRepo wfStatusRepo;
 
+	@Autowired
+	private UserRegistrationWfService userRegService;
+
 	Logger logger = LogManager.getLogger(ApplicationProcessingServiceImpl.class);
 
 	public void processWfApplicationRequest(WfRequest wfRequest) {
@@ -42,6 +41,9 @@ public class ApplicationProcessingServiceImpl {
 		case Constants.PROFILE_SERVICE_NAME:
 		case Constants.USER_PROFILE_FLAG_SERVICE:
 			userProfileWfService.updateUserProfile(wfRequest);
+			break;
+		case Constants.USER_REGISTRATION_SERVICE_NAME:
+			userRegService.processMessage(wfRequest);
 			break;
 		default:
 			break;
@@ -90,5 +92,4 @@ public class ApplicationProcessingServiceImpl {
 			logger.error("Exception while posting the data in portal service: ", e);
 		}
 	}
-
 }

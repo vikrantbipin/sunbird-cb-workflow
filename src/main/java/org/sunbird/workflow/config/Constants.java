@@ -108,8 +108,8 @@ public class Constants {
 	public static final String CONTENT = "content";
 	public static final String PROFILE_DETAILS = "profileDetails";
 	public static final String PERSONAL_DETAILS = "personalDetails";
-
-
+	public static final String USER_REGISTRATION_SERVICE_NAME = "user_registration";
+	public static final String WF_APPROVED_STATE = "WF_APPROVED";
 
 
 
