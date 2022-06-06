@@ -32,7 +32,7 @@ public class UserRegistrationWfServiceImpl implements UserRegistrationWfService 
 				wfRequest.getWfId());
 		logger.info("WF Status Object Status :: " + wfStatusEntity.getCurrentStatus());
 		if (Constants.USER_REGISTRATION_SERVICE_NAME.equals(wfRequest.getServiceName())
-				&& Constants.APPROVED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
+				&& Constants.WF_APPROVED_STATE.equals(wfStatusEntity.getCurrentStatus())) {
 			producer.push(configuration.getWorkflowCreateUserTopic(), wfRequest);
 		}
 	}
