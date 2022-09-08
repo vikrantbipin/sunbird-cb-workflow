@@ -20,7 +20,7 @@ public class WorkFlowController {
 
 	@PostMapping("/transition")
 	public ResponseEntity<Response> wfTransition(@RequestHeader String rootOrg, @RequestHeader String org,
-	        @RequestBody WfRequest wfRequest, @RequestHeader(Constants.X_AUTH_USER_ID) String userId) {
+	                @RequestBody WfRequest wfRequest, @RequestHeader(Constants.X_AUTH_USER_ID) String userId) {
 		Response response = workflowService.workflowTransition(rootOrg, org, wfRequest, userId);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
