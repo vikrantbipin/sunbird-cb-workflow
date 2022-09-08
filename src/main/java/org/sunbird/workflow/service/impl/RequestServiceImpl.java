@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.workflow.config.Configuration;
@@ -84,7 +84,7 @@ public class RequestServiceImpl {
 			String message = str.toString();
 			log.info(message);
 			HttpHeaders headers = new HttpHeaders();
-			if (!CollectionUtils.isEmpty(headersValue)) {
+			if (!ObjectUtils.isEmpty(headersValue)) {
 				for (Map.Entry<String, String> map : headersValue.entrySet()) {
 					headers.set(map.getKey(), map.getValue());
 				}
@@ -96,6 +96,32 @@ public class RequestServiceImpl {
 			log.error("External Service threw an Exception: ", e);
 		} catch (Exception e) {
 			log.error("Exception occured while calling the exteranl service: ", e);
+		}
+		return response;
+	}
+
+	public Object fetchResultUsingPatch(StringBuilder uri, Object request, Class objectType,HashMap<String, String> headersValue) {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+		Object response = null;
+		StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult:")
+				.append(System.lineSeparator());
+		str.append("URI: ").append(uri.toString()).append(System.lineSeparator());
+		try {
+			str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
+			log.debug(str.toString());
+			HttpHeaders headers = new HttpHeaders();
+			if (!ObjectUtils.isEmpty(headersValue)) {
+				for (Map.Entry<String, String> map : headersValue.entrySet()) {
+					headers.set(map.getKey(), map.getValue());
+				}
+			}
+			HttpEntity<Object> entity = new HttpEntity<>(request, headers);
+			response = restTemplate.patchForObject(uri.toString(), entity, objectType);
+		} catch (HttpClientErrorException e) {
+			log.error("External Service threw an Exception: ", e);
+		} catch (Exception e) {
+			log.error("Exception occured while calling the external service: ", e);
 		}
 		return response;
 	}
