@@ -113,7 +113,7 @@ public class Constants {
 	public static final String WF_APPROVED_STATE = "WF_APPROVED";
 	public static final String OSID = "osid";
 	public static final String FIELD_KEY = "fieldKey";
-	public static final String TO_VALUE = "TO_VALUE";
+	public static final String TO_VALUE = "toValue";
 	public static final String PROFESSIONAL_DETAILS = "professionalDetails";
 	public static final String CHANNEL = "channel";
 	public static final String FORCE_MIGRATION = "forceMigration";
