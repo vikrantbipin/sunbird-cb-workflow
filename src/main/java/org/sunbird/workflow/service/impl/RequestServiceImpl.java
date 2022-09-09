@@ -100,10 +100,10 @@ public class RequestServiceImpl {
 		return response;
 	}
 
-	public Object fetchResultUsingPatch(StringBuilder uri, Object request, Class objectType,HashMap<String, String> headersValue) {
+	public Map<String, Object> fetchResultUsingPatch(StringBuilder uri, Object request,HashMap<String, String> headersValue) {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-		Object response = null;
+		Map<String, Object> response = null;
 		StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult:")
 				.append(System.lineSeparator());
 		str.append("URI: ").append(uri.toString()).append(System.lineSeparator());
@@ -117,7 +117,7 @@ public class RequestServiceImpl {
 				}
 			}
 			HttpEntity<Object> entity = new HttpEntity<>(request, headers);
-			response = restTemplate.patchForObject(uri.toString(), entity, objectType);
+			response = restTemplate.patchForObject(uri.toString(), entity, Map.class);
 		} catch (HttpClientErrorException e) {
 			log.error("External Service threw an Exception: ", e);
 		} catch (Exception e) {

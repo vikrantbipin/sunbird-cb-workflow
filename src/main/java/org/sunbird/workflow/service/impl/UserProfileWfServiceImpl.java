@@ -80,14 +80,16 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			Map<String, Object> existingUserRootOrgMap = (Map<String, Object>) existingUserResponse.get(Constants.ROOT_ORG_CONSTANT);
 			String existingDeptName = (String) existingUserRootOrgMap.get(Constants.ORG_NAME);
 			String updatedDeptName = wfRequest.getDeptName();
-			if (!existingDeptName.equals(updatedDeptName)) {
-				Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
-				if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
-					logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-					failedCase(wfRequest);
-					return;
-				}
+			if (null != updatedDeptName) {
+				if (!existingDeptName.equals(updatedDeptName)) {
+					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
+					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
+						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+						failedCase(wfRequest);
+						return;
+					}
 
+				}
 			}
 			Map<String, Object> profileDetails = (Map<String, Object>) existingUserResponse.get(Constants.PROFILE_DETAILS);
 			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
@@ -98,8 +100,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			}
 			StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
 			builder.append(configuration.getUserProfileUpdateEndPoint());
-			Map<String, Object> updateUserApiResp = (Map<String, Object>) requestServiceImpl
-					.fetchResultUsingPatch(builder, getUpdateRequest(wfRequest, updateRequest), Map.class, getHeaders());
+			Map<String, Object> updateUserApiResp = requestServiceImpl
+					.fetchResultUsingPatch(builder, getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
 				logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 				failedCase(wfRequest);
@@ -262,8 +264,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		migrateRequestObject.put(Constants.REQUEST, migrateRequestWrapper);
 		StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
 		builder.append(configuration.getUserProfileMigrateEndPoint());
-		Map<String, Object> migrateUserApiResp = (Map<String, Object>) requestServiceImpl
-				.fetchResultUsingPatch(builder, migrateRequestObject, Map.class, getHeaders());
+		Map<String, Object> migrateUserApiResp = requestServiceImpl
+				.fetchResultUsingPatch(builder, migrateRequestObject, getHeaders());
 		return migrateUserApiResp;
 	}
 
