@@ -9,7 +9,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -100,30 +102,33 @@ public class RequestServiceImpl {
 		return response;
 	}
 
-	public Map<String, Object> fetchResultUsingPatch(StringBuilder uri, Object request,HashMap<String, String> headersValue) {
+	public Map<String, Object> fetchResultUsingPatch(String uri, Object request, Map<String, String> headersValues) {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 		Map<String, Object> response = null;
-		StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult:")
-				.append(System.lineSeparator());
-		str.append("URI: ").append(uri.toString()).append(System.lineSeparator());
 		try {
-			str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
-			log.debug(str.toString());
 			HttpHeaders headers = new HttpHeaders();
-			if (!ObjectUtils.isEmpty(headersValue)) {
-				for (Map.Entry<String, String> map : headersValue.entrySet()) {
-					headers.set(map.getKey(), map.getValue());
-				}
+			if (!CollectionUtils.isEmpty(headersValues)) {
+				headersValues.forEach((k, v) -> headers.set(k, v));
 			}
+			headers.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<Object> entity = new HttpEntity<>(request, headers);
-			response = restTemplate.patchForObject(uri.toString(), entity, Map.class);
-		} catch (HttpClientErrorException e) {
-			log.error("External Service threw an Exception: ", e);
-		} catch (Exception e) {
-			log.error("Exception occured while calling the external service: ", e);
+			if (log.isDebugEnabled()) {
+				StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult")
+						.append(System.lineSeparator());
+				str.append("URI: ").append(uri).append(System.lineSeparator());
+				str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
+				log.debug(str.toString());
+			}
+			response = restTemplate.patchForObject(uri, entity, Map.class);
+			if (log.isDebugEnabled()) {
+				StringBuilder str = new StringBuilder("Response: ");
+				str.append(mapper.writeValueAsString(response)).append(System.lineSeparator());
+				log.debug(str.toString());
+			}
+		} catch (HttpClientErrorException | JsonProcessingException e) {
+			log.error(e);
 		}
 		return response;
 	}
-
 }

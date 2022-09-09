@@ -98,10 +98,9 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
-			StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
-			builder.append(configuration.getUserProfileUpdateEndPoint());
+			logger.info("update API request is : ",updateRequest );
 			Map<String, Object> updateUserApiResp = requestServiceImpl
-					.fetchResultUsingPatch(builder, getUpdateRequest(wfRequest, updateRequest), getHeaders());
+					.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
 				logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 				failedCase(wfRequest);
@@ -262,10 +261,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		migrateRequestWrapper.put(Constants.SOFT_DELETE_OLD_GROUP, true);
 		migrateRequestWrapper.put(Constants.NOTIFY_MIGRATION, false);
 		migrateRequestObject.put(Constants.REQUEST, migrateRequestWrapper);
-		StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
-		builder.append(configuration.getUserProfileMigrateEndPoint());
 		Map<String, Object> migrateUserApiResp = requestServiceImpl
-				.fetchResultUsingPatch(builder, migrateRequestObject, getHeaders());
+				.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileMigrateEndPoint(), migrateRequestObject, getHeaders());
 		return migrateUserApiResp;
 	}
 
