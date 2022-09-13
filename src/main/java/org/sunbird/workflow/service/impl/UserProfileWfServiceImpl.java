@@ -90,6 +90,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			}
 			if (null != updatedDeptName) {
 				if (!existingDeptName.equals(updatedDeptName)) {
+					wfRequest.setDeptName(updatedDeptName);
 					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
 					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
 						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
