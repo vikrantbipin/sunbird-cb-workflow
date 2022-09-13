@@ -69,20 +69,17 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
 	private void updateProfile(WfRequest wfRequest) {
 		try {
-			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
-			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
-				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-				failedCase(wfRequest);
-				return;
-			}
-			Map<String, Object> existingUserResults = (Map<String, Object>) readData.get(Constants.RESULT);
-			Map<String, Object> existingUserResponse = (Map<String, Object>) existingUserResults.get(Constants.RESPONSE);
-			Map<String, Object> existingUserRootOrgMap = (Map<String, Object>) existingUserResponse.get(Constants.ROOT_ORG_CONSTANT);
-			String existingDeptName = (String) existingUserRootOrgMap.get(Constants.ORG_NAME);
 			String updatedDeptName = null;
+			String existingDeptName = null;
 			List<HashMap<String, Object>> updatedFieldValues = wfRequest.getUpdateFieldValues();
 			HashMap<String, Object> updatedFieldValueElement = updatedFieldValues.get(0);
 			HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
+			HashMap<String, Object> fromValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.FROM_VALUE);
+			for (String key : fromValueList.keySet()) {
+				if (Constants.NAME.equals(key)) {
+					existingDeptName = (String) toValueList.get(Constants.NAME);
+				}
+			}
 			for (String key : toValueList.keySet()) {
 				if (Constants.NAME.equals(key)) {
 					updatedDeptName = (String) toValueList.get(Constants.NAME);
@@ -100,6 +97,15 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
 				}
 			}
+
+			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
+			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
+				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+				failedCase(wfRequest);
+				return;
+			}
+			Map<String, Object> existingUserResults = (Map<String, Object>) readData.get(Constants.RESULT);
+			Map<String, Object> existingUserResponse = (Map<String, Object>) existingUserResults.get(Constants.RESPONSE);
 			Map<String, Object> profileDetails = (Map<String, Object>) existingUserResponse.get(Constants.PROFILE_DETAILS);
 			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {

@@ -114,6 +114,7 @@ public class Constants {
 	public static final String OSID = "osid";
 	public static final String FIELD_KEY = "fieldKey";
 	public static final String TO_VALUE = "toValue";
+	public static final String FROM_VALUE = "fromValue";
 	public static final String PROFESSIONAL_DETAILS = "professionalDetails";
 	public static final String CHANNEL = "channel";
 	public static final String FORCE_MIGRATION = "forceMigration";
