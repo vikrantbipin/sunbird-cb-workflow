@@ -77,7 +77,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			HashMap<String, Object> fromValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.FROM_VALUE);
 			for (String key : fromValueList.keySet()) {
 				if (Constants.NAME.equals(key)) {
-					existingDeptName = (String) toValueList.get(Constants.NAME);
+					existingDeptName = (String) fromValueList.get(Constants.NAME);
 				}
 			}
 			for (String key : toValueList.keySet()) {
