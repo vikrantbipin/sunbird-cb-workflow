@@ -79,7 +79,15 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			Map<String, Object> existingUserResponse = (Map<String, Object>) existingUserResults.get(Constants.RESPONSE);
 			Map<String, Object> existingUserRootOrgMap = (Map<String, Object>) existingUserResponse.get(Constants.ROOT_ORG_CONSTANT);
 			String existingDeptName = (String) existingUserRootOrgMap.get(Constants.ORG_NAME);
-			String updatedDeptName = wfRequest.getDeptName();
+			String updatedDeptName = null;
+			List<HashMap<String, Object>> updatedFieldValues = wfRequest.getUpdateFieldValues();
+			HashMap<String, Object> updatedFieldValueElement = updatedFieldValues.get(0);
+			HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
+			for (String key : toValueList.keySet()) {
+				if (Constants.NAME.equals(key)) {
+					updatedDeptName = (String) toValueList.get(Constants.NAME);
+				}
+			}
 			if (null != updatedDeptName) {
 				if (!existingDeptName.equals(updatedDeptName)) {
 					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
