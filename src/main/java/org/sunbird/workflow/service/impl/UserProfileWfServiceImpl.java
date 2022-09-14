@@ -107,7 +107,20 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			Map<String, Object> existingUserResults = (Map<String, Object>) readData.get(Constants.RESULT);
 			Map<String, Object> existingUserResponse = (Map<String, Object>) existingUserResults.get(Constants.RESPONSE);
 			Map<String, Object> profileDetails = (Map<String, Object>) existingUserResponse.get(Constants.PROFILE_DETAILS);
-			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
+			Map<String, Object> rootOrg = (Map<String, Object>) existingUserResponse.get(Constants.ROOT_ORG_CONSTANT);
+			String rootOrgId = (String) rootOrg.get(Constants.ROOT_ORG_ID);
+
+			if (null != updatedDeptName) {
+				boolean assignFlag = assignRole(rootOrgId,wfRequest.getApplicationId());
+				if (!assignFlag) {
+					logger.error("Failed to assign PUBLIC role to user after Migration");
+					failedCase(wfRequest);
+					return;
+				}
+				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
+				employmentDetails.put(Constants.DEPARTMENT_NAME,updatedDeptName);
+			}
+				Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {
 				logger.error("user profile datatype error");
 				failedCase(wfRequest);
@@ -280,6 +293,24 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		Map<String, Object> migrateUserApiResp = requestServiceImpl
 				.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileMigrateEndPoint(), migrateRequestObject, getHeaders());
 		return migrateUserApiResp;
+	}
+
+	public boolean assignRole(String sbOrgId, String userId) {
+		boolean retValue = false;
+		Map<String, Object> request = new HashMap<>();
+		Map<String, Object> requestBody = new HashMap<String, Object>();
+		requestBody.put(Constants.ORGANIZATION_ID, sbOrgId);
+		requestBody.put(Constants.USER_ID, userId);
+		requestBody.put(Constants.ROLES, Arrays.asList(Constants.PUBLIC));
+		request.put(Constants.REQUEST, requestBody);
+		StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
+		builder.append(configuration.getLmsAssignRoleEndPoint());
+		Map<String, Object> readData = (Map<String, Object>) requestServiceImpl
+				.fetchResultUsingPost(builder, request,Map.class, getHeaders());
+		if (Constants.OK.equalsIgnoreCase((String) readData.get(Constants.RESPONSE_CODE))) {
+			retValue = true;
+		}
+		return retValue;
 	}
 
 	private void failedCase(WfRequest wfRequest) {

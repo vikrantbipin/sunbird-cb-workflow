@@ -94,6 +94,8 @@ public class Constants {
 
 	public static final String ROOT_ORG_CONSTANT = "rootOrg";
 
+	public static final String ROOT_ORG_ID = "rootOrgId";
+
 	public static final String USER_ID = "userId";
 
 	public static final String FIRSTNAME = "firstname";
@@ -109,6 +111,8 @@ public class Constants {
 	public static final String PROFILE_DETAILS = "profileDetails";
 	public static final String REQUEST = "request";
 	public static final String PERSONAL_DETAILS = "personalDetails";
+	public static final String EMPLOYMENT_DETAILS = "employmentDetails";
+	public static final String DEPARTMENT_NAME = "departmentName";
 	public static final String USER_REGISTRATION_SERVICE_NAME = "user_registration";
 	public static final String WF_APPROVED_STATE = "WF_APPROVED";
 	public static final String OSID = "osid";
@@ -130,6 +134,9 @@ public class Constants {
 	public static final String APPLICATION_JSON = "application/json";
 	public static final String REJECTED = "REJECTED";
 	public static final String NAME = "name";
+	public static final String ORGANIZATION_ID = "organisationId";
+	public static final String ROLES = "roles";
+	public static final String PUBLIC = "PUBLIC";
 
 
 

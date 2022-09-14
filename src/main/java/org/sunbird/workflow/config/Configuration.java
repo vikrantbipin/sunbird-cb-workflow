@@ -36,6 +36,9 @@ public class Configuration {
     @Value("${lms.user.search}")
     private String lmsUserSearchEndPoint;
 
+    @Value("${lms.assign.role}")
+    private String lmsAssignRoleEndPoint;
+
     @Value("${pid.service.host}")
     private String pidServiceHost;
 
@@ -129,6 +132,14 @@ public class Configuration {
 
     public void setUserProfileMigrateEndPoint(String userProfileMigrateEndPoint) {
         this.userProfileMigrateEndPoint = userProfileMigrateEndPoint;
+    }
+
+    public String getLmsAssignRoleEndPoint() {
+        return lmsAssignRoleEndPoint;
+    }
+
+    public void setLmsAssignRoleEndPoint(String lmsAssignRoleEndPoint) {
+        this.lmsAssignRoleEndPoint = lmsAssignRoleEndPoint;
     }
 
     public String getHubProfileUpdateEndPoint() {
