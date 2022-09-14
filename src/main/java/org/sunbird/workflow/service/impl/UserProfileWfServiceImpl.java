@@ -120,7 +120,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
 				employmentDetails.put(Constants.DEPARTMENT_NAME,updatedDeptName);
 			}
-				Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
+			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {
 				logger.error("user profile datatype error");
 				failedCase(wfRequest);
