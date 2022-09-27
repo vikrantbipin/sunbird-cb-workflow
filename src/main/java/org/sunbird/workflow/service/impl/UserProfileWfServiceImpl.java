@@ -86,15 +86,12 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				}
 			}
 			if (null != updatedDeptName) {
-				if (!existingDeptName.equals(updatedDeptName)) {
 					wfRequest.setDeptName(updatedDeptName);
 					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
 					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
 						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 						failedCase(wfRequest);
 						return;
-					}
-
 				}
 			}
 
@@ -156,7 +153,14 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				} else if (updatedProfileElementObj instanceof HashMap) {
 					Map<String, Object> existingProfileElementList = mapper.convertValue(updatedProfileElementObj, Map.class);
 					updatedProfileElement.putAll(existingProfileElementList);
-				} else {
+				} else if (null == updatedProfileElementObj) {
+					List<Map<String, Object>> detailsList = new ArrayList<>();
+					Map<String, Object> detailsMap = new HashMap<>();
+					detailsMap = (Map<String, Object>) wfRequestParamObj.get("toValue");
+					detailsList.add(detailsMap);
+					existingProfileDetail.put((String) wfRequestParamObj.get("fieldKey"), detailsList);
+				}
+				else {
 					logger.error("profile element to be updated is neither arraylist nor hashmap");
 					return null;
 				}
