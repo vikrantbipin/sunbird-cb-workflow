@@ -133,6 +133,7 @@ public class Constants {
 	public static final String CONTENT_TYPE = "Content-Type";
 	public static final String APPLICATION_JSON = "application/json";
 	public static final String REJECTED = "REJECTED";
+	public static final String HTTP_STATUS_CODE = "httpStatusCode";
 	public static final String NAME = "name";
 	public static final String ORGANIZATION_ID = "organisationId";
 	public static final String ROLES = "roles";

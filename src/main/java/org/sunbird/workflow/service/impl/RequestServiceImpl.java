@@ -1,6 +1,7 @@
 package org.sunbird.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -114,20 +115,32 @@ public class RequestServiceImpl {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			HttpEntity<Object> entity = new HttpEntity<>(request, headers);
 			if (log.isDebugEnabled()) {
-				StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult")
-						.append(System.lineSeparator());
-				str.append("URI: ").append(uri).append(System.lineSeparator());
-				str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
-				log.debug(str.toString());
+				try {
+					StringBuilder str = new StringBuilder(this.getClass().getCanonicalName()).append(".fetchResult")
+							.append(System.lineSeparator());
+					str.append("URI: ").append(uri).append(System.lineSeparator());
+					str.append("Request: ").append(mapper.writeValueAsString(request)).append(System.lineSeparator());
+					log.debug(str.toString());
+				} catch (JsonProcessingException je) {
+				}
 			}
 			response = restTemplate.patchForObject(uri, entity, Map.class);
 			if (log.isDebugEnabled()) {
-				StringBuilder str = new StringBuilder("Response: ");
-				str.append(mapper.writeValueAsString(response)).append(System.lineSeparator());
-				log.debug(str.toString());
+				try {
+					StringBuilder str = new StringBuilder("Response: ");
+					str.append(mapper.writeValueAsString(response)).append(System.lineSeparator());
+					log.debug(str.toString());
+				} catch (JsonProcessingException je) {
+				}
 			}
-		} catch (HttpClientErrorException | JsonProcessingException e) {
-			log.error(e);
+		} catch (HttpClientErrorException e) {
+			try {
+				response = mapper.readValue(e.getResponseBodyAsString(), new TypeReference<HashMap<String, Object>>() {
+				});
+				response.put(Constants.HTTP_STATUS_CODE, e.getStatusCode());
+			} catch (Exception e1) {
+			}
+			log.error("Error received: " + e.getResponseBodyAsString(), e);
 		}
 		return response;
 	}
