@@ -75,6 +75,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			HashMap<String, Object> updatedFieldValueElement = updatedFieldValues.get(0);
 			HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
 			HashMap<String, Object> fromValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.FROM_VALUE);
+			String fieldKeyValue = (String) updatedFieldValueElement.get(Constants.FIELD_KEY);
 			for (String key : fromValueList.keySet()) {
 				if (Constants.NAME.equals(key)) {
 					existingDeptName = (String) fromValueList.get(Constants.NAME);
@@ -85,16 +86,17 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 					updatedDeptName = (String) toValueList.get(Constants.NAME);
 				}
 			}
+			if (Constants.PROFESSIONAL_DETAILS.equals(fieldKeyValue)) {
 			if (null != updatedDeptName) {
-					wfRequest.setDeptName(updatedDeptName);
-					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
-					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
-						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-						failedCase(wfRequest);
-						return;
+				wfRequest.setDeptName(updatedDeptName);
+				Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
+				if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
+					logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+					failedCase(wfRequest);
+					return;
 				}
 			}
-
+		}
 			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
 				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
