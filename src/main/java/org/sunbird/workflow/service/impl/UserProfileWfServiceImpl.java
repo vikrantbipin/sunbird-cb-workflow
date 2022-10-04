@@ -87,16 +87,16 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				}
 			}
 			if (Constants.PROFESSIONAL_DETAILS.equals(fieldKeyValue)) {
-			if (null != updatedDeptName) {
-				wfRequest.setDeptName(updatedDeptName);
-				Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
-				if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
-					logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-					failedCase(wfRequest);
-					return;
+				if (null != updatedDeptName) {
+					wfRequest.setDeptName(updatedDeptName);
+					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
+					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
+						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+						failedCase(wfRequest);
+						return;
+					}
 				}
 			}
-		}
 			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
 				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
