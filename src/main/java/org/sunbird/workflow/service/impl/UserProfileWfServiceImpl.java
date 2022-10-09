@@ -69,34 +69,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
 	private void updateProfile(WfRequest wfRequest) {
 		try {
-			String updatedDeptName = null;
-			String existingDeptName = null;
-			List<HashMap<String, Object>> updatedFieldValues = wfRequest.getUpdateFieldValues();
-			HashMap<String, Object> updatedFieldValueElement = updatedFieldValues.get(0);
-			HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
-			HashMap<String, Object> fromValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.FROM_VALUE);
-			String fieldKeyValue = (String) updatedFieldValueElement.get(Constants.FIELD_KEY);
-			for (String key : fromValueList.keySet()) {
-				if (Constants.NAME.equals(key)) {
-					existingDeptName = (String) fromValueList.get(Constants.NAME);
-				}
-			}
-			for (String key : toValueList.keySet()) {
-				if (Constants.NAME.equals(key)) {
-					updatedDeptName = (String) toValueList.get(Constants.NAME);
-				}
-			}
-			if (Constants.PROFESSIONAL_DETAILS.equals(fieldKeyValue)) {
-				if (null != updatedDeptName) {
-					wfRequest.setDeptName(updatedDeptName);
-					Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
-					if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
-						logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-						failedCase(wfRequest);
-						return;
-					}
-				}
-			}
+			String deptNameUpdated = migrationUpdate(wfRequest);
 			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
 				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
@@ -109,7 +82,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			Map<String, Object> rootOrg = (Map<String, Object>) existingUserResponse.get(Constants.ROOT_ORG_CONSTANT);
 			String rootOrgId = (String) rootOrg.get(Constants.ROOT_ORG_ID);
 
-			if (null != updatedDeptName) {
+			if (null != deptNameUpdated) {
 				boolean assignFlag = assignRole(rootOrgId,wfRequest.getApplicationId());
 				if (!assignFlag) {
 					logger.error("Failed to assign PUBLIC role to user after Migration");
@@ -117,7 +90,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 					return;
 				}
 				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
-				employmentDetails.put(Constants.DEPARTMENT_NAME,updatedDeptName);
+				employmentDetails.put(Constants.DEPARTMENT_NAME,deptNameUpdated);
 			}
 			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {
@@ -299,6 +272,38 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		Map<String, Object> migrateUserApiResp = requestServiceImpl
 				.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileMigrateEndPoint(), migrateRequestObject, getHeaders());
 		return migrateUserApiResp;
+	}
+
+	private String migrationUpdate(WfRequest wfRequest) {
+
+		String updatedDeptName = null;
+		String existingDeptName = null;
+		List<HashMap<String, Object>> updatedFieldValues = wfRequest.getUpdateFieldValues();
+		HashMap<String, Object> updatedFieldValueElement = updatedFieldValues.get(0);
+		HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
+		HashMap<String, Object> fromValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.FROM_VALUE);
+		String fieldKeyValue = (String) updatedFieldValueElement.get(Constants.FIELD_KEY);
+		for (String key : fromValueList.keySet()) {
+			if (Constants.NAME.equals(key)) {
+				existingDeptName = (String) fromValueList.get(Constants.NAME);
+			}
+		}
+		for (String key : toValueList.keySet()) {
+			if (Constants.NAME.equals(key)) {
+				updatedDeptName = (String) toValueList.get(Constants.NAME);
+			}
+		}
+		if (Constants.PROFESSIONAL_DETAILS.equals(fieldKeyValue)) {
+			if (null != updatedDeptName) {
+				wfRequest.setDeptName(updatedDeptName);
+				Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
+				if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
+					logger.error("Migrate user failed" + ((Map<String, Object>) response.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+					failedCase(wfRequest);
+				}
+			}
+		}
+		return updatedDeptName;
 	}
 
 	public boolean assignRole(String sbOrgId, String userId) {
