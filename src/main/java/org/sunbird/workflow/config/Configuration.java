@@ -21,11 +21,23 @@ public class Configuration {
     @Value("${hub.profile.update}")
     private String hubProfileUpdateEndPoint;
 
+    @Value("${lms.user.read}")
+    private String userProfileReadEndPoint;
+
+    @Value("${lms.user.update}")
+    private String userProfileUpdateEndPoint;
+
+    @Value("${lms.user.migrate}")
+    private String userProfileMigrateEndPoint;
+
     @Value("${lms.service.host}")
     private String lmsServiceHost;
 
     @Value("${lms.user.search}")
     private String lmsUserSearchEndPoint;
+
+    @Value("${lms.assign.role}")
+    private String lmsAssignRoleEndPoint;
 
     @Value("${pid.service.host}")
     private String pidServiceHost;
@@ -96,6 +108,38 @@ public class Configuration {
 
     public void setHubServiceHost(String hubServiceHost) {
         this.hubServiceHost = hubServiceHost;
+    }
+
+    public String getUserProfileReadEndPoint() {
+        return userProfileReadEndPoint;
+    }
+
+    public void setUserProfileReadEndPoint(String userProfileReadEndPoint) {
+        this.userProfileReadEndPoint = userProfileReadEndPoint;
+    }
+
+    public String getUserProfileUpdateEndPoint() {
+        return userProfileUpdateEndPoint;
+    }
+
+    public void setUserProfileUpdateEndPoint(String userProfileUpdateEndPoint) {
+        this.userProfileUpdateEndPoint = userProfileUpdateEndPoint;
+    }
+
+    public String getUserProfileMigrateEndPoint() {
+        return userProfileMigrateEndPoint;
+    }
+
+    public void setUserProfileMigrateEndPoint(String userProfileMigrateEndPoint) {
+        this.userProfileMigrateEndPoint = userProfileMigrateEndPoint;
+    }
+
+    public String getLmsAssignRoleEndPoint() {
+        return lmsAssignRoleEndPoint;
+    }
+
+    public void setLmsAssignRoleEndPoint(String lmsAssignRoleEndPoint) {
+        this.lmsAssignRoleEndPoint = lmsAssignRoleEndPoint;
     }
 
     public String getHubProfileUpdateEndPoint() {
