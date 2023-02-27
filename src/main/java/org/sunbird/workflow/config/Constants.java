@@ -138,7 +138,7 @@ public class Constants {
 	public static final String ORGANIZATION_ID = "organisationId";
 	public static final String ROLES = "roles";
 	public static final String PUBLIC = "PUBLIC";
-
+	public static final String VALUE = "value";
 
 
 

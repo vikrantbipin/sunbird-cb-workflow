@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Throwables;
 
 public class WFLogger {
 
@@ -37,12 +36,11 @@ public class WFLogger {
 			Map<String, Object> message = new HashMap<>();
 			message.put("event", exception.getClass());
 			message.put("message", exception.getMessage());
-			message.put("trace", Throwables.getStackTraceAsString(exception));
+			message.put("trace",  ow.writeValueAsString(exception));
 			logger.log(Level.ERROR, ow.writeValueAsString(message));
 		} catch (Exception e) {
 			logger.log(Level.ERROR,
-					"{\"event\":\"" + exception.getClass() + "\", \"message\":\"" + exception.getMessage()
-							+ "\", \"trace\":\"" + Throwables.getStackTraceAsString(exception) + "\"}");
+					"{\"event\":\"" + exception.getClass() + "\", \"message\":\"" + exception.getMessage() + "\"}");
 		}
 	}
 
@@ -53,12 +51,11 @@ public class WFLogger {
 			Map<String, Object> message = new HashMap<>();
 			message.put("event", exception.getClass());
 			message.put("message", exception.getMessage());
-			message.put("trace", Throwables.getStackTraceAsString(exception));
+			message.put("trace", ow.writeValueAsString(exception));
 			logger.log(Level.FATAL, ow.writeValueAsString(message));
 		} catch (Exception e) {
 			logger.log(Level.FATAL,
-					"{\"event\":\"" + exception.getClass() + "\", \"message\":\"" + exception.getMessage()
-							+ "\", \"trace\":\"" + Throwables.getStackTraceAsString(exception) + "\"}");
+					"{\"event\":\"" + exception.getClass() + "\", \"message\":\"" + exception.getMessage() + "\"}");
 		}
 	}
 

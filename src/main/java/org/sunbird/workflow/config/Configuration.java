@@ -78,6 +78,9 @@ public class Configuration {
     @Value("${kafka.topics.user.registration.createUser}")
     private String workflowCreateUserTopic;
 
+    @Value("${lms.system.settings.wfProfileService.path}")
+    private String profileServiceConfigPath;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -268,4 +271,12 @@ public class Configuration {
 	public void setWorkflowCreateUserTopic(String workflowCreateUserTopic) {
 		this.workflowCreateUserTopic = workflowCreateUserTopic;
 	}
+
+    public String getProfileServiceConfigPath() {
+        return profileServiceConfigPath;
+    }
+
+    public void setProfileServiceConfigPath(String profileServiceConfigPath) {
+        this.profileServiceConfigPath = profileServiceConfigPath;
+    }
 }
