@@ -140,7 +140,7 @@ public class Constants {
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
 
-
+	public static final String TAXONOMY_SERVIC_NAME = "taxonomy";
 
 
 }
