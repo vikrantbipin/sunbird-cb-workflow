@@ -1,7 +1,14 @@
 package org.sunbird.workflow.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,19 +22,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
-import org.sunbird.workflow.models.*;
+import org.sunbird.workflow.models.SBApiResponse;
+import org.sunbird.workflow.models.SearchCriteria;
+import org.sunbird.workflow.models.SunbirdApiRespParam;
+import org.sunbird.workflow.models.WfAction;
+import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.models.V2.WfStatusV2;
 import org.sunbird.workflow.models.V2.WorkFlowModelV2;
 import org.sunbird.workflow.postgres.entity.WfStatusEntityV2;
 import org.sunbird.workflow.postgres.repo.WfStatusRepoV2;
 import org.sunbird.workflow.producer.Producer;
-import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.WorkflowServiceV2;
 import org.sunbird.workflow.util.RequestInterceptor;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
@@ -40,9 +49,6 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
 
     @Autowired
     private Configuration configuration;
-
-    @Autowired
-    private UserProfileWfService userProfileWfService;
 
     @Autowired
     private RequestServiceImpl requestServiceImpl;
@@ -188,50 +194,52 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
         String errMsg = null;
         HashMap<String, String> data = new HashMap<>();
         try {
-            validateWfRequest(wfRequest, userId);
-            WfStatusEntityV2 applicationStatus = wfStatusRepoV2.findByUserIdAndWfId(userId, wfRequest.getWfId());
             WorkFlowModelV2 workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
             WfStatusV2 wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
             if (wfStatus == null) {
                 data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_STATE_CHECK_ERROR);
                 return data;
             }
-            errMsg = validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
+            
             WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
             if (wfAction == null) {
                 data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_ACTION_ERROR);
                 return data;
             }
-            // actor has proper role to take the workflow action
             nextState = wfAction.getNextState();
-            if (ObjectUtils.isEmpty(applicationStatus)) {
-                applicationStatus = new WfStatusEntityV2();
-                wfId = UUID.randomUUID().toString();
-                applicationStatus.setWfId(wfId);
-                applicationStatus.setServiceName(wfRequest.getServiceName());
-                applicationStatus.setUserId(userId);
-                applicationStatus.setCreatedBy(userId);
-                applicationStatus.setCreatedOn(new Date());
-                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-                wfRequest.setWfId(wfId);
-            }
-            WfStatusV2 wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
-            if (wfStatusCheckForNextState == null) {
+            
+            WfStatusV2 wfNextStatus = getWfStatus(nextState, workFlowModel);
+            if (wfNextStatus == null) {
                 data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_STATE_CHECK_ERROR);
                 return data;
             }
+            
+            WfStatusEntityV2 applicationStatus = wfStatusRepoV2.findByUserIdAndWfId(userId, wfRequest.getWfId());
+            errMsg = validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
+			if (StringUtils.isEmpty(errMsg)) {
+				// actor has proper role to take the workflow action
+				if (ObjectUtils.isEmpty(applicationStatus)) {
+					applicationStatus = new WfStatusEntityV2();
+					wfId = UUID.randomUUID().toString();
+					applicationStatus.setWfId(wfId);
+					applicationStatus.setServiceName(wfRequest.getServiceName());
+					applicationStatus.setUserId(userId);
+					applicationStatus.setCreatedBy(userId);
+					applicationStatus.setCreatedOn(new Date());
+					applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+					wfRequest.setWfId(wfId);
+				}
 
-            applicationStatus.setLastUpdatedOn(new Date());
-            applicationStatus.setCurrentStatus(nextState);
-            applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+				applicationStatus.setLastUpdatedOn(new Date());
+				applicationStatus.setCurrentStatus(nextState);
+				applicationStatus.setInWorkflow(!wfNextStatus.getIsLastState());
 
-            if (StringUtils.isEmpty(errMsg)) {
-                wfStatusRepoV2.save(applicationStatus);
-                if (wfStatus.getNotificationEnable() == Boolean.TRUE) {
-                    producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
-                }
-                producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
-            }
+				wfStatusRepoV2.save(applicationStatus);
+				if (wfStatus.getNotificationEnable() == Boolean.TRUE) {
+					producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+				}
+				producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+			}
         } catch (IOException e) {
             errMsg = Constants.WORKFLOW_PARSING_ERROR_MESSAGE;
             log.error(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
@@ -269,9 +277,9 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
             } else {
                 ArrayList<String> invalidTerms = new ArrayList<>();
                 for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
-                    if (StringUtils.isEmpty((String) updatedField.get(Constants.APPROVAL_STATUS)) || !updatedField.get(Constants.APPROVAL_STATUS).equals(Constants.DRAFT)) {
-                        invalidTerms.add((String) updatedField.get(Constants.IDENTIFIER));
-                    }
+                	if(Constants.DRAFT.equalsIgnoreCase((String) updatedField.get(Constants.APPROVAL_STATUS))) {
+                		 invalidTerms.add((String) updatedField.get(Constants.IDENTIFIER));
+                	}
                 }
                 if (CollectionUtils.isNotEmpty(invalidTerms)) {
                     params.add(Constants.TERM_APPROVAL_STATUS_ERROR + ": " + invalidTerms);
@@ -289,7 +297,7 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
             params.add(Constants.WORKFLOW_SERVICENAME_VALIDATION_ERROR);
         }
         if (!params.isEmpty()) {
-            strBuilder.append("Invalid Request. - " + params);
+            strBuilder.append("Invalid Request. " + params);
         }
         return strBuilder.toString();
     }
@@ -382,7 +390,7 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
         return wfStatus;
     }
 
-    private static SBApiResponse createDefaultResponse(String api) {
+    private SBApiResponse createDefaultResponse(String api) {
         SBApiResponse response = new SBApiResponse();
         response.setId(api);
         response.setVer(Constants.API_VERSION_1);
