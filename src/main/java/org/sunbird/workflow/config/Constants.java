@@ -144,6 +144,13 @@ public class Constants {
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
 
+	public static final String INITIATE_UPPERCASE = "INITIATE";
+	public static final String SEND_FOR_REVIEW_LEVEL_1 = "SEND_FOR_REVIEW_L1";
+	public static final String SEND_FOR_REVIEW_LEVEL_2 = "SEND_FOR_REVIEW_L2";
+	public static final String XCHANNELID = "X-Channel-Id";
+	public static final String CODE = "code";
+	public static final String CATEGORY = "category";
+	public static final String APPROVED = "APPROVED";
 	public static final String TAXONOMY_SERVICE_NAME = "taxonomy";
 	public static final String INITIATE = "initiate";
 
@@ -168,9 +175,5 @@ public class Constants {
 	public static final String GET_WF_APPLICATION = "taxonomy.get.workflow.application";
 	public static final String TAXONOMY_WF_APPLICATION_SEARCH = "taxonomy.workflow.application.search";
 	public static final String WF_NOT_AVAILABLE = "work flow not available for the given wfId";
-
-
-
-
 
 }
