@@ -93,6 +93,9 @@ public class Configuration {
     @Value("${accesstoken.publickey.basepath}")
     private String baseKeyPath;
 
+    @Value("${kafka.topics.workflow.request.v1}")
+    private String taxonomyWorkflowKafkaTopic;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -322,5 +325,13 @@ public class Configuration {
 
     public void setTaxonomyServiceConfigPath(String taxonomyServiceConfigPath) {
         this.taxonomyServiceConfigPath = taxonomyServiceConfigPath;
+    }
+
+    public String getTaxonomyWorkflowKafkaTopic() {
+        return taxonomyWorkflowKafkaTopic;
+    }
+
+    public void setTaxonomyWorkflowKafkaTopic(String taxonomyWorkflowKafkaTopic) {
+        this.taxonomyWorkflowKafkaTopic = taxonomyWorkflowKafkaTopic;
     }
 }
