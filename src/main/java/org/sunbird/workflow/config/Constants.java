@@ -31,7 +31,6 @@ public class Constants {
 	public static final String UPDATED_FIELD_VALUES_ERROR_MESSAGE = "Error occurred while parsing updated fields values!";
 
 	public static final String WORKFLOW_INITIATE_ERROR_MESSAGE = "Workflow is not initiated!";
-
 	public static final String WORKFLOW_ROLE_ERROR = "No role found for the actor!";
 
 	public static final String WORKFLOW_ROLE_CHECK_ERROR = "No proper role found for the actor!";
@@ -41,19 +40,22 @@ public class Constants {
 	public static final String WORKFLOW_STATE_CHECK_ERROR = "No wf state found on given state!";
 
 	public static final String STATE_VALIDATION_ERROR = "Work flow state can not be empty!";
-	public static final String STATUS_VALIDATION_ERROR_FOR_INITIATE = "Work flow state must be initiate!";
-	public static final String STATUS_VALIDATION_ERROR_FOR_NOT_INITIATE = "Work flow state must not be initiate!";
+
+	public static final String WFID_VALIDATION_ERROR_FOR_INITIATE = "For Create the Workflow request wfId must be empty!";
+
+	public static final String WFID_VALIDATION_ERROR_FOR_REVIEW = "wfId must not be empty!";
 
 	public static final String ACTOR_UUID_VALIDATION_ERROR = "actor uuid can not be empty!";
 
 	public static final String APPLICATION_ID_VALIDATION_ERROR = "application id can not be empty!";
 
 	public static final String USER_UUID_VALIDATION_ERROR = "user uuid can not be empty!";
-	public static final String USER_ID_VALIDATION_ERROR = "userId can not be empty!";
 
 	public static final String ACTION_VALIDATION_ERROR = "Work flow action can not be empty!";
 
 	public static final String FIELD_VALUE_VALIDATION_ERROR = "Update Field values can not be empty!";
+
+	public static final String FIELD_VALUE_VALIDATION_ERROR_FOR_UPDATE = "Update Field values must be empty!";
 
 	public static final String WORKFLOW_SERVICENAME_VALIDATION_ERROR = "Workflow service name can not be empty!";
 

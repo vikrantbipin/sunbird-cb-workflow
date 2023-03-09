@@ -32,14 +32,14 @@ import org.sunbird.workflow.models.V2.WorkFlowModelV2;
 import org.sunbird.workflow.postgres.entity.WfStatusEntityV2;
 import org.sunbird.workflow.postgres.repo.WfStatusRepoV2;
 import org.sunbird.workflow.producer.Producer;
-import org.sunbird.workflow.service.WorkflowServiceV2;
+import org.sunbird.workflow.service.TaxonomyWorkflowService;
 import org.sunbird.workflow.util.RequestInterceptor;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
+public class TaxonomyWorkflowServiceImpl implements TaxonomyWorkflowService {
 
     @Autowired
     private WfStatusRepoV2 wfStatusRepoV2;
@@ -58,40 +58,64 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
 
     @Autowired
     RequestInterceptor requestInterceptor;
-    Logger log = LogManager.getLogger(WorkflowServiceImplV2.class);
-
+    Logger log = LogManager.getLogger(TaxonomyWorkflowServiceImpl.class);
 
     /**
-     * Change the status of workflow application
-     *
+     * create the workflow application
      * @param userToken
      * @param wfRequest
      * @return
      */
     @Override
-    public SBApiResponse workflowTransition(String userToken, WfRequest wfRequest) {
+    public SBApiResponse createWorkflow(String userToken, WfRequest wfRequest) {
         SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_TRANSITION);
-        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
-        String errMsg = validateWfRequest(wfRequest, userId);
+        String errMsg = validateCreateWfRequest(wfRequest);
         if (!StringUtils.isEmpty(errMsg)) {
             response.getParams().setErrmsg(errMsg);
             response.getParams().setStatus(Constants.FAILED);
             response.setResponseCode(HttpStatus.BAD_REQUEST);
             return response;
         }
-        HashMap<String, String> changeStatusResponse = changeStatus(wfRequest, userId);
-        if (StringUtils.isNotEmpty(changeStatusResponse.get(Constants.ERROR_MESSAGE))) {
+        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
+        response = changeStatus(wfRequest, userId, response);
+        errMsg = (String) response.getResult().get(Constants.ERROR_MESSAGE);
+        if (StringUtils.isNotEmpty(errMsg)) {
             response.getParams().setStatus(Constants.FAILED);
-            response.getParams().setErrmsg(changeStatusResponse.get(Constants.ERROR_MESSAGE));
+            response.getParams().setErrmsg(errMsg);
             response.setResponseCode(HttpStatus.BAD_REQUEST);
         } else {
-            HashMap<String, Object> data = new HashMap<>();
-            data.put(Constants.STATUS, changeStatusResponse.get(Constants.STATUS));
-            data.put(Constants.WF_ID_CONSTANT, changeStatusResponse.get(Constants.WF_ID_CONSTANT));
             response.getParams().setStatus(Constants.SUCCESSFUL);
             response.setResponseCode(HttpStatus.OK);
-            response.getResult().put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changeStatusResponse.get(Constants.STATUS));
-            response.getResult().putAll(data);
+        }
+        return response;
+    }
+
+    /**
+     * update the workflow application
+     * @param userToken
+     * @param wfRequest
+     * @return
+     */
+    @Override
+    public SBApiResponse updateWorkflow(String userToken, WfRequest wfRequest) {
+        SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_TRANSITION);
+        String errMsg = validateUpdateWfRequest(wfRequest);
+        if (!StringUtils.isEmpty(errMsg)) {
+            response.getParams().setErrmsg(errMsg);
+            response.getParams().setStatus(Constants.FAILED);
+            response.setResponseCode(HttpStatus.BAD_REQUEST);
+            return response;
+        }
+        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
+        response = changeStatus(wfRequest, userId, response);
+        errMsg = (String) response.getResult().get(Constants.ERROR_MESSAGE);
+        if (StringUtils.isNotEmpty(errMsg)) {
+            response.getParams().setStatus(Constants.FAILED);
+            response.getParams().setErrmsg(errMsg);
+            response.setResponseCode(HttpStatus.BAD_REQUEST);
+        } else {
+            response.getParams().setStatus(Constants.SUCCESSFUL);
+            response.setResponseCode(HttpStatus.OK);
         }
         return response;
     }
@@ -188,108 +212,92 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
         return pageable;
     }
 
-    private HashMap<String, String> changeStatus(WfRequest wfRequest, String userId) {
+    private SBApiResponse changeStatus(WfRequest wfRequest, String userId, SBApiResponse response) {
         String wfId = wfRequest.getWfId();
         String nextState = null;
         String errMsg = null;
-        HashMap<String, String> data = new HashMap<>();
         try {
             WorkFlowModelV2 workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
             WfStatusV2 wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
             if (wfStatus == null) {
-                data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_STATE_CHECK_ERROR);
-                return data;
+                response.getParams().setErrmsg(Constants.WORKFLOW_STATE_CHECK_ERROR);
+                return response;
             }
-            
+
             WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
             if (wfAction == null) {
-                data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_ACTION_ERROR);
-                return data;
+                response.getParams().setErrmsg(Constants.WORKFLOW_ACTION_ERROR);
+                return response;
             }
             nextState = wfAction.getNextState();
-            
+
             WfStatusV2 wfNextStatus = getWfStatus(nextState, workFlowModel);
             if (wfNextStatus == null) {
-                data.put(Constants.ERROR_MESSAGE, Constants.WORKFLOW_STATE_CHECK_ERROR);
-                return data;
+                response.getParams().setErrmsg(Constants.WORKFLOW_STATE_CHECK_ERROR);
+                return response;
             }
-            
+
             WfStatusEntityV2 applicationStatus = wfStatusRepoV2.findByUserIdAndWfId(userId, wfRequest.getWfId());
             errMsg = validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
-			if (StringUtils.isEmpty(errMsg)) {
-				// actor has proper role to take the workflow action
-				if (ObjectUtils.isEmpty(applicationStatus)) {
-					applicationStatus = new WfStatusEntityV2();
-					wfId = UUID.randomUUID().toString();
-					applicationStatus.setWfId(wfId);
-					applicationStatus.setServiceName(wfRequest.getServiceName());
-					applicationStatus.setUserId(userId);
-					applicationStatus.setCreatedBy(userId);
-					applicationStatus.setCreatedOn(new Date());
-					applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-					wfRequest.setWfId(wfId);
-				}
+            if (StringUtils.isEmpty(errMsg)) {
+                // actor has proper role to take the workflow action
+                if (ObjectUtils.isEmpty(applicationStatus)) {
+                    applicationStatus = new WfStatusEntityV2();
+                    wfId = UUID.randomUUID().toString();
+                    applicationStatus.setWfId(wfId);
+                    applicationStatus.setServiceName(wfRequest.getServiceName());
+                    applicationStatus.setUserId(userId);
+                    applicationStatus.setCreatedBy(userId);
+                    applicationStatus.setCreatedOn(new Date());
+                    applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+                    wfRequest.setWfId(wfId);
+                }
 
-				applicationStatus.setLastUpdatedOn(new Date());
-				applicationStatus.setCurrentStatus(nextState);
-				applicationStatus.setInWorkflow(!wfNextStatus.getIsLastState());
+                applicationStatus.setLastUpdatedOn(new Date());
+                applicationStatus.setCurrentStatus(nextState);
+                applicationStatus.setInWorkflow(!wfNextStatus.getIsLastState());
 
-				wfStatusRepoV2.save(applicationStatus);
-				if (wfStatus.getNotificationEnable() == Boolean.TRUE) {
-					producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
-				}
-				producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
-			}
+                wfStatusRepoV2.save(applicationStatus);
+                if (wfStatus.getNotificationEnable() == Boolean.TRUE) {
+                    producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+                }
+                producer.push(configuration.getTaxonomyWorkflowKafkaTopic(), wfRequest);
+            }
         } catch (IOException e) {
             errMsg = Constants.WORKFLOW_PARSING_ERROR_MESSAGE;
             log.error(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
         }
-        data.put(Constants.ERROR_MESSAGE, errMsg);
+        response.getParams().setErrmsg(errMsg);
+        HashMap<String, Object> data = new HashMap<>();
         data.put(Constants.WF_ID_CONSTANT, wfId);
         data.put(Constants.STATUS, nextState);
-        return data;
+        data.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + nextState);
+        response.getResult().putAll(data);
+        return response;
     }
 
-    /**
-     * Validate the workflow request
-     *
-     * @param wfRequest
-     */
-    private String validateWfRequest(WfRequest wfRequest, String userId) {
+    private String validateCreateWfRequest(WfRequest wfRequest) {
         List<String> params = new ArrayList<String>();
         StringBuilder strBuilder = new StringBuilder();
         if (StringUtils.isEmpty(wfRequest.getState())) {
             params.add(Constants.STATE_VALIDATION_ERROR);
+        }
+        if (StringUtils.isNotEmpty(wfRequest.getWfId())) {
+            params.add(Constants.WFID_VALIDATION_ERROR_FOR_INITIATE);
+        }
+        if (CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
+            params.add(Constants.FIELD_VALUE_VALIDATION_ERROR);
         } else {
-            if (StringUtils.isEmpty(wfRequest.getWfId())) {
-                if (!wfRequest.getState().equalsIgnoreCase(Constants.INITIATE)) {
-                    params.add(Constants.STATUS_VALIDATION_ERROR_FOR_INITIATE);
-                }
-            } else {
-                if (wfRequest.getState().equalsIgnoreCase(Constants.INITIATE)) {
-                    params.add(Constants.STATUS_VALIDATION_ERROR_FOR_NOT_INITIATE);
+            ArrayList<String> invalidTerms = new ArrayList<>();
+            for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
+                if (!Constants.DRAFT.equalsIgnoreCase((String) updatedField.get(Constants.APPROVAL_STATUS))) {
+                    invalidTerms.add((String) updatedField.get(Constants.IDENTIFIER));
                 }
             }
-            if (CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
-                if (wfRequest.getState().equalsIgnoreCase(Constants.INITIATE)) {
-                    params.add(Constants.FIELD_VALUE_VALIDATION_ERROR);
-                }
-            } else {
-                ArrayList<String> invalidTerms = new ArrayList<>();
-                for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
-                	if(Constants.DRAFT.equalsIgnoreCase((String) updatedField.get(Constants.APPROVAL_STATUS))) {
-                		 invalidTerms.add((String) updatedField.get(Constants.IDENTIFIER));
-                	}
-                }
-                if (CollectionUtils.isNotEmpty(invalidTerms)) {
-                    params.add(Constants.TERM_APPROVAL_STATUS_ERROR + ": " + invalidTerms);
-                }
+            if (CollectionUtils.isNotEmpty(invalidTerms)) {
+                params.add(Constants.TERM_APPROVAL_STATUS_ERROR + ": " + invalidTerms);
             }
         }
-        if (StringUtils.isEmpty(userId)) {
-            params.add(Constants.USER_ID_VALIDATION_ERROR);
-        }
-
         if (StringUtils.isEmpty(wfRequest.getAction())) {
             params.add(Constants.ACTION_VALIDATION_ERROR);
         }
@@ -301,6 +309,35 @@ public class WorkflowServiceImplV2 implements WorkflowServiceV2 {
         }
         return strBuilder.toString();
     }
+
+        /**
+         * Validate the workflow request
+         *
+         * @param wfRequest
+         */
+        private String validateUpdateWfRequest(WfRequest wfRequest) {
+            List<String> params = new ArrayList<String>();
+            StringBuilder strBuilder = new StringBuilder();
+            if (StringUtils.isEmpty(wfRequest.getState())) {
+                params.add(Constants.STATE_VALIDATION_ERROR);
+            }
+            if (StringUtils.isEmpty(wfRequest.getWfId())) {
+                params.add(Constants.WFID_VALIDATION_ERROR_FOR_REVIEW);
+            }
+            if (CollectionUtils.isNotEmpty(wfRequest.getUpdateFieldValues())) {
+                params.add(Constants.FIELD_VALUE_VALIDATION_ERROR_FOR_UPDATE);
+            }
+            if (StringUtils.isEmpty(wfRequest.getAction())) {
+                params.add(Constants.ACTION_VALIDATION_ERROR);
+            }
+            if (StringUtils.isEmpty(wfRequest.getServiceName())) {
+                params.add(Constants.WORKFLOW_SERVICENAME_VALIDATION_ERROR);
+            }
+            if (!params.isEmpty()) {
+                strBuilder.append("Invalid Request. " + params);
+            }
+            return strBuilder.toString();
+        }
 
     /**
      * Validate application against workflow state
