@@ -15,7 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.postgres.entity.WfStatusEntityV2;
-import org.sunbird.workflow.postgres.repo.WfStatusRepo;
+import org.sunbird.workflow.postgres.repo.WfStatusRepoV2;
 import org.sunbird.workflow.service.WfServiceHandler;
 
 import java.util.*;
@@ -26,7 +26,7 @@ public class TaxonomyServiceImpl implements WfServiceHandler {
     Logger logger = LogManager.getLogger(TaxonomyServiceImpl.class);
 
     @Autowired
-    private WfStatusRepo wfStatusRepo;
+    private WfStatusRepoV2 wfStatusRepoV2;
 
     @Autowired
     private RequestServiceImpl requestService;
@@ -82,7 +82,7 @@ public class TaxonomyServiceImpl implements WfServiceHandler {
             if (state.equals(Constants.INITIATE)){
                 updateFieldValues  =  wfRequest.getUpdateFieldValues();
             } else {
-                WfStatusEntityV2 wfStatusEntityV2 =  wfStatusRepo.findBywfId(wfRequest.getWfId());
+                WfStatusEntityV2 wfStatusEntityV2 =  wfStatusRepoV2.findBywfId(wfRequest.getWfId());
                 updateFieldValues = getUpdateFieldValues(wfStatusEntityV2);
             }
 

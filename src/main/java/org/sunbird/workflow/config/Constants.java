@@ -153,7 +153,7 @@ public class Constants {
 	public static final String CATEGORY = "category";
 	public static final String APPROVED = "APPROVED";
 	public static final String TAXONOMY_SERVICE_NAME = "taxonomy";
-	public static final String INITIATE = "initiate";
+	public static final String INITIATE = "INITIATE";
 	public static final String DOT_SEPARATOR = ".";
 	public static final String UNAUTHORIZED_KEY = "Unauthorized";
 	public static final String SHA_256_WITH_RSA = "SHA256withRSA";

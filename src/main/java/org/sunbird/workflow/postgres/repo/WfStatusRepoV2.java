@@ -12,4 +12,5 @@ import java.util.List;
 public interface WfStatusRepoV2 extends JpaRepository<WfStatusEntityV2 , String> {
     WfStatusEntityV2 findByUserIdAndWfId(String userId, String wfId);
     Page<WfStatusEntityV2> findByServiceNameAndCurrentStatus(String servicename , String status, Pageable pageable);
+    WfStatusEntityV2 findBywfId(String wfId);
 }
