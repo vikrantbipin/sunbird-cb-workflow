@@ -68,15 +68,15 @@ public class TaxonomyWorkflowServiceImpl implements TaxonomyWorkflowService {
      */
     @Override
     public SBApiResponse createWorkflow(String userToken, WfRequest wfRequest) {
-        SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_TRANSITION);
-        String errMsg = validateCreateWfRequest(wfRequest);
+        SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_CREATE);
+        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
+        String errMsg = validateCreateWfRequest(wfRequest, userId);
         if (!StringUtils.isEmpty(errMsg)) {
             response.getParams().setErrmsg(errMsg);
             response.getParams().setStatus(Constants.FAILED);
             response.setResponseCode(HttpStatus.BAD_REQUEST);
             return response;
         }
-        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
         response = changeStatus(wfRequest, userId, response);
         errMsg = (String) response.getResult().get(Constants.ERROR_MESSAGE);
         if (StringUtils.isNotEmpty(errMsg)) {
@@ -98,15 +98,15 @@ public class TaxonomyWorkflowServiceImpl implements TaxonomyWorkflowService {
      */
     @Override
     public SBApiResponse updateWorkflow(String userToken, WfRequest wfRequest) {
-        SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_TRANSITION);
-        String errMsg = validateUpdateWfRequest(wfRequest);
+        SBApiResponse response = createDefaultResponse(Constants.TAXONOMY_WORKFLOW_UPDATE);
+        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
+        String errMsg = validateUpdateWfRequest(wfRequest, userId);
         if (!StringUtils.isEmpty(errMsg)) {
             response.getParams().setErrmsg(errMsg);
             response.getParams().setStatus(Constants.FAILED);
             response.setResponseCode(HttpStatus.BAD_REQUEST);
             return response;
         }
-        String userId = requestInterceptor.fetchUserIdFromAccessToken(userToken);
         response = changeStatus(wfRequest, userId, response);
         errMsg = (String) response.getResult().get(Constants.ERROR_MESSAGE);
         if (StringUtils.isNotEmpty(errMsg)) {
@@ -276,9 +276,12 @@ public class TaxonomyWorkflowServiceImpl implements TaxonomyWorkflowService {
         return response;
     }
 
-    private String validateCreateWfRequest(WfRequest wfRequest) {
+    private String validateCreateWfRequest(WfRequest wfRequest, String userId) {
         List<String> params = new ArrayList<String>();
         StringBuilder strBuilder = new StringBuilder();
+        if (StringUtils.isEmpty(userId)) {
+            params.add(Constants.USER_ID_VALIDATION_ERROR);
+        }
         if (StringUtils.isEmpty(wfRequest.getState())) {
             params.add(Constants.STATE_VALIDATION_ERROR);
         }
@@ -315,9 +318,12 @@ public class TaxonomyWorkflowServiceImpl implements TaxonomyWorkflowService {
          *
          * @param wfRequest
          */
-        private String validateUpdateWfRequest(WfRequest wfRequest) {
+        private String validateUpdateWfRequest(WfRequest wfRequest, String userId) {
             List<String> params = new ArrayList<String>();
             StringBuilder strBuilder = new StringBuilder();
+            if (StringUtils.isEmpty(userId)) {
+                params.add(Constants.USER_ID_VALIDATION_ERROR);
+            }
             if (StringUtils.isEmpty(wfRequest.getState())) {
                 params.add(Constants.STATE_VALIDATION_ERROR);
             }

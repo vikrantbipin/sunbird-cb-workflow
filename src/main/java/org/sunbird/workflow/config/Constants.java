@@ -171,11 +171,14 @@ public class Constants {
 	public static final String TERM_APPROVAL_STATUS_ERROR = "This terms are having wrong approval status value ";
 	public static final String API_VERSION_1 = "1.0";
 	public static final String SUCCESS = "success";
-	public static final String TAXONOMY_WORKFLOW_TRANSITION = "taxonomy.workflow.transition";
+	public static final String TAXONOMY_WORKFLOW_CREATE = "taxonomy.workflow.create";
+	public static final String TAXONOMY_WORKFLOW_UPDATE = "taxonomy.workflow.update";
 	public static final String GET_WF_APPLICATION = "taxonomy.get.workflow.application";
 	public static final String TAXONOMY_WF_APPLICATION_SEARCH = "taxonomy.workflow.application.search";
 	public static final String WF_NOT_AVAILABLE = "work flow not available for the given wfId";
 	public static final String TERM = "term";
 	public static final String FRAMEWORK = "framework";
 	public static final String ID = "{id}";
+	public static final String USER_ID_VALIDATION_ERROR = "Invalid user auth token";
+
 }
