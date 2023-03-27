@@ -75,18 +75,7 @@ public class TaxonomyServiceImpl implements WfServiceHandler {
             List<HashMap<String, Object>> updateFieldValues = getUpdateFieldValues(wfStatusEntityV2);
             if (Objects.nonNull(updateFieldValues) && !CollectionUtils.isEmpty(updateFieldValues)) {
                 for (HashMap<String, Object> updateFieldValue : updateFieldValues) {
-                    String identifier = (String) updateFieldValue.get(Constants.IDENTIFIER);
-                    String id = (String) updateFieldValue.get(Constants.CODE);
-                    String category = (String) updateFieldValue.get(Constants.CATEGORY);
-                    changeStatus((String) updateFieldValue.get(Constants.APPROVAL_STATUS),wfStatusEntityV2.getCurrentStatus(),identifier,category,id);
-                    List<HashMap<String, Object>> associationsList = (List<HashMap<String, Object>>) updateFieldValue.get(Constants.ASSOCIATIONS);
-                     if (!CollectionUtils.isEmpty(associationsList)) {
-                            for (Map association : associationsList) {
-                                if (!CollectionUtils.isEmpty(association)) {
-                                    changeStatus((String) association.get(Constants.APPROVAL_STATUS),wfStatusEntityV2.getCurrentStatus(),(String) association.get(Constants.IDENTIFIER),(String) association.get(Constants.CATEGORY),(String) association.get(Constants.CODE));
-                                }
-                            }
-                     }
+                    changeStatus(updateFieldValue,wfStatusEntityV2.getCurrentStatus());
                 }
                 StringBuilder frameworkURI = constructPublishFrameworkURI();
                 HashMap<String, String> headers = new HashMap<>();
@@ -100,9 +89,7 @@ public class TaxonomyServiceImpl implements WfServiceHandler {
         }
 
     }
-
     private String constructTermUpdateURI(String term, String category) {
-        String uri = null;
         StringBuilder builder = null;
         if (!StringUtils.isEmpty(term) && !StringUtils.isEmpty(frameworkId) && !StringUtils.isEmpty(category)) {
             builder = new StringBuilder();
@@ -136,33 +123,94 @@ public class TaxonomyServiceImpl implements WfServiceHandler {
         }
         return updateFieldValuesList;
     }
-    private void changeStatus(String currentApprovalStatus, String currentStatus, String identifier, String category, String id) {
-        if (StringUtils.isNotEmpty(currentStatus) && StringUtils.isNotEmpty(identifier) && StringUtils.isNotEmpty(category) && StringUtils.isNotEmpty(id)) {
-        if (!currentApprovalStatus.equals(Constants.Live)) {
-            HashMap<String, Object> request = new HashMap<>();
-            HashMap<String, Object> term = new HashMap<>();
-            HashMap<String, Object> requestMap = new HashMap<>();
-            if (currentStatus.equals(Constants.SEND_FOR_REVIEW_LEVEL_1)) {
-                requestMap.put(Constants.APPROVAL_STATUS, under_L1_Review);
-            } else if (currentStatus.equals(Constants.SEND_FOR_REVIEW_LEVEL_2)) {
-                requestMap.put(Constants.APPROVAL_STATUS, under_L2_Review);
-            } else if (currentStatus.equals(Constants.SEND_FOR_PUBLISH)) {
-                requestMap.put(Constants.APPROVAL_STATUS, underPublish);
-            } else if (currentStatus.equals(Constants.APPROVED)) {
-                requestMap.put(Constants.APPROVAL_STATUS, live);
-            }
-            requestMap.put(Constants.IDENTIFIER, identifier);
-            term.put(Constants.TERM, requestMap);
-            request.put(Constants.REQUEST, term);
-            String URI = constructTermUpdateURI(id, category);
-            logger.info("printing URI For Term Update {} ", URI);
-            Map<String, Object> response = requestService.fetchResultUsingPatch(URI, request, null);
-            String responseCode = (String) response.get(Constants.RESPONSE_CODE);
-            if (!responseCode.equals(Constants.OK)) {
-                logger.error("Unable To Update Term Status");
+    private void changeStatus(Map<String,Object> updateFieldValue, String currentStatus) {
+        String termIdentifier = (String) updateFieldValue.get(Constants.IDENTIFIER);
+        String termCode = (String) updateFieldValue.get(Constants.CODE);
+        String category = (String) updateFieldValue.get(Constants.CATEGORY);
+        String termStatus = (String) updateFieldValue.get(Constants.APPROVAL_STATUS);
+
+        String approvalStatus;
+        if (currentStatus.equals(Constants.REJECTED)){
+            approvalStatus = getUpdatedAssociationStatusForReject(termStatus);
+        } else {
+            approvalStatus = getUpdatedAssociationStatus(termStatus);
+        }
+
+        Map<String, Object> request = new HashMap<>();
+        Map<String, Object> term = new HashMap<>();
+        Map<String, Object> requestMap = new HashMap<>();
+
+        requestMap.put(Constants.APPROVAL_STATUS, approvalStatus);
+        requestMap.put(Constants.IDENTIFIER, termIdentifier);
+        List<HashMap<String, Object>> associationsList = (List<HashMap<String, Object>>) updateFieldValue.get(Constants.ASSOCIATIONS);;
+        List<Map<String, Object>> association=null;
+        if (!CollectionUtils.isEmpty(associationsList)) {
+            for (Map associations : associationsList)
+            {
+                if (association == null) {
+                    association = new ArrayList<>();
+                }
+                Map<String,Object> map = (Map) associations.get(Constants.ASSOCIATION_PROPERTIES);
+                Map<String, Object> associationMap = new HashMap<>();
+                String associationStatus = (String) map.get(Constants.APPROVAL_STATUS);
+                if (!currentStatus.equals(Constants.REJECTED)) {
+                    String status = getUpdatedAssociationStatus(associationStatus);
+                    associationMap.put(Constants.APPROVAL_STATUS, status);
+                    associationMap.put(Constants.IDENTIFIER, (String) associations.get(Constants.IDENTIFIER));
+                } else {
+                    String status = getUpdatedAssociationStatusForReject(associationStatus);
+                    associationMap.put(Constants.APPROVAL_STATUS, status);
+                    associationMap.put(Constants.IDENTIFIER, (String) associations.get(Constants.IDENTIFIER));
+                }
+                association.add(associationMap);
+                requestMap.put(Constants.ASSOCIATIONS, association);
             }
         }
+        term.put(Constants.TERM, requestMap);
+        request.put(Constants.REQUEST,term);
+
+        String URI = constructTermUpdateURI(termCode, category);
+        logger.info("Printing URI for Term Update {}", URI);
+
+        Map<String, Object> response = requestService.fetchResultUsingPatch(URI, request, null);
+        String responseCode = (String) response.get(Constants.RESPONSE_CODE);
+        if (!responseCode.equals(Constants.OK)) {
+            logger.error("Unable to update term status");
+        }
     }
+    private String getUpdatedAssociationStatus(String associationStatus) {
+        String status = null;
+        switch (associationStatus) {
+            case Constants.DRAFT:
+                status = under_L1_Review;
+                break;
+            case Constants.IN_REVIEW_L1:
+                status = under_L2_Review;
+                break;
+            case Constants.IN_REVIEW_L2:
+                status = underPublish;
+                break;
+            case Constants.IN_REVIEW_FOR_PUBLISH:
+                status = live;
+                break;
+        }
+        return status;
+    }
+
+    private String getUpdatedAssociationStatusForReject(String associationStatus) {
+        String status = null;
+        switch (associationStatus) {
+            case Constants.IN_REVIEW_L1:
+                status = draft;
+                break;
+            case Constants.IN_REVIEW_L2:
+                status = under_L1_Review;
+                break;
+            case Constants.IN_REVIEW_FOR_PUBLISH:
+                status = under_L2_Review;
+                break;
+        }
+        return status;
     }
 
 }
