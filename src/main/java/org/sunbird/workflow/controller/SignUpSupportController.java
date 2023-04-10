@@ -18,14 +18,14 @@ public class SignUpSupportController {
     @PostMapping("/create")
     public ResponseEntity<?> wfCreate(@RequestHeader String rootOrg, @RequestHeader String org,
                                       @RequestBody WfRequest wfRequest) {
-        SBApiResponse response = signUpWFService.createWorkflow(rootOrg, org, wfRequest);
+        SBApiResponse response = signUpWFService.upsertWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, response.getResponseCode());
     }
 
     @PostMapping("/update")
     public ResponseEntity<?> wfTransition(@RequestHeader String rootOrg, @RequestHeader String org,
                                           @RequestBody WfRequest wfRequest) {
-        SBApiResponse response = signUpWFService.updateWorkflow(rootOrg, org, wfRequest);
+        SBApiResponse response = signUpWFService.upsertWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, response.getResponseCode());
     }
 

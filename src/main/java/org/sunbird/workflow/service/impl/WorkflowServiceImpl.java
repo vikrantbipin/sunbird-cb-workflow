@@ -260,7 +260,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param wfStatus
 	 * @return Work flow Action
 	 */
-	private WfAction getWfAction(String action, WfStatus wfStatus) {
+	public WfAction getWfAction(String action, WfStatus wfStatus) {
 		WfAction wfAction = null;
 		if (ObjectUtils.isEmpty(wfStatus.getActions())) {
 			throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
@@ -283,7 +283,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param workFlowModel
 	 * @return Workflow State
 	 */
-	private WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
+	public WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
 		WfStatus wfStatus = null;
 		for (WfStatus status : workFlowModel.getWfstates()) {
 			if (status.getState().equals(state)) {
@@ -634,14 +634,23 @@ public class WorkflowServiceImpl implements Workflowservice {
         return response;	
     }
 
-	private WorkFlowModel getWorkFlowConfig(String serviceName) {
+	public WorkFlowModel getWorkFlowConfig(String serviceName) {
 		try {
 			Map<String, Object> wfConfig = new HashMap<>();
-			if (serviceName.equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
-				StringBuilder uri = new StringBuilder();
-				uri.append(configuration.getLmsServiceHost() + configuration.getProfileServiceConfigPath());
-				wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
+			StringBuilder uri = new StringBuilder();
+			switch (serviceName) {
+				case Constants.PROFILE_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getProfileServiceConfigPath());
+					break;
+				case Constants.POSITION_SERVICE_NAME:
+				case Constants.ORGANISATION_SERVICE_NAME:
+				case Constants.DOMAIN_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getSignUpSupportServiceConfigPath());
+					break;
+				default:
+					break;
 			}
+			wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
 			Map<String, Object> result = (Map<String, Object>) wfConfig.get(Constants.RESULT);
 			Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
 			Map<String,Object> wfStates = mapper.readValue((String) response.get(Constants.VALUE),Map.class);

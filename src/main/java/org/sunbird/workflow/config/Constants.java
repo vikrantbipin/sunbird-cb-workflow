@@ -67,6 +67,9 @@ public class Constants {
 	public static final String SEARCH_CRITERIA_VALIDATION = "Provide the mandatory fields for search!";
 
 	public static final String PROFILE_SERVICE_NAME = "profile";
+	public static final String POSITION_SERVICE_NAME = "position";
+	public static final String ORGANISATION_SERVICE_NAME = "organisation";
+	public static final String DOMAIN_SERVICE_NAME = "domain";
 
 	public static final String SERVICE_NAME_EXCEPTION = "No configured service found!";
 
@@ -140,16 +143,11 @@ public class Constants {
 	public static final String ROLES = "roles";
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
-	public static final String SIGNUP_SUPPORT_SERVICE_NAME = "signUpSupport";
 	public static final String SIGNUP_SUPPORT_WORKFLOW_CREATE = "signup.support.workflow.create";
-	public static final String SIGNUP_SUPPORT_WORKFLOW_UPDATE = "signup.support.workflow.update";
 	public static final String SIGNUP_SUPPORT_WORKFLOW_READ = "signUp.support.workflow.read";
-	public static final String WFID_VALIDATION_ERROR_FOR_INITIATE = "For Create the Workflow request wfId must be empty!";
 	public static final String API_VERSION_1 = "1.0";
 	public static final String SUCCESS = "success";
-	public static final String FIELD_VALUE_VALIDATION_ERROR_FOR_UPDATE = "Update Field values must be empty!";
 	public static final String UPDATED_FIELD_VALUES_ERROR_MESSAGE = "Error occurred while parsing updated fields values!";
 	public static final String WF_NOT_AVAILABLE = "work flow not available for the given wfId";
 	public static final String UPDATED_FIELDS_VALUES = "updateFieldValues";
-	public static final String INITIATE = "initiate";
 }

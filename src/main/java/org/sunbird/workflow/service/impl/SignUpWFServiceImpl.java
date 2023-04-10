@@ -40,36 +40,16 @@ public class SignUpWFServiceImpl implements SignUpWFService {
     private RequestServiceImpl requestServiceImpl;
 
     @Autowired
+    private WorkflowServiceImpl wfService;
+
+    @Autowired
     private Producer producer;
 
     Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
     @Override
-    public SBApiResponse createWorkflow(String rootOrg, String org, WfRequest wfRequest) {
+    public SBApiResponse upsertWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         SBApiResponse response = createDefaultResponse(Constants.SIGNUP_SUPPORT_WORKFLOW_CREATE);
-        String errMsg = validateWfRequest(wfRequest);
-        if (!StringUtils.isEmpty(errMsg)) {
-            response.getParams().setErrmsg(errMsg);
-            response.getParams().setStatus(Constants.FAILED);
-            response.setResponseCode(HttpStatus.BAD_REQUEST);
-            return response;
-        }
-        response = changeStatus(rootOrg, org, wfRequest, response);
-        errMsg = (String) response.getResult().get(Constants.ERROR_MESSAGE);
-        if (StringUtils.isNotEmpty(errMsg)) {
-            response.getParams().setStatus(Constants.FAILED);
-            response.getParams().setErrmsg(errMsg);
-            response.setResponseCode(HttpStatus.BAD_REQUEST);
-        } else {
-            response.getParams().setStatus(Constants.SUCCESSFUL);
-            response.setResponseCode(HttpStatus.OK);
-        }
-        return response;
-    }
-
-    @Override
-    public SBApiResponse updateWorkflow(String rootOrg, String org, WfRequest wfRequest) {
-        SBApiResponse response = createDefaultResponse(Constants.SIGNUP_SUPPORT_WORKFLOW_UPDATE);
         String errMsg = validateWfRequest(wfRequest);
         if (!StringUtils.isEmpty(errMsg)) {
             response.getParams().setErrmsg(errMsg);
@@ -105,19 +85,8 @@ public class SignUpWFServiceImpl implements SignUpWFService {
         if (StringUtils.isEmpty(wfRequest.getState())) {
             params.add(Constants.STATE_VALIDATION_ERROR);
         }
-        if (StringUtils.isNotEmpty(wfRequest.getWfId())) {
-            if (Constants.INITIATE.equalsIgnoreCase(wfRequest.getState())) {
-                params.add(Constants.WFID_VALIDATION_ERROR_FOR_INITIATE);
-            }
-        } else {
-            params.add(Constants.WF_ID_VALIDATION_ERROR);
-        }
         if (CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
-            if (Constants.INITIATE.equalsIgnoreCase(wfRequest.getState())) {
-                params.add(Constants.FIELD_VALUE_VALIDATION_ERROR);
-            }
-        } else {
-            params.add(Constants.FIELD_VALUE_VALIDATION_ERROR_FOR_UPDATE);
+            params.add(Constants.FIELD_VALUE_VALIDATION_ERROR);
         }
         if (StringUtils.isEmpty(wfRequest.getAction())) {
             params.add(Constants.ACTION_VALIDATION_ERROR);
@@ -136,21 +105,21 @@ public class SignUpWFServiceImpl implements SignUpWFService {
         String nextState = null;
         String errMsg = null;
         try {
-            WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
-            WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
+            WorkFlowModel workFlowModel = wfService.getWorkFlowConfig(wfRequest.getServiceName());
+            WfStatus wfStatus = wfService.getWfStatus(wfRequest.getState(), workFlowModel);
             if (wfStatus == null) {
                 response.getParams().setErrmsg(Constants.WORKFLOW_STATE_CHECK_ERROR);
                 return response;
             }
 
-            WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+            WfAction wfAction = wfService.getWfAction(wfRequest.getAction(), wfStatus);
             if (wfAction == null) {
                 response.getParams().setErrmsg(Constants.WORKFLOW_ACTION_ERROR);
                 return response;
             }
             nextState = wfAction.getNextState();
 
-            WfStatus wfNextStatus = getWfStatus(nextState, workFlowModel);
+            WfStatus wfNextStatus = wfService.getWfStatus(nextState, workFlowModel);
             if (wfNextStatus == null) {
                 response.getParams().setErrmsg(Constants.WORKFLOW_STATE_CHECK_ERROR);
                 return response;
@@ -195,29 +164,6 @@ public class SignUpWFServiceImpl implements SignUpWFService {
         return response;
     }
 
-    private WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
-        WfStatus wfStatus = null;
-        for (WfStatus status : workFlowModel.getWfstates()) {
-            if (status.getState().equals(state)) {
-                wfStatus = status;
-            }
-        }
-        return wfStatus;
-    }
-
-    private WfAction getWfAction(String action, WfStatus wfStatus) {
-        WfAction wfAction = null;
-        if (ObjectUtils.isEmpty(wfStatus.getActions())) {
-            return null;
-        }
-        for (WfAction filterAction : wfStatus.getActions()) {
-            if (action.equals(filterAction.getAction())) {
-                wfAction = filterAction;
-            }
-        }
-        return wfAction;
-    }
-
     private String validateUserAndWfStatus(WfRequest wfRequest, WfStatus wfStatus, WfStatusEntity applicationStatus) {
         List<String> params = new ArrayList<String>();
         StringBuilder strBuilder = new StringBuilder();
@@ -234,26 +180,6 @@ public class SignUpWFServiceImpl implements SignUpWFService {
             strBuilder.append(params);
         }
         return strBuilder.toString();
-    }
-
-    private WorkFlowModel getWorkFlowConfig(String serviceName) {
-        WorkFlowModel workFlowModel = new WorkFlowModel();
-        try {
-            Map<String, Object> wfConfig = new HashMap<>();
-            if (serviceName.equalsIgnoreCase(Constants.SIGNUP_SUPPORT_SERVICE_NAME)) {
-                StringBuilder uri = new StringBuilder();
-                uri.append(configuration.getLmsServiceHost() + configuration.getSignUpSupportServiceConfigPath());
-                wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
-            }
-            Map<String, Object> result = (Map<String, Object>) wfConfig.get(Constants.RESULT);
-            Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
-            Map<String, Object> wfStates = mapper.readValue((String) response.get(Constants.VALUE), Map.class);
-            workFlowModel = mapper.convertValue(wfStates, new TypeReference<WorkFlowModel>() {
-            });
-        } catch (Exception e) {
-            log.error("Exception occurred while getting work flow config details!");
-        }
-        return workFlowModel;
     }
 
     public SBApiResponse getWfApplication(String rootOrg, String org, String wfId, String applicationId) {
