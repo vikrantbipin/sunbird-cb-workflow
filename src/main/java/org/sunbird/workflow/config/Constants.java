@@ -44,6 +44,7 @@ public class Constants {
 	public static final String ACTOR_UUID_VALIDATION_ERROR = "actor uuid can not be empty!";
 
 	public static final String APPLICATION_ID_VALIDATION_ERROR = "application id can not be empty!";
+	public static final String WF_ID_VALIDATION_ERROR = "wfId can not be empty!";
 
 	public static final String USER_UUID_VALIDATION_ERROR = "user uuid can not be empty!";
 
@@ -139,8 +140,16 @@ public class Constants {
 	public static final String ROLES = "roles";
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
-
-
-
-
+	public static final String SIGNUP_SUPPORT_SERVICE_NAME = "signUpSupport";
+	public static final String SIGNUP_SUPPORT_WORKFLOW_CREATE = "signup.support.workflow.create";
+	public static final String SIGNUP_SUPPORT_WORKFLOW_UPDATE = "signup.support.workflow.update";
+	public static final String SIGNUP_SUPPORT_WORKFLOW_READ = "signUp.support.workflow.read";
+	public static final String WFID_VALIDATION_ERROR_FOR_INITIATE = "For Create the Workflow request wfId must be empty!";
+	public static final String API_VERSION_1 = "1.0";
+	public static final String SUCCESS = "success";
+	public static final String FIELD_VALUE_VALIDATION_ERROR_FOR_UPDATE = "Update Field values must be empty!";
+	public static final String UPDATED_FIELD_VALUES_ERROR_MESSAGE = "Error occurred while parsing updated fields values!";
+	public static final String WF_NOT_AVAILABLE = "work flow not available for the given wfId";
+	public static final String UPDATED_FIELDS_VALUES = "updateFieldValues";
+	public static final String INITIATE = "initiate";
 }

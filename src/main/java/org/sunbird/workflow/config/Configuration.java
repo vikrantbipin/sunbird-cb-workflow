@@ -81,6 +81,9 @@ public class Configuration {
     @Value("${lms.system.settings.wfProfileService.path}")
     private String profileServiceConfigPath;
 
+    @Value("${lms.system.settings.wfSignUpService.path}")
+    private String signUpSupportServiceConfigPath;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -278,5 +281,13 @@ public class Configuration {
 
     public void setProfileServiceConfigPath(String profileServiceConfigPath) {
         this.profileServiceConfigPath = profileServiceConfigPath;
+    }
+
+    public String getSignUpSupportServiceConfigPath() {
+        return signUpSupportServiceConfigPath;
+    }
+
+    public void setSignUpSupportServiceConfigPath(String signUpSupportServiceConfigPath) {
+        this.signUpSupportServiceConfigPath = signUpSupportServiceConfigPath;
     }
 }
