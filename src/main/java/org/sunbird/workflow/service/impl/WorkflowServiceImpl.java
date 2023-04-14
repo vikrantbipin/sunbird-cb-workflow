@@ -152,7 +152,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param searchCriteria Search Criteria
 	 * @return Response of Application Search
 	 */
-	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... positionSearch) {
+	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... isSearchEnabled) {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
 		switch (searchCriteria.getServiceName()) {
@@ -162,7 +162,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			case Constants.POSITION_SERVICE_NAME:
 			case Constants.ORGANISATION_SERVICE_NAME:
 			case Constants.DOMAIN_SERVICE_NAME:
-				wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria, positionSearch);
+				wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria, isSearchEnabled);
 				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData(
 						(Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
 				response = new Response();
@@ -570,8 +570,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}*/
 
-	public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... positionSearch) {
-		boolean positionSearchEnabled = (positionSearch.length < 1)?false:positionSearch[0];
+	public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... isSearchEnabled) {
+		boolean searchEnabled = (isSearchEnabled.length < 1)?false:isSearchEnabled[0];
 		Pageable pageable = getPageReqForApplicationSearch(criteria);
 		List<String> applicationIds = criteria.getApplicationIds();
 		Map<String, List<WfStatusEntity>> infos = null;
@@ -581,7 +581,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		List<WfStatusEntity> wfStatusEntities = null;
 		if (!StringUtils.isEmpty(criteria.getDeptName())) {
-			if (positionSearchEnabled==true) {
+			if (searchEnabled==true) {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
 			} else {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(

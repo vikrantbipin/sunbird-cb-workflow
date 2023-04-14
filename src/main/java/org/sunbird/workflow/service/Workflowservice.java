@@ -21,7 +21,7 @@ public interface Workflowservice {
 
     public Response getApplicationWfHistory(String rootOrg, String applicationId);
 
-    public Response applicationsSearch(String rootOrg, String org, SearchCriteria criteria, boolean... positionSearch);
+    public Response applicationsSearch(String rootOrg, String org, SearchCriteria criteria, boolean... isSearchEnabled);
 
     public Response getWorkflowProcess(String rootOrg, String wfId);
 

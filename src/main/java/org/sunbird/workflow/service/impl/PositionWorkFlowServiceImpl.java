@@ -35,7 +35,7 @@ public class PositionWorkFlowServiceImpl implements PositionWorkFlowService {
 
     @Override
     public Response positionSearch(String rootOrg, String org, SearchCriteria criteria) {
-        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.POSITION_SEARCH);
+        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.POSITION_SEARCH_ENABLED);
         return response;
     }
 }

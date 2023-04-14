@@ -35,7 +35,7 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
 
     @Override
     public Response domainSearch(String rootOrg, String org, SearchCriteria criteria) {
-        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.POSITION_SEARCH);
+        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.DOMAIN_SEARCH_ENABLED);
         return response;
     }
 }

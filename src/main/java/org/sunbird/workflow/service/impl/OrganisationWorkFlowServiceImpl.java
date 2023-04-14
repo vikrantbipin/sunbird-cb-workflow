@@ -35,7 +35,7 @@ public class OrganisationWorkFlowServiceImpl implements OrganisationWorkFlowServ
 
     @Override
     public Response orgSearch(String rootOrg, String org, SearchCriteria criteria) {
-        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.POSITION_SEARCH);
+        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.ORG_SEARCH_ENABLED);
         return response;
     }
 }

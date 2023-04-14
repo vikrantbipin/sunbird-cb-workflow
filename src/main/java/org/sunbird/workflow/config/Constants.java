@@ -142,5 +142,7 @@ public class Constants {
 	public static final String ROLES = "roles";
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
-	public static final boolean POSITION_SEARCH = true;
+	public static final boolean POSITION_SEARCH_ENABLED = true;
+	public static final boolean DOMAIN_SEARCH_ENABLED = true;
+	public static final boolean ORG_SEARCH_ENABLED = true;
 }
