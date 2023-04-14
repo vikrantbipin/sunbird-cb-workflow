@@ -580,7 +580,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		List<WfStatusEntity> wfStatusEntities = null;
 		if (!StringUtils.isEmpty(criteria.getDeptName())) {
 			if (positionSearchEnabled==true) {
-				wfStatusEntities = wfStatusRepo.findByPosition(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
 			} else {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);

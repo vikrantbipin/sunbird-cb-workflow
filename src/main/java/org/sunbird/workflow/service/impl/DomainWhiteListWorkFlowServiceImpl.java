@@ -6,14 +6,14 @@ import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SearchCriteria;
 import org.sunbird.workflow.models.WfRequest;
-import org.sunbird.workflow.service.SignUpWorkFlowService;
+import org.sunbird.workflow.service.DomainWhiteListWorkFlowService;
 import org.sunbird.workflow.service.Workflowservice;
 
 @Service
-public class SignUpWorkFlowServiceImpl implements SignUpWorkFlowService {
+public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFlowService {
 
     @Autowired
-    Workflowservice workflowService;
+    private Workflowservice workflowService;
 
     @Override
     public Response createWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
@@ -34,7 +34,7 @@ public class SignUpWorkFlowServiceImpl implements SignUpWorkFlowService {
     }
 
     @Override
-    public Response positionSearch(String rootOrg, String org, SearchCriteria criteria) {
+    public Response domainSearch(String rootOrg, String org, SearchCriteria criteria) {
         Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.POSITION_SEARCH);
         return response;
     }
