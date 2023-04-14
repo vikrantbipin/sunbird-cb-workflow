@@ -18,28 +18,28 @@ public class PositionWorkFlowController {
     private PositionWorkFlowService signUpWorkFlowService;
 
     @PostMapping("/create")
-    public ResponseEntity<Response> wfCreate(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> positionWfCreate(@RequestHeader String rootOrg, @RequestHeader String org,
                                       @RequestBody WfRequest wfRequest) {
-        Response response = signUpWorkFlowService.createWorkFlow(rootOrg, org, wfRequest);
+        Response response = signUpWorkFlowService.createPositionWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/update")
-    public ResponseEntity<Response> wfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> positionWfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
                                           @RequestBody WfRequest wfRequest) {
-        Response response = signUpWorkFlowService.updateWorkFlow(rootOrg, org, wfRequest);
+        Response response = signUpWorkFlowService.updatePositionWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(path = "/{wfId}/{applicationId}/read", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> getWfApplication(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> getPositionWfApplication(@RequestHeader String rootOrg, @RequestHeader String org,
                                               @PathVariable("wfId") String wfId, @PathVariable("applicationId") String applicationId) {
-        Response response = signUpWorkFlowService.readWFApplication(rootOrg, org, wfId, applicationId);
+        Response response = signUpWorkFlowService.readPositionWFApplication(rootOrg, org, wfId, applicationId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> wfPositionSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
+    public ResponseEntity<Response> positionWfSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
         System.out.println("In controller");
         Response response = signUpWorkFlowService.positionSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, HttpStatus.OK);

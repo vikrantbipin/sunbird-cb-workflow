@@ -160,6 +160,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 			case Constants.PROFILE_SERVICE_NAME:
 			case Constants.USER_PROFILE_FLAG_SERVICE:
 			case Constants.POSITION_SERVICE_NAME:
+			case Constants.ORGANISATION_SERVICE_NAME:
+			case Constants.DOMAIN_SERVICE_NAME:
 				wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria, positionSearch);
 				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData(
 						(Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
@@ -649,9 +651,13 @@ public class WorkflowServiceImpl implements Workflowservice {
 					uri.append(configuration.getLmsServiceHost() + configuration.getProfileServiceConfigPath());
 					break;
 				case Constants.POSITION_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getPositionServiceConfigPath());
+					break;
 				case Constants.ORGANISATION_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getOrgServiceConfigPath());
+					break;
 				case Constants.DOMAIN_SERVICE_NAME:
-					uri.append(configuration.getLmsServiceHost() + configuration.getSignUpServiceConfigPath());
+					uri.append(configuration.getLmsServiceHost() + configuration.getDomainServiceConfigPath());
 					break;
 				default:
 					break;

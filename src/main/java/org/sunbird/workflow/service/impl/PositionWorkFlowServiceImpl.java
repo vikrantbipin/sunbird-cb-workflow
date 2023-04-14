@@ -16,19 +16,19 @@ public class PositionWorkFlowServiceImpl implements PositionWorkFlowService {
     private Workflowservice workflowService;
 
     @Override
-    public Response createWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
+    public Response createPositionWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
         return response;
     }
 
     @Override
-    public Response updateWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
+    public Response updatePositionWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
         return response;
     }
 
     @Override
-    public Response readWFApplication(String rootOrg, String org, String wfId, String applicationId) {
+    public Response readPositionWFApplication(String rootOrg, String org, String wfId, String applicationId) {
         Response response = workflowService.getWfApplication(rootOrg, org, wfId, applicationId);
         return response;
     }

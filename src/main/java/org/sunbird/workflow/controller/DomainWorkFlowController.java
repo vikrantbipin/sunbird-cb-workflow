@@ -18,28 +18,28 @@ public class DomainWorkFlowController {
     private DomainWhiteListWorkFlowService domainWhiteListWorkFlowService;
 
     @PostMapping("/create")
-    public ResponseEntity<Response> wfCreate(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> domainWfCreate(@RequestHeader String rootOrg, @RequestHeader String org,
                                              @RequestBody WfRequest wfRequest) {
-        Response response = domainWhiteListWorkFlowService.createWorkFlow(rootOrg, org, wfRequest);
+        Response response = domainWhiteListWorkFlowService.createDomainWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/update")
-    public ResponseEntity<Response> wfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> domainWfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
                                              @RequestBody WfRequest wfRequest) {
-        Response response = domainWhiteListWorkFlowService.updateWorkFlow(rootOrg, org, wfRequest);
+        Response response = domainWhiteListWorkFlowService.updateDomainWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(path = "/{wfId}/{applicationId}/read", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> getWfApplication(@RequestHeader String rootOrg, @RequestHeader String org,
+    public ResponseEntity<Response> getDomainWfApplication(@RequestHeader String rootOrg, @RequestHeader String org,
                                                      @PathVariable("wfId") String wfId, @PathVariable("applicationId") String applicationId) {
-        Response response = domainWhiteListWorkFlowService.readWFApplication(rootOrg, org, wfId, applicationId);
+        Response response = domainWhiteListWorkFlowService.readDomainWFApplication(rootOrg, org, wfId, applicationId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response> wfDomainSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
+    public ResponseEntity<Response> domainWfSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
         System.out.println("In controller");
         Response response = domainWhiteListWorkFlowService.domainSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, HttpStatus.OK);

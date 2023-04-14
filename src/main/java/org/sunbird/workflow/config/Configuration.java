@@ -81,8 +81,14 @@ public class Configuration {
     @Value("${lms.system.settings.wfProfileService.path}")
     private String profileServiceConfigPath;
 
-    @Value("${lms.system.settings.wfSignUpService.path}")
-    private String signUpServiceConfigPath;
+    @Value("${lms.system.settings.wfPositionService.path}")
+    private String positionServiceConfigPath;
+
+    @Value("${lms.system.settings.wfOrgService.path}")
+    private String orgServiceConfigPath;
+
+    @Value("${lms.system.settings.wfDomainService.path}")
+    private String domainServiceConfigPath;
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -283,11 +289,27 @@ public class Configuration {
         this.profileServiceConfigPath = profileServiceConfigPath;
     }
 
-    public String getSignUpServiceConfigPath() {
-        return signUpServiceConfigPath;
+    public String getPositionServiceConfigPath() {
+        return positionServiceConfigPath;
     }
 
-    public void setSignUpServiceConfigPath(String signUpServiceConfigPath) {
-        this.signUpServiceConfigPath = signUpServiceConfigPath;
+    public void setPositionServiceConfigPath(String positionServiceConfigPath) {
+        this.positionServiceConfigPath = positionServiceConfigPath;
+    }
+
+    public String getOrgServiceConfigPath() {
+        return orgServiceConfigPath;
+    }
+
+    public void setOrgServiceConfigPath(String orgServiceConfigPath) {
+        this.orgServiceConfigPath = orgServiceConfigPath;
+    }
+
+    public String getDomainServiceConfigPath() {
+        return domainServiceConfigPath;
+    }
+
+    public void setDomainServiceConfigPath(String domainServiceConfigPath) {
+        this.domainServiceConfigPath = domainServiceConfigPath;
     }
 }
