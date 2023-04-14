@@ -263,7 +263,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param wfStatus
 	 * @return Work flow Action
 	 */
-	public WfAction getWfAction(String action, WfStatus wfStatus) {
+	private WfAction getWfAction(String action, WfStatus wfStatus) {
 		WfAction wfAction = null;
 		if (ObjectUtils.isEmpty(wfStatus.getActions())) {
 			throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
@@ -286,7 +286,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param workFlowModel
 	 * @return Workflow State
 	 */
-	public WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
+	private WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
 		WfStatus wfStatus = null;
 		for (WfStatus status : workFlowModel.getWfstates()) {
 			if (status.getState().equals(state)) {
