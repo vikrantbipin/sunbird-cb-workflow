@@ -58,7 +58,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	@Autowired
 	private Producer producer;
 
-	 Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
+	Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
 	/**
 	 * Change the status of workflow application
@@ -152,24 +152,27 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param searchCriteria Search Criteria
 	 * @return Response of Application Search
 	 */
-	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria) {
+	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... isSearchEnabled) {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
 		switch (searchCriteria.getServiceName()) {
-		// Below statement will work as OR condition.
-		case Constants.PROFILE_SERVICE_NAME:
-		case Constants.USER_PROFILE_FLAG_SERVICE:
-			wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria);
-			List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData(
-					(Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
-			response = new Response();
-			response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-			response.put(Constants.DATA, userProfiles);
-			response.put(Constants.STATUS, HttpStatus.OK);
-			break;
-		default:
-			response = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria);
-			break;
+			// Below statement will work as OR condition.
+			case Constants.PROFILE_SERVICE_NAME:
+			case Constants.USER_PROFILE_FLAG_SERVICE:
+			case Constants.POSITION_SERVICE_NAME:
+			case Constants.ORGANISATION_SERVICE_NAME:
+			case Constants.DOMAIN_SERVICE_NAME:
+				wfApplicationSearchResponse = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria, isSearchEnabled);
+				List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData(
+						(Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
+				response = new Response();
+				response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+				response.put(Constants.DATA, userProfiles);
+				response.put(Constants.STATUS, HttpStatus.OK);
+				break;
+			default:
+				response = applicationSerachOnApplicationIdGroup(rootOrg, searchCriteria);
+				break;
 		}
 		return response;
 	}
@@ -556,7 +559,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}
 
-	/*@Override
+    /*@Override
 	public Response getUserWf(String rootOrg, String org, String wid, SearchCriteria criteria) {
 		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByRootOrgAndOrgAndServiceNameAndCurrentStatusAndUserId(
 				rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);
@@ -567,7 +570,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}*/
 
-	public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria) {
+	public Response applicationSerachOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... isSearchEnabled) {
+		boolean searchEnabled = (isSearchEnabled.length < 1)?false:isSearchEnabled[0];
 		Pageable pageable = getPageReqForApplicationSearch(criteria);
 		List<String> applicationIds = criteria.getApplicationIds();
 		Map<String, List<WfStatusEntity>> infos = null;
@@ -577,8 +581,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		List<WfStatusEntity> wfStatusEntities = null;
 		if (!StringUtils.isEmpty(criteria.getDeptName())) {
-			wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(
-					criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+			if (searchEnabled==true) {
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
+			} else {
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(
+						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+			}
 		} else {
 			wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
 					criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
@@ -606,42 +614,55 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
-	
-	@Override	
-    public Response getUserWFApplicationFields(String rootOrg, String org, String wid, SearchCriteria criteria) {	
-        List<String> updatedFieldValues = wfStatusRepo.findWfFieldsForUser(rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);	
-        TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {	
-        };	
-        Set<String> fieldsSet = new HashSet<>();	
-        for (String fields : updatedFieldValues) {	
-            if (!StringUtils.isEmpty(fields)) {	
-                try {	
-                    List<HashMap<String, Object>> values = mapper.readValue(fields, typeRef);	
-                    for (HashMap<String, Object> wffieldReq : values) {	
-                        HashMap<String, Object> toValueMap = (HashMap<String, Object>) wffieldReq.get("toValue");	
-                        fieldsSet.add(toValueMap.entrySet().iterator().next().getKey());	
-                    }	
-                } catch (IOException e) {	
-                    log.error("Exception occurred while parsing wf fields!");
-                    log.error(e.toString());	
-                }	
-            }	
-        }	
-        Response response = new Response();	
-        response.put(Constants.MESSAGE, Constants.SUCCESSFUL);	
-        response.put(Constants.DATA, fieldsSet);	
-        response.put(Constants.STATUS, HttpStatus.OK);	
-        return response;	
-    }
 
-	private WorkFlowModel getWorkFlowConfig(String serviceName) {
+	@Override
+	public Response getUserWFApplicationFields(String rootOrg, String org, String wid, SearchCriteria criteria) {
+		List<String> updatedFieldValues = wfStatusRepo.findWfFieldsForUser(rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);
+		TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {
+		};
+		Set<String> fieldsSet = new HashSet<>();
+		for (String fields : updatedFieldValues) {
+			if (!StringUtils.isEmpty(fields)) {
+				try {
+					List<HashMap<String, Object>> values = mapper.readValue(fields, typeRef);
+					for (HashMap<String, Object> wffieldReq : values) {
+						HashMap<String, Object> toValueMap = (HashMap<String, Object>) wffieldReq.get("toValue");
+						fieldsSet.add(toValueMap.entrySet().iterator().next().getKey());
+					}
+				} catch (IOException e) {
+					log.error("Exception occurred while parsing wf fields!");
+                    log.error(e.toString());
+				}
+			}
+		}
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, fieldsSet);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
+	public WorkFlowModel getWorkFlowConfig(String serviceName) {
 		try {
 			Map<String, Object> wfConfig = new HashMap<>();
-			if (serviceName.equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
-				StringBuilder uri = new StringBuilder();
-				uri.append(configuration.getLmsServiceHost() + configuration.getProfileServiceConfigPath());
-				wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
+			StringBuilder uri = new StringBuilder();
+			switch (serviceName) {
+				case Constants.PROFILE_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getProfileServiceConfigPath());
+					break;
+				case Constants.POSITION_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getPositionServiceConfigPath());
+					break;
+				case Constants.ORGANISATION_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getOrgServiceConfigPath());
+					break;
+				case Constants.DOMAIN_SERVICE_NAME:
+					uri.append(configuration.getLmsServiceHost() + configuration.getDomainServiceConfigPath());
+					break;
+				default:
+					break;
 			}
+			wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
 			Map<String, Object> result = (Map<String, Object>) wfConfig.get(Constants.RESULT);
 			Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
 			Map<String,Object> wfStates = mapper.readValue((String) response.get(Constants.VALUE),Map.class);
