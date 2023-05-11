@@ -81,6 +81,18 @@ public class Configuration {
     @Value("${lms.system.settings.wfProfileService.path}")
     private String profileServiceConfigPath;
 
+    @Value("${lms.system.settings.wfPositionService.path}")
+    private String positionServiceConfigPath;
+
+    @Value("${lms.system.settings.wfOrgService.path}")
+    private String orgServiceConfigPath;
+
+    @Value("${lms.system.settings.wfDomainService.path}")
+    private String domainServiceConfigPath;
+
+    @Value("${notification.sender.mail}")
+    private String senderMail;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -278,5 +290,37 @@ public class Configuration {
 
     public void setProfileServiceConfigPath(String profileServiceConfigPath) {
         this.profileServiceConfigPath = profileServiceConfigPath;
+    }
+
+    public String getPositionServiceConfigPath() {
+        return positionServiceConfigPath;
+    }
+
+    public void setPositionServiceConfigPath(String positionServiceConfigPath) {
+        this.positionServiceConfigPath = positionServiceConfigPath;
+    }
+
+    public String getOrgServiceConfigPath() {
+        return orgServiceConfigPath;
+    }
+
+    public void setOrgServiceConfigPath(String orgServiceConfigPath) {
+        this.orgServiceConfigPath = orgServiceConfigPath;
+    }
+
+    public String getDomainServiceConfigPath() {
+        return domainServiceConfigPath;
+    }
+
+    public void setDomainServiceConfigPath(String domainServiceConfigPath) {
+        this.domainServiceConfigPath = domainServiceConfigPath;
+    }
+
+    public String getSenderMail() {
+        return senderMail;
+    }
+
+    public void setSenderMail(String senderMail) {
+        this.senderMail = senderMail;
     }
 }
