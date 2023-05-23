@@ -99,11 +99,18 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
 				employmentDetails.put(Constants.DEPARTMENT_NAME, deptNameUpdated);
 			}
+
 			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {
 				logger.error("user profile datatype error");
 				failedCase(wfRequest);
 				return;
+			}
+			String schema = getVerifiedProfileSchema();
+			if (validateJsonAgainstSchema(schema, new Gson().toJson(updateRequest))) {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
+			} else {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, false);
 			}
 			logger.error("update API request is : ", updateRequest);
 			Map<String, Object> updateUserApiResp = requestServiceImpl
@@ -111,35 +118,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
 				logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 				failedCase(wfRequest);
-			} else {
-				readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
-				if (null != readData && Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
-					Map<String, Object> response = (Map<String, Object>) ((Map<String, Object>) readData
-							.get(Constants.RESULT)).get(Constants.RESPONSE);
-					Map<String, Object> existingProfileDetails = (Map<String, Object>) response
-							.get(Constants.PROFILE_DETAILS);
-					logger.info("Existing Profile Details : " + new Gson().toJson(existingProfileDetails));
-					String schema = getVerifiedProfileSchema();
-					if (validateJsonAgainstSchema(schema, new Gson().toJson(existingProfileDetails))) {
-						existingProfileDetails.put(Constants.VERIFIED_KARMAYOGI, true);
-					} else {
-						existingProfileDetails.put(Constants.VERIFIED_KARMAYOGI, false);
-					}
-					Map<String, Object> updateRequestValue = new HashMap<>();
-					updateRequestValue.put(Constants.PROFILE_DETAILS, existingProfileDetails);
-					updateRequestValue.put(Constants.USER_ID, wfRequest.getUserId());
-					Map<String, Object> updateRequestNew = new HashMap<>();
-					updateRequestNew.put(Constants.REQUEST, updateRequestValue);
-					updateUserApiResp = requestServiceImpl
-							.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), updateRequestNew, getHeaders());
-					if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
-						logger.error("User update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-						failedCase(wfRequest);
-					}
-				} else {
-					logger.error("Failed to read user :" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
-					failedCase(wfRequest);
-				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception occurred : ", e);
