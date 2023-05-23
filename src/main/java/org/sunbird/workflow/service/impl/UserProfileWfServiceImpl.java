@@ -116,8 +116,9 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			{
 				readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 				if (null != readData && Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
-					logger.info("Reading Profile Details : " + readData.toString());
-					Map<String, Object> existingProfileDetails = (Map<String, Object>) readData
+					Map<String, Object> response = (Map<String, Object>) ((Map<?, ?>) readData
+							.get(Constants.RESULT)).get(Constants.RESPONSE);
+					Map<String, Object> existingProfileDetails = (Map<String, Object>) response
 							.get(Constants.PROFILE_DETAILS);
 					logger.info("Existing Profile Details : " + new Gson().toJson(existingProfileDetails));
 					String schema = getVerifiedProfileSchema();
@@ -128,13 +129,13 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 					}
 					Map<String, Object> updateRequestValue = new HashMap<>();
 					updateRequestValue.put(Constants.PROFILE_DETAILS, existingProfileDetails);
-					Map<String, Object> updateRequestNew = new HashMap<>();
-					updateRequest.put(Constants.REQUEST, updateRequestValue);
-					logger.error("update API request is : ",updateRequest );
+					updateRequestValue.put(Constants.USER_ID, wfRequest.getUserId());
+					Map<String, Object>  updateRequestNew = new HashMap<>();
+					updateRequestNew.put(Constants.REQUEST, updateRequestValue);
 					updateUserApiResp = requestServiceImpl
-							.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), updateRequest, getHeaders());
+							.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), updateRequestNew, getHeaders());
 					if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
-						logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+						logger.error("User update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 						failedCase(wfRequest);
 					}
 				}
@@ -142,7 +143,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				{
 					logger.error("Failed to read user :" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 					failedCase(wfRequest);
-					return;
 				}
 			}
 		} catch (Exception e) {
