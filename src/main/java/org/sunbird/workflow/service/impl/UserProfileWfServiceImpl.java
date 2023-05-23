@@ -114,7 +114,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			} else {
 				readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 				if (null != readData && Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
-					Map<String, Object> response = (Map<String, Object>) ((Map<?, ?>) readData
+					Map<String, Object> response = (Map<String, Object>) ((Map<String, Object>) readData
 							.get(Constants.RESULT)).get(Constants.RESPONSE);
 					Map<String, Object> existingProfileDetails = (Map<String, Object>) response
 							.get(Constants.PROFILE_DETAILS);
