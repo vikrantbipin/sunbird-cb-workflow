@@ -74,7 +74,6 @@ public class Configuration {
 
     @Value("${kafka.topics.workflow.notification}")
     private String workFlowNotificationTopic;
-
     @Value("${kafka.topics.user.registration.createUser}")
     private String workflowCreateUserTopic;
 
@@ -92,6 +91,7 @@ public class Configuration {
 
     @Value("${notification.sender.mail}")
     private String senderMail;
+
     @Value("${lms.system.settings.verified.profile.fields.path}")
     private String verifiedProfileFieldsPath;
 
