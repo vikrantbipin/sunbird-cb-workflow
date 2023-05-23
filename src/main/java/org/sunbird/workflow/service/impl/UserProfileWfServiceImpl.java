@@ -106,6 +106,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
+			logger.error("update API request is 1: ", updateRequest);
 			String schema = getVerifiedProfileSchema();
 			if (validateJsonAgainstSchema(schema, new Gson().toJson(updateRequest))) {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
