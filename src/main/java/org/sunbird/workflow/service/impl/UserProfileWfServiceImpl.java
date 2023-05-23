@@ -76,7 +76,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
 	private void updateProfile(WfRequest wfRequest) {
 		try {
-			String deptNameUpdated = migrationUpdate(wfRequest);
+			//String deptNameUpdated = migrationUpdate(wfRequest);
 			Map<String, Object> readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
 			if (null != readData && !Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
 				logger.error("user not found" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
@@ -106,6 +106,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
+			logger.error("update API request is 1: ", updateRequest);
 			String schema = getVerifiedProfileSchema();
 			if (validateJsonAgainstSchema(schema, new Gson().toJson(updateRequest))) {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
