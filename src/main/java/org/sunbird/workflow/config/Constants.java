@@ -145,4 +145,5 @@ public class Constants {
 	public static final boolean POSITION_SEARCH_ENABLED = true;
 	public static final boolean DOMAIN_SEARCH_ENABLED = true;
 	public static final boolean ORG_SEARCH_ENABLED = true;
+	public static final String VERIFIED_KARMAYOGI = "verifiedKarmayogi";
 }

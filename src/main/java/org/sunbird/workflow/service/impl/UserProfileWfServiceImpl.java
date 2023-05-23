@@ -3,6 +3,13 @@ package org.sunbird.workflow.service.impl;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.Gson;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,13 +105,45 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
-			logger.info("testing");
 			logger.error("update API request is : ",updateRequest );
 			Map<String, Object> updateUserApiResp = requestServiceImpl
 					.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
 				logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 				failedCase(wfRequest);
+			}
+			else
+			{
+				readData = (Map<String, Object>) userProfileRead(wfRequest.getApplicationId());
+				if (null != readData && Constants.OK.equals(readData.get(Constants.RESPONSE_CODE))) {
+					logger.info("Reading Profile Details : " + readData.toString());
+					Map<String, Object> existingProfileDetails = (Map<String, Object>) readData
+							.get(Constants.PROFILE_DETAILS);
+					logger.info("Existing Profile Details : " + new Gson().toJson(existingProfileDetails));
+					String schema = getVerifiedProfileSchema();
+					if (validateJsonAgainstSchema(schema, new Gson().toJson(existingProfileDetails))) {
+						existingProfileDetails.put(Constants.VERIFIED_KARMAYOGI, true);
+					} else {
+						existingProfileDetails.put(Constants.VERIFIED_KARMAYOGI, false);
+					}
+					Map<String, Object> updateRequestValue = new HashMap<>();
+					updateRequestValue.put(Constants.PROFILE_DETAILS, existingProfileDetails);
+					Map<String, Object> updateRequestNew = new HashMap<>();
+					updateRequest.put(Constants.REQUEST, updateRequestValue);
+					logger.error("update API request is : ",updateRequest );
+					updateUserApiResp = requestServiceImpl
+							.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), updateRequest, getHeaders());
+					if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
+						logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+						failedCase(wfRequest);
+					}
+				}
+				else
+				{
+					logger.error("Failed to read user :" + ((Map<String, Object>) readData.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+					failedCase(wfRequest);
+					return;
+				}
 			}
 		} catch (Exception e) {
 			logger.error("Exception occurred : ", e);
@@ -374,5 +413,43 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		request.put("filters", filters);
 		requestObject.put("request", request);
 		return requestObject;
+	}
+
+	public boolean validateJsonAgainstSchema(String jsonSchema, String jsonData) {
+		JSONObject rawSchema;
+		try {
+			rawSchema = new JSONObject(new JSONTokener(jsonSchema));
+		} catch (JSONException e) {
+			throw new RuntimeException("Can't parse json schema: " + e.getMessage(), e);
+		}
+		JSONObject data;
+		try {
+			data = new JSONObject(new JSONTokener(jsonData));
+		} catch (JSONException e) {
+			throw new RuntimeException("Can't parse json data: " + e.getMessage(), e);
+		}
+		Schema schema = SchemaLoader.load(rawSchema);
+		try {
+			schema.validate(data);
+		} catch (ValidationException ex) {
+			StringBuffer result = new StringBuffer("Validation against Json schema failed: \n");
+			ex.getAllMessages().stream().peek(e -> result.append("\n")).forEach(result::append);
+			logger.info(String.format("Exception : %s", result.toString()));
+			return false;
+		}
+		return true;
+	}
+
+	public String getVerifiedProfileSchema() {
+		Map<String, String> header = new HashMap<>();
+		Object data = requestServiceImpl
+				.fetchResultUsingGet(new StringBuilder(configuration.getLmsServiceHost() + configuration.getLmsSystemSettingsVerifiedProfileFieldsPath()));
+		if (null == data){
+			return null;
+		}
+		Map<String, Object> readResponse = mapper.convertValue(data, Map.class);
+		Map<String, Object> result = (Map<String, Object>) readResponse.get(Constants.RESULT);
+		Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
+		return (String) response.get(Constants.VALUE);
 	}
 }
