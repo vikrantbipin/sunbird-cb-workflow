@@ -3,6 +3,13 @@ package org.sunbird.workflow.service.impl;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.Gson;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,23 +90,27 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			String rootOrgId = (String) rootOrg.get(Constants.ROOT_ORG_ID);
 
 			if (null != deptNameUpdated) {
-				boolean assignFlag = assignRole(rootOrgId,wfRequest.getApplicationId());
+				boolean assignFlag = assignRole(rootOrgId, wfRequest.getApplicationId());
 				if (!assignFlag) {
 					logger.error("Failed to assign PUBLIC role to user after Migration");
 					failedCase(wfRequest);
 					return;
 				}
 				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
-				employmentDetails.put(Constants.DEPARTMENT_NAME,deptNameUpdated);
+				employmentDetails.put(Constants.DEPARTMENT_NAME, deptNameUpdated);
 			}
+
 			Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getApplicationId(), wfRequest.getUpdateFieldValues(), profileDetails);
 			if (null == updateRequest) {
 				logger.error("user profile datatype error");
 				failedCase(wfRequest);
 				return;
 			}
-			logger.info("testing");
-			logger.error("update API request is : ",updateRequest );
+			if (validateJsonAgainstSchema(updateRequest)) {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
+			} else {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, false);
+			}
 			Map<String, Object> updateUserApiResp = requestServiceImpl
 					.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
@@ -374,4 +385,82 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		requestObject.put("request", request);
 		return requestObject;
 	}
+
+	public List<String> getMdoAdminDetails(String rootOrgId) {
+		List<String> mdoResults = new ArrayList<>();
+		Map<String, Object> requestObject = new HashMap<>();
+		Map<String, Object> request = new HashMap<>();
+		List<String> roles = new ArrayList<>();
+		roles.add(Constants.MDO_ADMIN);
+		Map<String, Object> filters = new HashMap<>();
+		filters.put("rootOrgId", rootOrgId);
+		filters.put("organisations.roles", roles);
+		request.put("filters", filters);
+		request.put(Constants.FIELDS, configuration.getMdoAdminSearchFields());
+		requestObject.put("request", request);
+		HashMap<String, String> headersValue = new HashMap<>();
+		headersValue.put("Content-Type", "application/json");
+		try {
+			StringBuilder builder = new StringBuilder(configuration.getLmsServiceHost());
+			builder.append(configuration.getLmsUserSearchEndPoint());
+			Map<String, Object> mdoAdminSearchResult = (Map<String, Object>) requestServiceImpl
+					.fetchResultUsingPost(builder, requestObject, Map.class, getHeaders());
+			if (mdoAdminSearchResult != null
+					&& "OK".equalsIgnoreCase((String) mdoAdminSearchResult.get(Constants.RESPONSE_CODE))) {
+				Map<String, Object> map = (Map<String, Object>) mdoAdminSearchResult.get(Constants.RESULT);
+				Map<String, Object> response = (Map<String, Object>) map.get(Constants.RESPONSE);
+				List<Map<String, Object>> contents = (List<Map<String, Object>>) response.get(Constants.CONTENT);
+				if (!CollectionUtils.isEmpty(contents)) {
+					for (Map<String, Object> content : contents) {
+						HashMap<String, Object> profileDetails = (HashMap<String, Object>) content
+								.get(Constants.PROFILE_DETAILS);
+						if (!CollectionUtils.isEmpty(profileDetails)) {
+							HashMap<String, Object> personalDetails = (HashMap<String, Object>) profileDetails
+									.get(Constants.PERSONAL_DETAILS);
+							if (!CollectionUtils.isEmpty(personalDetails)) {
+								mdoResults.add((String) personalDetails.get(Constants.PRIMARY_EMAIL));
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Exception while fetching user setails : ",e);
+			throw new ApplicationException("Hub Service ERROR: ", e);
+		}
+		return mdoResults;
+	}
+
+	public boolean validateJsonAgainstSchema(Map<String, Object> existingProfileDetails) {
+		try {
+			String jsonData = new Gson().toJson(existingProfileDetails);
+			String jsonSchema = getVerifiedProfileSchema();
+			JSONObject rawSchema = new JSONObject(new JSONTokener(jsonSchema));
+			JSONObject data = new JSONObject(new JSONTokener(jsonData));
+			Schema schema = SchemaLoader.load(rawSchema);
+			schema.validate(data);
+		} catch (JSONException e) {
+			throw new RuntimeException("Can't parse json schema: " + e.getMessage(), e);
+		} catch (ValidationException ex) {
+			StringBuffer result = new StringBuffer("Validation against Json schema failed: \n");
+			ex.getAllMessages().stream().peek(e -> result.append("\n")).forEach(result::append);
+			logger.info(String.format("Exception : %s", result.toString()));
+			return false;
+		}
+		return true;
+	}
+
+	public String getVerifiedProfileSchema() {
+		Map<String, String> header = new HashMap<>();
+		Object data = requestServiceImpl
+				.fetchResultUsingGet(new StringBuilder(configuration.getLmsServiceHost() + configuration.getVerifiedProfileFieldsPath()));
+		if (null == data) {
+			return null;
+		}
+		Map<String, Object> readResponse = mapper.convertValue(data, Map.class);
+		Map<String, Object> result = (Map<String, Object>) readResponse.get(Constants.RESULT);
+		Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
+		return (String) response.get(Constants.VALUE);
+	}
+
 }

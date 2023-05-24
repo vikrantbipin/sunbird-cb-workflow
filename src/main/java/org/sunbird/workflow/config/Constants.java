@@ -66,6 +66,9 @@ public class Constants {
 	public static final String SEARCH_CRITERIA_VALIDATION = "Provide the mandatory fields for search!";
 
 	public static final String PROFILE_SERVICE_NAME = "profile";
+	public static final String POSITION_SERVICE_NAME = "position";
+	public static final String ORGANISATION_SERVICE_NAME = "organisation";
+	public static final String DOMAIN_SERVICE_NAME = "domain";
 
 	public static final String SERVICE_NAME_EXCEPTION = "No configured service found!";
 
@@ -135,8 +138,14 @@ public class Constants {
 	public static final String ROLES = "roles";
 	public static final String PUBLIC = "PUBLIC";
 	public static final String VALUE = "value";
-
-
-
-
+	public static final boolean POSITION_SEARCH_ENABLED = true;
+	public static final boolean DOMAIN_SEARCH_ENABLED = true;
+	public static final boolean ORG_SEARCH_ENABLED = true;
+	public static final String MDO_ADMIN = "MDO_ADMIN";
+	public static final String FIELDS = "fields";
+	public static final String APPROVED = "APPROVED";
+	public static final String SUPPORT_EMAIL = "supportEmail";
+	public static final String LINK = "link";
+	public static final String USER_NAME = "userName";
+	public static final String VERIFIED_KARMAYOGI = "verifiedKarmayogi";
 }
