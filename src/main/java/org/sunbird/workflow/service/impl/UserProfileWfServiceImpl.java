@@ -113,7 +113,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			} else {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, false);
 			}
-			logger.error("update API request is : ", updateRequest);
 			Map<String, Object> updateUserApiResp = requestServiceImpl
 					.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
