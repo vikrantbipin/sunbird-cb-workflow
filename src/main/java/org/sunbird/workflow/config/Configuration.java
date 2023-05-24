@@ -389,11 +389,12 @@ public class Configuration {
         this.userRegistrationServiceConfigPath = userRegistrationServiceConfigPath;
     }
 
-    public String getLmsSystemSettingsVerifiedProfileFieldsPath() {
+
+    public String getVerifiedProfileFieldsPath() {
         return verifiedProfileFieldsPath;
     }
 
-    public void setLmsSystemSettingsVerifiedProfileFieldsPath(String verifiedProfileFieldsPath) {
+    public void setVerifiedProfileFieldsPath(String verifiedProfileFieldsPath) {
         this.verifiedProfileFieldsPath = verifiedProfileFieldsPath;
     }
 }

@@ -106,7 +106,6 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
-			logger.error("update API request is 1: ", updateRequest);
 			String schema = getVerifiedProfileSchema();
 			if (validateJsonAgainstSchema(schema, new Gson().toJson(updateRequest))) {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
@@ -462,7 +461,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 	public String getVerifiedProfileSchema() {
 		Map<String, String> header = new HashMap<>();
 		Object data = requestServiceImpl
-				.fetchResultUsingGet(new StringBuilder(configuration.getLmsServiceHost() + configuration.getLmsSystemSettingsVerifiedProfileFieldsPath()));
+				.fetchResultUsingGet(new StringBuilder(configuration.getLmsServiceHost() + configuration.getVerifiedProfileFieldsPath()));
 		if (null == data) {
 			return null;
 		}
