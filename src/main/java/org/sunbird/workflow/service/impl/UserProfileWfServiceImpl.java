@@ -106,8 +106,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
-			String schema = getVerifiedProfileSchema();
-			if (validateJsonAgainstSchema(schema, new Gson().toJson(updateRequest))) {
+			if (validateJsonAgainstSchema(updateRequest)) {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
 			} else {
 				updateRequest.put(Constants.VERIFIED_KARMAYOGI, false);
@@ -433,22 +432,16 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 		return mdoResults;
 	}
 
-	public boolean validateJsonAgainstSchema(String jsonSchema, String jsonData) {
-		JSONObject rawSchema;
+	public boolean validateJsonAgainstSchema(Map<String, Object> existingProfileDetails) {
 		try {
-			rawSchema = new JSONObject(new JSONTokener(jsonSchema));
+			String jsonData = new Gson().toJson(existingProfileDetails);
+			String jsonSchema = getVerifiedProfileSchema();
+			JSONObject rawSchema = new JSONObject(new JSONTokener(jsonSchema));
+			JSONObject data = new JSONObject(new JSONTokener(jsonData));
+			Schema schema = SchemaLoader.load(rawSchema);
+			schema.validate(data);
 		} catch (JSONException e) {
 			throw new RuntimeException("Can't parse json schema: " + e.getMessage(), e);
-		}
-		JSONObject data;
-		try {
-			data = new JSONObject(new JSONTokener(jsonData));
-		} catch (JSONException e) {
-			throw new RuntimeException("Can't parse json data: " + e.getMessage(), e);
-		}
-		Schema schema = SchemaLoader.load(rawSchema);
-		try {
-			schema.validate(data);
 		} catch (ValidationException ex) {
 			StringBuffer result = new StringBuffer("Validation against Json schema failed: \n");
 			ex.getAllMessages().stream().peek(e -> result.append("\n")).forEach(result::append);
