@@ -15,7 +15,7 @@ import org.sunbird.workflow.service.impl.NotificationServiceImpl;
 
 @Service
 public class NotificationConsumer {
-	Logger logger = LogManager.getLogger(ApplicationProcessingConsumer.class);
+	Logger logger = LogManager.getLogger(NotificationConsumer.class);
 
 	@Autowired
 	private ObjectMapper mapper;
