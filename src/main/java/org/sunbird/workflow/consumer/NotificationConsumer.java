@@ -23,8 +23,7 @@ public class NotificationConsumer {
 	@Autowired
 	private NotificationServiceImpl notificationService;
 
-	@KafkaListener(id = "id2", groupId = "workflowNotificationTopic-consumer", topicPartitions = {
-			@TopicPartition(topic = "${kafka.topics.workflow.notification}", partitions = { "0", "1", "2", "3" }) })
+	@KafkaListener( groupId = "workflowNotificationTopic-consumer", topics = "${kafka.topics.workflow.notification}")
 	public void processMessage(ConsumerRecord<String, String> data) {
 		WfRequest wfRequest = null;
 		try {
@@ -37,12 +36,15 @@ public class NotificationConsumer {
 		switch (wfRequest.getServiceName()) {
 			case Constants.PROFILE_SERVICE_NAME:
 				notificationService.sendNotification(wfRequest);
+				logger.info("Profile service notification sent");
 				notificationService.sendNotificationToMdoAdmin(wfRequest);
+				logger.info("Profile service notification sent to MDO");
 				break;
 			case Constants.POSITION_SERVICE_NAME:
 			case Constants.DOMAIN_SERVICE_NAME:
 			case Constants.ORGANISATION_SERVICE_NAME:
 				notificationService.sendEmailNotification(wfRequest);
+				logger.info("Organisation email notification sent");
 				break;
 			case Constants.BLENDED_PROGRAM_SERVICE_NAME:
 				notificationService.sendNotification(wfRequest);
