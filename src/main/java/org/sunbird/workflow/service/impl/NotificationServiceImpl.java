@@ -120,9 +120,7 @@ public class NotificationServiceImpl {
 				} else {
 					HashMap<String, Object> toValue = (HashMap<String, Object>) updatedFieldValue.get().get(TO_VALUE_CONST);
 					params.put("body", MAIL_BODY.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus())
-							.replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey())
-							.replace(COMMENT_TAG, (String) toValue.entrySet().iterator().next().getValue())
-							.replace(TO_VALUE_TAG, (String) toValue.entrySet().iterator().next().getValue()));
+							.replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey()).replace(COMMENT_TAG, (String) toValue.entrySet().iterator().next().getValue()).replace(TO_VALUE_TAG, (String) toValue.entrySet().iterator().next().getValue()));
 				}
 			}
 			params.put("orgImageUrl", null);
@@ -175,9 +173,7 @@ public class NotificationServiceImpl {
 				if (updatedFieldValue.isPresent()) {
 					HashMap<String, Object> toValue = (HashMap<String, Object>) updatedFieldValue.get().get(TO_VALUE_CONST);
 					params.put("body", MAIL_BODY.replace(STATE_NAME_TAG, wfStatusEntity.getCurrentStatus())
-							.replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey())
-							.replace(COMMENT_TAG, (String) toValue.entrySet().iterator().next().getValue())
-							.replace(TO_VALUE_TAG, (String) toValue.entrySet().iterator().next().getValue()));
+							.replace(FIELD_KEY_TAG, toValue.entrySet().iterator().next().getKey()).replace(COMMENT_TAG, (String) toValue.entrySet().iterator().next().getValue()).replace(TO_VALUE_TAG, (String) toValue.entrySet().iterator().next().getValue()));
 				}
 				params.put("orgImageUrl", null);
 				template.setParams(params);
