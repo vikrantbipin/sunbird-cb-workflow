@@ -53,6 +53,9 @@ public class ApplicationProcessingServiceImpl {
 				if (Constants.SEND_FOR_PC_APPROVAL.equalsIgnoreCase(wfRequest.getState())) {
 					bpWorkFlowService.updateEnrolmentDetails(wfRequest);
 				}
+				if (Constants.APPROVED.equalsIgnoreCase(wfRequest.getState())) {
+					bpWorkFlowService.updateEnrolmentDetails(wfRequest);
+				}
 				break;
 			default:
 				break;

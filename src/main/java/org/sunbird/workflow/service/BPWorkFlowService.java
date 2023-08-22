@@ -19,4 +19,12 @@ public interface BPWorkFlowService {
     Response blendedProgramUserSearch(String rootOrg, String org, String userId, SearchCriteria searchCriteria);
 
     public Response readBPWFApplication(String wfId, boolean isPc);
+
+    /**
+     * @param rootOrg   - Root Organization Name ex: "igot"
+     * @param org       - Organization name ex: "dopt"
+     * @param wfRequest - WorkFlow request which needs to be processed.
+     * @return - Return the response of success/failure after processing the request.
+     */
+    Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
 }
