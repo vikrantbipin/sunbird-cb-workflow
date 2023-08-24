@@ -194,4 +194,16 @@ public class Constants {
 	public static final String TAG = "tag";
 	public static final String BP_ENROLL_STATE = "ENROLL_STATE";
 	public static final String BP_UPDATE_STATE = "UPDATE_STATE";
+	public static final String COURSE_ID_LIST = "courseIdList";
+	public static final String END_DATE = "end_date";
+	public static final String BATCH_ID_KEY = "batchid";
+	public static final String COURSE_ID_KEY = "courseid";
+	public static final String BATCH_DETAILS_KEY = "batchDetails";
+	public static final String NEW_REQUEST_COUNT = "newRequestCount";
+	public static final String LEARNER_COUNT = "learnerCount";
+	public static final String REJECTED_COUNT = "rejectedCount";
+	public static final String TOTAL_NEW_REQUEST_COUNT = "totalNewRequestCount";
+	public static final String TOTAL_LEARNER_COUNT = "totalLearnerCount";
+	public static final String TOTAL_REJECTED_COUNT = "totalRejectedCount";
+	public static final String COUNT = "count";
 }
