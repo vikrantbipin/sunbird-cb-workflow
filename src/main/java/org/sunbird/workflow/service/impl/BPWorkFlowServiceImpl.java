@@ -238,6 +238,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 response.put(Constants.MESSAGE, Constants.FAILED);
                 response.put(Constants.ERROR_MESSAGE, errMsg);
                 response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+                response.setResponseCode(HttpStatus.BAD_REQUEST);
                 return response;
             }
             Map<String, Object> respCourseDetails = new HashMap<String, Object>();
@@ -312,11 +313,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.setResponseCode(HttpStatus.OK);
             response.getResult().put(Constants.COUNT, respCourseDetails.size());
             response.getResult().put(Constants.CONTENT, respCourseDetails.values());
-
         } catch (Exception e) {
             String errMsg = String.format("Failed to get the stats for course. Exception: ", e.getMessage());
-            response.put(Constants.MESSAGE, Constants.FAILED);
+            response.put(Constants.ERROR_MESSAGE, errMsg);
             response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+            response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
             logger.error(errMsg, e);
         }
         return response;
