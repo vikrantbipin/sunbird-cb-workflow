@@ -57,7 +57,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
         int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
-        int totalApprovedUserCount = getTotalUserEnrolCount(wfRequest);
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
         boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
                 Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
@@ -98,7 +98,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     public void updateEnrolmentDetails(WfRequest wfRequest) {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        int totalApprovedUserCount = getTotalUserEnrolCount(wfRequest);
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
         boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
                 Constants.BP_UPDATE_STATE);
         if (enrolAccess) {
@@ -167,7 +167,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         return Collections.emptyMap();
     }
 
-    private int getTotalUserEnrolCount(WfRequest wfRequest) {
+    private int getTotalApprovedUserCount(WfRequest wfRequest) {
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put(Constants.BATCH_ID, wfRequest.getApplicationId());
         int totalCount = cassandraOperation.getCountByProperties(Constants.KEYSPACE_SUNBIRD_COURSES,
@@ -244,7 +244,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         }
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        return validateBatchEnrolment(courseBatchDetails, getTotalUserEnrolCount(wfRequest), 0,
+        return validateBatchEnrolment(courseBatchDetails, getTotalApprovedUserCount(wfRequest), 0,
                 Constants.BP_UPDATE_STATE);
     }
 
