@@ -50,18 +50,20 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     private Configuration configuration;
 
     @Autowired
-	private WfStatusRepo wfStatusRepo;
+    private WfStatusRepo wfStatusRepo;
 
     @Override
     public Response enrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
         int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
         int totalApprovedUserCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount, Constants.BP_ENROLL_STATE);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
+                Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
-            response.put(Constants.STATUS,HttpStatus.BAD_REQUEST);
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
         Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
@@ -70,12 +72,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Override
     public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
-        if(validateBatchUserRequestAccess(wfRequest)) {
+        if (validateBatchUserRequestAccess(wfRequest)) {
             return workflowService.workflowTransition(rootOrg, org, wfRequest);
         }
         Response response = new Response();
         response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
-        response.put(Constants.STATUS,HttpStatus.BAD_REQUEST);
+        response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
         return response;
     }
 
@@ -87,22 +89,25 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Override
     public Response blendedProgramSearch(String rootOrg, String org, SearchCriteria criteria) {
-        Response response = workflowService.applicationsSearch(rootOrg, org, criteria, Constants.BLENDED_PROGRAM_SEARCH_ENABLED);
+        Response response = workflowService.applicationsSearch(rootOrg, org, criteria,
+                Constants.BLENDED_PROGRAM_SEARCH_ENABLED);
         return response;
     }
 
     @Override
     public void updateEnrolmentDetails(WfRequest wfRequest) {
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
         int totalApprovedUserCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0, Constants.BP_UPDATE_STATE);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
+                Constants.BP_UPDATE_STATE);
         if (enrolAccess) {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put(Constants.USER_ID, wfRequest.getUserId());
             requestBody.put(Constants.BATCH_ID, wfRequest.getApplicationId());
             requestBody.put(Constants.COURSE_ID, wfRequest.getCourseId());
             Map<String, Object> request = new HashMap<>();
-            request.put(Constants.REQUEST,requestBody);
+            request.put(Constants.REQUEST, requestBody);
             HashMap<String, String> headersValue = new HashMap<>();
             headersValue.put("Content-Type", "application/json");
             try {
@@ -114,7 +119,8 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                         && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
                     logger.info("User enrolment success");
                 } else {
-                    logger.error("user enrolment failed" + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+                    logger.error("user enrolment failed"
+                            + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
                 }
             } catch (Exception e) {
                 logger.error("Exception while enrol user");
@@ -161,15 +167,16 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         return Collections.emptyMap();
     }
 
-
     private int getTotalUserEnrolCount(WfRequest wfRequest) {
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put(Constants.BATCH_ID, wfRequest.getApplicationId());
-        int totalCount = cassandraOperation.getCountByProperties(Constants.KEYSPACE_SUNBIRD_COURSES, Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap);
+        int totalCount = cassandraOperation.getCountByProperties(Constants.KEYSPACE_SUNBIRD_COURSES,
+                Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap);
         return totalCount;
     }
 
-    private boolean validateBatchEnrolment(Map<String, Object> courseBatchDetails, int totalApprovedUserCount, int totalUserEnrolCount, String bpState) {
+    private boolean validateBatchEnrolment(Map<String, Object> courseBatchDetails, int totalApprovedUserCount,
+            int totalUserEnrolCount, String bpState) {
         if (MapUtils.isEmpty(courseBatchDetails)) {
             return false;
         }
@@ -181,8 +188,9 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return false;
         }
         Date enrollmentEndDate = (Date) courseBatchDetails.get(Constants.ENROLMENT_END_DATE);
-        if(currentBatchSize != 0 && Constants.BP_ENROLL_STATE.equals(bpState)) {
-            currentBatchSize = (int)Math.round(currentBatchSize + (((double)configuration.getBpBatchEnrolLimitBufferSize()/100)*currentBatchSize));
+        if (currentBatchSize != 0 && Constants.BP_ENROLL_STATE.equals(bpState)) {
+            currentBatchSize = (int) Math.round(currentBatchSize
+                    + (((double) configuration.getBpBatchEnrolLimitBufferSize() / 100) * currentBatchSize));
         } else {
             totalUserEnrolCount = totalApprovedUserCount;
         }
@@ -199,20 +207,21 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     public Response readBPWFApplication(String wfId, boolean isPc) {
         WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfId);
-		List<WfStatusEntity> applicationList = applicationStatus == null ? new ArrayList<>()
-				: new ArrayList<>(Arrays.asList(applicationStatus));
-		Response response = new Response();
+        List<WfStatusEntity> applicationList = applicationStatus == null ? new ArrayList<>()
+                : new ArrayList<>(Arrays.asList(applicationStatus));
+        Response response = new Response();
         if (isPc) {
             // TODO - Need to enrich this response with User Profile Details ?
         }
-		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-		response.put(Constants.DATA, applicationList);
-		response.put(Constants.STATUS, HttpStatus.OK);
-		return response;
+        response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+        response.put(Constants.DATA, applicationList);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
     }
 
     /**
-     * This method is responsible for processing the wfRequest based on the state of the wfRequest
+     * This method is responsible for processing the wfRequest based on the state of
+     * the wfRequest
      *
      * @param wfRequest - Recieves a wfRequest with the request params.
      */
@@ -223,17 +232,20 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 updateEnrolmentDetails(wfRequest);
                 break;
             default:
-                logger.info("Status is Skipped by Blended Program Workflow Handler - Current Status: "+wfStatusEntity.getCurrentStatus());
+                logger.info("Status is Skipped by Blended Program Workflow Handler - Current Status: "
+                        + wfStatusEntity.getCurrentStatus());
                 break;
         }
     }
 
     private boolean validateBatchUserRequestAccess(WfRequest wfRequest) {
-        if(configuration.getBpBatchFullValidationExcludeStates().contains(wfRequest.getAction())) {
+        if (configuration.getBpBatchFullValidationExcludeStates().contains(wfRequest.getAction())) {
             return true;
         }
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
-        return validateBatchEnrolment(courseBatchDetails, getTotalUserEnrolCount(wfRequest), 0, Constants.BP_UPDATE_STATE);
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        return validateBatchEnrolment(courseBatchDetails, getTotalUserEnrolCount(wfRequest), 0,
+                Constants.BP_UPDATE_STATE);
     }
 
     public Response readStats(Map<String, Object> request) {
@@ -344,10 +356,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
     private int getTotalUserEnrolCountForBatch(String applicationId) {
-        List<WfStatusEntity> wfEntries = wfStatusRepo.findByServiceNameAndApplicationId(Constants.BLENDED_PROGRAM_SERVICE_NAME, applicationId);
+        List<WfStatusEntity> wfEntries = wfStatusRepo
+                .findByServiceNameAndApplicationId(Constants.BLENDED_PROGRAM_SERVICE_NAME, applicationId);
         wfEntries = wfEntries.stream().filter(wfEntry -> !configuration.getBpBatchFullValidationExcludeStates()
-                                      .contains(wfEntry.getCurrentStatus()))
-                                      .collect(Collectors.toList());
+                .contains(wfEntry.getCurrentStatus()))
+                .collect(Collectors.toList());
         return wfEntries.size();
     }
 }
