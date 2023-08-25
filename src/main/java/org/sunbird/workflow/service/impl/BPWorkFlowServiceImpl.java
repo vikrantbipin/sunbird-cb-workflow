@@ -1,6 +1,7 @@
 package org.sunbird.workflow.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
@@ -8,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
@@ -23,7 +23,15 @@ import org.sunbird.workflow.service.BPWorkFlowService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.CassandraOperation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.commons.collections.CollectionUtils;
 
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
@@ -123,27 +131,35 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.KEYSPACE_SUNBIRD_COURSES,
                 Constants.TABLE_COURSE_BATCH,
                 propertyMap,
-                Arrays.asList(Constants.BATCH_ATTRIBUTES, Constants.ENROLMENT_END_DATE)
-        );
-        return batchAttributesDetails.stream()
-                .findFirst()
-                .map(Optional::ofNullable)
-                .orElse(Optional.empty())
-                .map(details -> {
-                    Map<String, Object> batchAttributes = (Map<String, Object>) details.get(Constants.BATCH_ATTRIBUTES);
-                    String currentBatchSizeString = batchAttributes != null && batchAttributes.containsKey(Constants.CURRENT_BATCH_SIZE)
+                Arrays.asList(Constants.BATCH_ATTRIBUTES, Constants.ENROLMENT_END_DATE));
+        if (CollectionUtils.isNotEmpty(batchAttributesDetails)) {
+            Map<String, Object> courseBatch = (Map<String, Object>) batchAttributesDetails.get(0);
+            if (courseBatch.containsKey(Constants.BATCH_ATTRIBUTES)) {
+                try {
+                    Map<String, Object> batchAttributes = (new ObjectMapper()).readValue(
+                            (String) courseBatch.get(Constants.BATCH_ATTRIBUTES),
+                            new TypeReference<HashMap<String, Object>>() {
+                            });
+
+                    String currentBatchSizeString = batchAttributes != null
+                            && batchAttributes.containsKey(Constants.CURRENT_BATCH_SIZE)
                             ? (String) batchAttributes.get(Constants.CURRENT_BATCH_SIZE)
                             : "0";
                     int currentBatchSize = Integer.parseInt(currentBatchSizeString);
-                    Date enrollmentEndDate = details.containsKey(Constants.ENROLMENT_END_DATE)
-                            ? (Date) details.get(Constants.ENROLMENT_END_DATE)
+                    Date enrollmentEndDate = courseBatch.containsKey(Constants.ENROLMENT_END_DATE)
+                            ? (Date) courseBatch.get(Constants.ENROLMENT_END_DATE)
                             : null;
                     Map<String, Object> result = new HashMap<>();
                     result.put(Constants.CURRENT_BATCH_SIZE, currentBatchSize);
                     result.put(Constants.ENROLMENT_END_DATE, enrollmentEndDate);
                     return result;
-                })
-                .orElse(Collections.emptyMap());
+                } catch (Exception e) {
+                    logger.error(String.format("Failed to retrieve course batch details. CourseId: %s, BatchId: %s",
+                            courseId, batchId), e);
+                }
+            }
+        }
+        return Collections.emptyMap();
     }
 
 
@@ -292,6 +308,23 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
         if (StringUtils.isEmpty(wfRequest.getServiceName())) {
             throw new InvalidDataInputException(Constants.WORKFLOW_SERVICENAME_VALIDATION_ERROR);
+        }
+    }
+
+    /**
+     * This method is responsible for processing the wfRequest based on the state of the wfRequest
+     *
+     * @param wfRequest - Recieves a wfRequest with the request params.
+     */
+    public void processWFRequest(WfRequest wfRequest) {
+        WfStatusEntity wfStatusEntity = wfStatusRepo.findByWfId(wfRequest.getWfId());
+        switch (wfStatusEntity.getCurrentStatus()) {
+            case Constants.APPROVED:
+                updateEnrolmentDetails(wfRequest);
+                break;
+            default:
+                logger.info("Status is Skipped by Blended Program Workflow Handler - Current Status: " + wfStatusEntity.getCurrentStatus());
+                break;
         }
     }
 

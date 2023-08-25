@@ -167,7 +167,7 @@ public class Constants {
 	public static final String KEYSPACE_SUNBIRD_COURSES = "sunbird_courses";
 	public static final String TABLE_COURSE_BATCH = "course_batch";
 	public static final String TABLE_ENROLMENT_BATCH_LOOKUP = "enrollment_batch_lookup";
-	public static final String BATCH_ATTRIBUTES = "batchattributes";
+	public static final String BATCH_ATTRIBUTES = "batch_attributes";
 	public static final String CURRENT_BATCH_SIZE = "currentBatchSize";
 	public static final String BATCH_ID = "batchId";
 	public static final String COURSE_ID = "courseId";

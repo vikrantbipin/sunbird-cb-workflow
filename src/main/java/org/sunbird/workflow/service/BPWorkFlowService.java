@@ -27,4 +27,11 @@ public interface BPWorkFlowService {
      * @return - Return the response of success/failure after processing the request.
      */
     Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
+
+    /**
+     * This method is responsible for processing the wfRequest based on the state of the wfRequest
+     *
+     * @param wfRequest - Recieves a wfRequest with the request params.
+     */
+    public void processWFRequest(WfRequest wfRequest);
 }
