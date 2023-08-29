@@ -34,4 +34,7 @@ public interface BPWorkFlowService {
      * @param wfRequest - Recieves a wfRequest with the request params.
      */
     public void processWFRequest(WfRequest wfRequest);
+
+    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
+
 }
