@@ -19,4 +19,7 @@ public interface BPWorkFlowService {
     Response blendedProgramUserSearch(String rootOrg, String org, String userId, SearchCriteria searchCriteria);
 
     public Response readBPWFApplication(String wfId, boolean isPc);
+
+    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
+
 }
