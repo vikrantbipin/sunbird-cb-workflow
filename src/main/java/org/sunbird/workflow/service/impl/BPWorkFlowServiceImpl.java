@@ -25,9 +25,6 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.util.ObjectUtils;
 
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.exception.InvalidDataInputException;
@@ -43,11 +40,7 @@ import org.sunbird.workflow.utils.CassandraOperation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.*;
-
-
+import java.util.UUID;
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
@@ -397,9 +390,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      */
     @Override
     public Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
-        int totalUserEnrolCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalUserEnrolCount);
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
+                Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
@@ -474,9 +470,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     @Override
     public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         Response response = new Response();
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
-        int totalUserEnrolCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalUserEnrolCount);
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
+                Constants.BP_UPDATE_STATE);
         List<WfStatusEntity> approvedLearners = wfStatusRepo.findByApplicationIdAndUserIdAndCurrentStatus(wfRequest.getApplicationId(), wfRequest.getUserId(), wfRequest.getState());
         if (enrolAccess && approvedLearners.size() > 1) {
             response.put(Constants.ERROR_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR);

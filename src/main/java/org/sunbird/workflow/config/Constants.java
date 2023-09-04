@@ -210,7 +210,6 @@ public class Constants {
 
 	public static final String USER_ENROLMENTS="user_enrolments";
 	public static final String START_DATE="start_date";
-	public static final String END_DATE="end_date";
 	public static final String ENROLLMENT_TYPE= "enrollmenttype";
 	public static final String INVITE_ONLY="invite-only";
 
