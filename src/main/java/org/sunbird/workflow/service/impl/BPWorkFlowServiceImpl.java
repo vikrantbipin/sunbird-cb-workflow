@@ -25,9 +25,6 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.util.ObjectUtils;
 
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.exception.InvalidDataInputException;
@@ -43,11 +40,7 @@ import org.sunbird.workflow.utils.CassandraOperation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.*;
-
-
+import java.util.UUID;
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
@@ -253,6 +246,9 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             case Constants.APPROVED:
                 updateEnrolmentDetails(wfRequest);
                 break;
+            case Constants.REMOVED:
+                removeEnrolmentDetails(wfRequest);
+                break;
             default:
                 logger.info("Status is Skipped by Blended Program Workflow Handler - Current Status: "
                         + wfStatusEntity.getCurrentStatus());
@@ -397,9 +393,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      */
     @Override
     public Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
-        int totalUserEnrolCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalUserEnrolCount);
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
+                Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
@@ -474,9 +473,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     @Override
     public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         Response response = new Response();
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(), wfRequest.getCourseId());
-        int totalUserEnrolCount = getTotalUserEnrolCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalUserEnrolCount);
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
+                Constants.BP_UPDATE_STATE);
         List<WfStatusEntity> approvedLearners = wfStatusRepo.findByApplicationIdAndUserIdAndCurrentStatus(wfRequest.getApplicationId(), wfRequest.getUserId(), wfRequest.getState());
         if (enrolAccess && approvedLearners.size() > 1) {
             response.put(Constants.ERROR_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -661,6 +662,44 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      */
     public static boolean isWithinRange(Date date, Date startDate, Date endDate) {
         return date.compareTo(startDate) >= 0 && date.compareTo(endDate) <= 0;
+    }
+
+    /**
+     * This method is responsible for removing a user enrollment details
+     *
+     * @param wfRequest - Receives a wfRequest with the request params.
+     */
+    @Override
+    public void removeEnrolmentDetails(WfRequest wfRequest) {
+        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
+                wfRequest.getCourseId());
+        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
+        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
+                Constants.BP_UPDATE_STATE);
+        if (enrolAccess) {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put(Constants.USER_ID, wfRequest.getUserId());
+            requestBody.put(Constants.BATCH_ID, wfRequest.getApplicationId());
+            requestBody.put(Constants.COURSE_ID, wfRequest.getCourseId());
+            Map<String, Object> request = new HashMap<>();
+            request.put(Constants.REQUEST,requestBody);
+            HashMap<String, String> headersValue = new HashMap<>();
+            headersValue.put("Content-Type", "application/json");
+            try {
+                StringBuilder builder = new StringBuilder(configuration.getCourseServiceHost());
+                builder.append(configuration.getAdminUnEnrolEndPoint());
+                Map<String, Object> enrolResp = (Map<String, Object>) requestServiceImpl
+                        .fetchResultUsingPost(builder, request, Map.class, headersValue);
+                if (enrolResp != null
+                        && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
+                    logger.info("User un-enrollment success");
+                } else {
+                    logger.error("user un-enrollment failed" + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+                }
+            } catch (Exception e) {
+                logger.error("Exception while un-enrol user");
+            }
+        }
     }
 
 }

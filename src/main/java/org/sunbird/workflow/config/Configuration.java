@@ -134,6 +134,9 @@ public class Configuration {
     @Value("${bp.batch.enrol.limit.buffer.size}")
     private Integer bpBatchEnrolLimitBufferSize;
 
+    @Value("${course.admin.unenrol}")
+    private String adminUnEnrolEndPoint;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -471,5 +474,13 @@ public class Configuration {
 
     public void setBpBatchEnrolLimitBufferSize(Integer bpBatchEnrolLimitBufferSize) {
         this.bpBatchEnrolLimitBufferSize = bpBatchEnrolLimitBufferSize;
+    }
+
+    public String getAdminUnEnrolEndPoint() {
+        return adminUnEnrolEndPoint;
+    }
+
+    public void setAdminUnEnrolEndPoint(String adminUnEnrolEndPoint) {
+        this.adminUnEnrolEndPoint = adminUnEnrolEndPoint;
     }
 }

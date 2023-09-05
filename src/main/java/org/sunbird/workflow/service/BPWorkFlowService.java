@@ -47,5 +47,12 @@ public interface BPWorkFlowService {
 
     public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
 
+    /**
+     * This method is responsible for removing a user enrollment details
+     *
+     * @param wfRequest - Receives a wfRequest with the request params.
+     */
+    public void removeEnrolmentDetails(WfRequest wfRequest);
+
 
 }

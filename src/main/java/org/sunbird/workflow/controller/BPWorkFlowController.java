@@ -84,7 +84,7 @@ public class BPWorkFlowController {
     public ResponseEntity<Response> getBatchStats(@RequestBody Map<String, Object> request) {
         Response response = bPWorkFlowService.readStats(request);
         return new ResponseEntity<Response>(response, response.getResponseCode());
-
+    }
 
     /**
      * @param rootOrg   - Root Organization Name ex: "igot"
@@ -101,7 +101,7 @@ public class BPWorkFlowController {
             responses.add(response);
         }
         return new ResponseEntity<>(responses,HttpStatus.OK);
-
+    }
 
     @PostMapping("/remove")
     public ResponseEntity<Response> blendedProgramWfRemove(@RequestHeader String rootOrg, @RequestHeader String org,
