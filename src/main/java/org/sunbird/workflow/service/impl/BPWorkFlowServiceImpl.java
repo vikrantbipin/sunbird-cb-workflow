@@ -87,7 +87,8 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
+        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
+        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
         return response;
     }
 
@@ -710,37 +711,6 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 logger.error("Exception while un-enrol user");
             }
         }
-    }
-
-
-    /**
-     * Service method to handle the user enrolled with enrollment configurations.
-     *
-     * @param rootOrg   - Root Organization Name ex: "igot"
-     * @param org       - Organization name ex: "dopt"
-     * @param wfRequest - WorkFlow request which needs to be processed.
-     * @return - Return the response of success/failure after processing the request.
-     */
-    @Override
-    public Response enrolBPWorkFlowWithConfig(String rootOrg, String org, WfRequest wfRequest) {
-
-        Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
-                wfRequest.getCourseId());
-        int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
-        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
-                Constants.BP_ENROLL_STATE);
-        if (!enrolAccess) {
-            Response response = new Response();
-            response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
-            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
-            return response;
-        }
-        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
-        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
-
-
-        return response;
     }
 
     /**
