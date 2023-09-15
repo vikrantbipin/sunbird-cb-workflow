@@ -137,6 +137,15 @@ public class Configuration {
     @Value("${course.admin.unenrol}")
     private String adminUnEnrolEndPoint;
 
+    @Value("${content.service.host}")
+    private String contentServiceHost;
+
+    @Value("${content.read.search}")
+    private String contentReadSearchEndPoint;
+
+    @Value("${ms.system.settings.multilevelBPEnroll.path}")
+    private String multilevelBPEnrolEndPoint;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -482,5 +491,29 @@ public class Configuration {
 
     public void setAdminUnEnrolEndPoint(String adminUnEnrolEndPoint) {
         this.adminUnEnrolEndPoint = adminUnEnrolEndPoint;
+    }
+
+    public String getContentServiceHost() {
+        return contentServiceHost;
+    }
+
+    public void setContentServiceHost(String contentServiceHost) {
+        this.contentServiceHost = contentServiceHost;
+    }
+
+    public String getContentReadSearchEndPoint() {
+        return contentReadSearchEndPoint;
+    }
+
+    public void setContentReadSearchEndPoint(String contentReadSearchEndPoint) {
+        this.contentReadSearchEndPoint = contentReadSearchEndPoint;
+    }
+
+    public String getMultilevelBPEnrolEndPoint() {
+        return multilevelBPEnrolEndPoint;
+    }
+
+    public void setMultilevelBPEnrolEndPoint(String multilevelBPEnrolEndPoint) {
+        this.multilevelBPEnrolEndPoint = multilevelBPEnrolEndPoint;
     }
 }
