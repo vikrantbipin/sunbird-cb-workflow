@@ -105,7 +105,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
 					wfRequest.getApplicationId(), wfRequest.getWfId());
-			WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
+			/*WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());*/
+			WorkFlowModel workFlowModel = getWorkFlowConfig(applicationStatus.getServiceName());
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
 			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
 			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
@@ -117,7 +118,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicationStatus = new WfStatusEntity();
 				wfId = UUID.randomUUID().toString();
 				applicationStatus.setWfId(wfId);
-				applicationStatus.setServiceName(wfRequest.getServiceName());
+				applicationStatus.setServiceName(applicationStatus.getServiceName());
 				applicationStatus.setUserId(wfRequest.getUserId());
 				applicationStatus.setApplicationId(wfRequest.getApplicationId());
 				applicationStatus.setRootOrg(rootOrg);
@@ -599,7 +600,13 @@ public class WorkflowServiceImpl implements Workflowservice {
 		if (!StringUtils.isEmpty(criteria.getDeptName())) {
 			if (searchEnabled==true) {
 				if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())) {
-					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+					List<String> eligibleServiceNames = new ArrayList<>();
+					eligibleServiceNames.add(Constants.ONE_STEP_MDO_APPROVAL);
+					eligibleServiceNames.add(Constants.ONE_STEP_PC_APPROVAL);
+					eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+					eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+					eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
 				} else {
 					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
 				}
@@ -608,8 +615,18 @@ public class WorkflowServiceImpl implements Workflowservice {
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
 			}
 		} else {
-			wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
-					criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())) {
+				List<String> eligibleServiceNames = new ArrayList<>();
+				eligibleServiceNames.add(Constants.ONE_STEP_MDO_APPROVAL);
+				eligibleServiceNames.add(Constants.ONE_STEP_PC_APPROVAL);
+				eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+				eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+				eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+			}else {
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
+						criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+			}
 		}
 		if (criteria.getServiceName().equalsIgnoreCase(Constants.BLENDED_PROGRAM_SERVICE_NAME)) {
 			infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
@@ -688,6 +705,18 @@ public class WorkflowServiceImpl implements Workflowservice {
 					break;
 				case Constants.BLENDED_PROGRAM_SERVICE_NAME:
 					uri.append(configuration.getLmsServiceHost() + configuration.getBlendedProgramServicePath());
+					break;
+				case Constants.ONE_STEP_PC_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_PC_APPROVAL);
+					break;
+				case Constants.ONE_STEP_MDO_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_MDO_APPROVAL);
+					break;
+				case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+					break;
+				case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
 					break;
 				default:
 					break;
