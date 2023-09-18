@@ -87,9 +87,17 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
-        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
-        return response;
+        List<WfStatusEntity> enrollmentStatus = wfStatusRepo.findByServiceNameAndUserIdAndApplicationId(wfRequest.getServiceName(),
+                wfRequest.getUserId(), wfRequest.getApplicationId());
+        if (!enrollmentStatus.isEmpty()) {
+            wfRequest.setWfId(enrollmentStatus.get(0).getWfId());
+            producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+            return new Response();
+        } else {
+            Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
+            producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+            return response;
+        }
     }
 
     @Override
@@ -257,6 +265,8 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 removeEnrolmentDetails(wfRequest);
                 break;
             case Constants.ENROLL_IS_IN_PROGRESS:
+            case Constants.SEND_FOR_MDO_APPROVAL:
+            case Constants.SEND_FOR_PC_APPROVAL:
                 handleEnrollmentRequest(wfRequest);
                 break;
             default:

@@ -3,6 +3,7 @@ package org.sunbird.workflow.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.service.ContentReadService;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * @author mahesh.vakkund
  */
+@Service
 public class ContentReadServiceImpl implements ContentReadService {
 
     private Logger logger = LoggerFactory.getLogger(ContentReadServiceImpl.class);
