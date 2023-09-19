@@ -1,6 +1,7 @@
 package org.sunbird.workflow.service.impl;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,19 +28,21 @@ import org.springframework.util.ObjectUtils;
 
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
+import org.sunbird.workflow.exception.ApplicationException;
+import org.sunbird.workflow.exception.BadRequestException;
 import org.sunbird.workflow.exception.InvalidDataInputException;
-import org.sunbird.workflow.models.Response;
-import org.sunbird.workflow.models.SearchCriteria;
-import org.sunbird.workflow.models.WfRequest;
+import org.sunbird.workflow.models.*;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.producer.Producer;
 import org.sunbird.workflow.service.BPWorkFlowService;
+import org.sunbird.workflow.service.ContentReadService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.CassandraOperation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import java.util.UUID;
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
@@ -67,8 +70,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     @Autowired
     private Producer producer;
 
+    @Autowired
+    private ContentReadService contentReadService;
+
     @Override
     public Response enrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
+        validateWfRequestMultilevelEnrol(wfRequest);
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
         int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
@@ -77,11 +84,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
-            response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
+            response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        Response response = workflowService.workflowTransition(rootOrg, org, wfRequest);
+        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
+        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
         return response;
     }
 
@@ -91,7 +99,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return workflowService.workflowTransition(rootOrg, org, wfRequest);
         }
         Response response = new Response();
-        response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
+        response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
         response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
         return response;
     }
@@ -249,12 +257,22 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             case Constants.REMOVED:
                 removeEnrolmentDetails(wfRequest);
                 break;
+            case Constants.ENROLL_IS_IN_PROGRESS:
+                handleEnrollmentRequest(wfRequest);
+                break;
+            case Constants.ONE_STEP_MDO_APPROVAL:
+            case Constants.ONE_STEP_PC_APPROVAL:
+            case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+            case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+                handleApprovalRequest(wfRequest);
+                break;
             default:
                 logger.info("Status is Skipped by Blended Program Workflow Handler - Current Status: "
                         + wfStatusEntity.getCurrentStatus());
                 break;
         }
     }
+
 
     private boolean validateBatchUserRequestAccess(WfRequest wfRequest) {
         if (configuration.getBpBatchFullValidationExcludeStates().contains(wfRequest.getAction())) {
@@ -401,7 +419,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
-            response.put(Constants.ERROR_MESSAGE, "BATCH_IS_FULL");
+            response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
@@ -702,4 +720,226 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         }
     }
 
+    /**
+     * This will handle the enrolment once the event is triggered from the kafka topic
+     *
+     * @param wfRequest - WorkFlow request which needs to be processed.
+     */
+    private void handleEnrollmentRequest(WfRequest wfRequest) {
+        String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
+        String nextState = null;
+        if (serviceName != null && !serviceName.isEmpty()) {
+            try {
+                WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
+                WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
+                WfStatus wfStatus = getWfStatus(applicationStatus.getCurrentStatus(), workFlowModel);
+                WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+
+                nextState = wfAction.getNextState();
+                WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
+
+                applicationStatus.setLastUpdatedOn(new Date());
+                applicationStatus.setCurrentStatus(nextState);
+                applicationStatus.setActorUUID(wfRequest.getActorUserId());
+                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+                applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+                applicationStatus.setDeptName(wfRequest.getDeptName());
+                applicationStatus.setComment(wfRequest.getComment());
+                applicationStatus.setServiceName(serviceName);
+                wfStatusRepo.save(applicationStatus);
+                producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+                producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+            } catch (IOException e) {
+                throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+            }
+        }else{
+            try{
+                WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
+                applicationStatus.setLastUpdatedOn(new Date());
+                applicationStatus.setActorUUID(wfRequest.getActorUserId());
+                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+                applicationStatus.setDeptName(wfRequest.getDeptName());
+                applicationStatus.setComment("Service Name is missing for the current request");
+                wfStatusRepo.save(applicationStatus);
+            }catch (IOException e) {
+                throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+            }
+
+        }
+    }
+
+
+    /**
+     * @param serviceName -the serviceName based on which the enrollment configuration json is fetched from the system_settings.
+     * @return - the workflow-model object with the json.
+     */
+    public WorkFlowModel getWorkFlowConfig(String serviceName) {
+        try {
+            Map<String, Object> wfConfig;
+            StringBuilder uri = new StringBuilder();
+            switch (serviceName) {
+                case Constants.ONE_STEP_PC_APPROVAL:
+                    uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_PC_APPROVAL);
+                    break;
+                case Constants.ONE_STEP_MDO_APPROVAL:
+                    uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_MDO_APPROVAL);
+                    break;
+                case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+                    uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+                    break;
+                case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+                    uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+                    break;
+                default:
+                    break;
+            }
+            wfConfig = (Map<String, Object>) requestServiceImpl.fetchResultUsingGet(uri);
+            Map<String, Object> result = (Map<String, Object>) wfConfig.get(Constants.RESULT);
+            Map<String, Object> response = (Map<String, Object>) result.get(Constants.RESPONSE);
+            Map<String, Object> wfStates = mapper.readValue((String) response.get(Constants.VALUE), Map.class);
+            return mapper.convertValue(wfStates, new TypeReference<WorkFlowModel>() {
+            });
+        } catch (Exception e) {
+            logger.error("Exception occurred while getting work flow config details!");
+            throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+        }
+    }
+
+    /**
+     * Save Method to save the enrolled user data into the wf_status table.
+     *
+     * @param rootOrg   - Root Organization Name ex: "igot"
+     * @param org       - Organization name ex: "dopt"
+     * @param wfRequest - WorkFlow request which needs to be processed.
+     * @return - Return the response of success/failure after processing the request.
+     */
+    private Response saveEnrollUserIntoWfStatus(String rootOrg, String org, WfRequest wfRequest) {
+        WfStatusEntity applicationStatus = new WfStatusEntity();
+        String wfId = UUID.randomUUID().toString();
+        applicationStatus.setWfId(wfId);
+        applicationStatus.setApplicationId(wfRequest.getApplicationId());
+        applicationStatus.setUserId(wfRequest.getUserId());
+        applicationStatus.setInWorkflow(true);
+        applicationStatus.setActorUUID(wfRequest.getActorUserId());
+        applicationStatus.setCreatedOn(new Date());
+        applicationStatus.setCurrentStatus(Constants.ENROLL_IS_IN_PROGRESS);
+        applicationStatus.setLastUpdatedOn(new Date());
+        applicationStatus.setOrg(org);
+        applicationStatus.setRootOrg(rootOrg);
+        try {
+            applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+        } catch (JsonProcessingException e) {
+            logger.error(String.valueOf(e));
+        }
+        applicationStatus.setDeptName(wfRequest.getDeptName());
+        applicationStatus.setComment(wfRequest.getComment());
+        wfRequest.setWfId(wfId);
+        wfStatusRepo.save(applicationStatus);
+        wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+        Response response = new Response();
+        HashMap<String, Object> data = new HashMap<>();
+        data.put(Constants.STATUS, Constants.ENROLL_IS_IN_PROGRESS);
+        data.put(Constants.WF_IDS_CONSTANT, wfId);
+        response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.ENROLL_IS_IN_PROGRESS);
+        response.put(Constants.DATA, data);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
+    }
+
+    /**
+     * Get the workflow State based on given state
+     *
+     * @param state         - Current state fetched from the wf_status table.
+     * @param workFlowModel - Workflow model object
+     * @return Workflow State
+     */
+    private WfStatus getWfStatus(String state, WorkFlowModel workFlowModel) {
+        WfStatus wfStatus = null;
+        for (WfStatus status : workFlowModel.getWfstates()) {
+            if (status.getState().equals(state)) {
+                wfStatus = status;
+            }
+        }
+        if (ObjectUtils.isEmpty(wfStatus)) {
+            throw new BadRequestException(Constants.WORKFLOW_STATE_CHECK_ERROR);
+        }
+        return wfStatus;
+    }
+
+    /**
+     * Get Workflow Action based on given action
+     *
+     * @param action   - Action that needs to be performed. -INITIATE/APPROVE .
+     * @param wfStatus -wfStatus object
+     * @return Work flow Action
+     */
+    private WfAction getWfAction(String action, WfStatus wfStatus) {
+        WfAction wfAction = null;
+        if (ObjectUtils.isEmpty(wfStatus.getActions())) {
+            throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
+        }
+        for (WfAction filterAction : wfStatus.getActions()) {
+            if (action.equals(filterAction.getAction())) {
+                wfAction = filterAction;
+            }
+        }
+        if (ObjectUtils.isEmpty(wfAction)) {
+            throw new BadRequestException(Constants.WORKFLOW_ACTION_ERROR);
+        }
+        return wfAction;
+    }
+
+    private void validateWfRequestMultilevelEnrol(WfRequest wfRequest) {
+
+        if (StringUtils.isEmpty(wfRequest.getState())) {
+            throw new InvalidDataInputException(Constants.STATE_VALIDATION_ERROR);
+        }
+
+        if (StringUtils.isEmpty(wfRequest.getApplicationId())) {
+            throw new InvalidDataInputException(Constants.APPLICATION_ID_VALIDATION_ERROR);
+        }
+
+        if (StringUtils.isEmpty(wfRequest.getActorUserId())) {
+            throw new InvalidDataInputException(Constants.ACTOR_UUID_VALIDATION_ERROR);
+        }
+
+        if (StringUtils.isEmpty(wfRequest.getUserId())) {
+            throw new InvalidDataInputException(Constants.USER_UUID_VALIDATION_ERROR);
+        }
+
+
+        if (CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
+            throw new InvalidDataInputException(Constants.FIELD_VALUE_VALIDATION_ERROR);
+        }
+    }
+
+
+    private void handleApprovalRequest(WfRequest wfRequest) {
+        String nextState = null;
+        try {
+            WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
+            WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
+            WfStatus wfStatus = getWfStatus(applicationStatus.getCurrentStatus(), workFlowModel);
+            WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+
+            nextState = wfAction.getNextState();
+            WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
+
+            applicationStatus.setLastUpdatedOn(new Date());
+            applicationStatus.setCurrentStatus(nextState);
+            applicationStatus.setActorUUID(wfRequest.getActorUserId());
+            applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+            applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+            applicationStatus.setDeptName(wfRequest.getDeptName());
+            applicationStatus.setComment(wfRequest.getComment());
+            applicationStatus.setServiceName(wfRequest.getServiceName());
+            wfStatusRepo.save(applicationStatus);
+            producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+            producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+        } catch (IOException e) {
+            throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+        }
+
+
+    }
 }
