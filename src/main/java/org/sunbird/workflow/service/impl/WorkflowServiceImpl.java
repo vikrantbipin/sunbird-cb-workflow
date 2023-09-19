@@ -105,8 +105,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
 					wfRequest.getApplicationId(), wfRequest.getWfId());
-			/*WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());*/
-			WorkFlowModel workFlowModel = getWorkFlowConfig(applicationStatus.getServiceName());
+			String serviceName=wfRequest.getServiceName();
+			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName()) && !StringUtils.isEmpty(applicationStatus.getServiceName())) {
+				serviceName = applicationStatus.getServiceName();
+			}
+			WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
 			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
 			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
@@ -118,7 +121,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicationStatus = new WfStatusEntity();
 				wfId = UUID.randomUUID().toString();
 				applicationStatus.setWfId(wfId);
-				applicationStatus.setServiceName(applicationStatus.getServiceName());
+				applicationStatus.setServiceName(serviceName);
 				applicationStatus.setUserId(wfRequest.getUserId());
 				applicationStatus.setApplicationId(wfRequest.getApplicationId());
 				applicationStatus.setRootOrg(rootOrg);
