@@ -727,46 +727,34 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      */
     private void handleEnrollmentRequest(WfRequest wfRequest) {
         String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
-        String nextState = null;
-        if (serviceName != null && !serviceName.isEmpty()) {
-            try {
-                WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
-                WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
-                WfStatus wfStatus = getWfStatus(applicationStatus.getCurrentStatus(), workFlowModel);
-                WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+        if (serviceName == null || serviceName.isEmpty()) {
+            serviceName = Constants.BLENDED_PROGRAM_SERVICE_NAME;
+        }
+        try {
+            WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
+            WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
+            WfStatus wfStatus = getWfStatus(applicationStatus.getCurrentStatus(), workFlowModel);
+            WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
 
-                nextState = wfAction.getNextState();
-                WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
+            String nextState = wfAction.getNextState();
+            WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
 
-                applicationStatus.setLastUpdatedOn(new Date());
-                applicationStatus.setCurrentStatus(nextState);
-                applicationStatus.setActorUUID(wfRequest.getActorUserId());
-                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-                applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
-                applicationStatus.setDeptName(wfRequest.getDeptName());
-                applicationStatus.setComment(wfRequest.getComment());
-                applicationStatus.setServiceName(serviceName);
-                wfStatusRepo.save(applicationStatus);
-                producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
-                producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
-            } catch (IOException e) {
-                throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
-            }
-        }else{
-            try{
-                WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
-                applicationStatus.setLastUpdatedOn(new Date());
-                applicationStatus.setActorUUID(wfRequest.getActorUserId());
-                applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
-                applicationStatus.setDeptName(wfRequest.getDeptName());
-                applicationStatus.setComment("Service Name is missing for the current request");
-                wfStatusRepo.save(applicationStatus);
-            }catch (IOException e) {
-                throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
-            }
-
+            applicationStatus.setLastUpdatedOn(new Date());
+            applicationStatus.setCurrentStatus(nextState);
+            applicationStatus.setActorUUID(wfRequest.getActorUserId());
+            applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+            applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+            applicationStatus.setDeptName(wfRequest.getDeptName());
+            applicationStatus.setComment(wfRequest.getComment());
+            applicationStatus.setServiceName(serviceName);
+            wfStatusRepo.save(applicationStatus);
+            producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+            producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+        } catch (IOException e) {
+            throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
         }
     }
+
 
 
     /**
