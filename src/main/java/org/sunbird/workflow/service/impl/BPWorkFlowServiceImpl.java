@@ -89,6 +89,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return response;
         }
         Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
+        wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
         producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
         return response;
     }
@@ -728,7 +729,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     private void handleEnrollmentRequest(WfRequest wfRequest) {
         String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
         if (serviceName == null || serviceName.isEmpty()) {
-            serviceName = Constants.BLENDED_PROGRAM_SERVICE_NAME;
+            serviceName = wfRequest.getServiceName();
         }
         try {
             WfStatusEntity applicationStatus = wfStatusRepo.findByWfId(wfRequest.getWfId());
@@ -823,7 +824,6 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         applicationStatus.setComment(wfRequest.getComment());
         wfRequest.setWfId(wfId);
         wfStatusRepo.save(applicationStatus);
-        wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
         Response response = new Response();
         HashMap<String, Object> data = new HashMap<>();
         data.put(Constants.STATUS, Constants.ENROLL_IS_IN_PROGRESS);
