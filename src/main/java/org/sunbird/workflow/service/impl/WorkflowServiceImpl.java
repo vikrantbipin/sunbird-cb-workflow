@@ -135,6 +135,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
 			applicationStatus.setDeptName(wfRequest.getDeptName());
 			applicationStatus.setComment(wfRequest.getComment());
+			applicationStatus.setServiceName(wfRequest.getServiceName());
 			wfStatusRepo.save(applicationStatus);
 			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
@@ -710,9 +711,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 		if (CollectionUtils.isEmpty(applicationIds)) {
 			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
 		}
-		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndUserIdAndApplicationIdIn(
-					criteria.getServiceName(), criteria.getUserId(), applicationIds);
-		infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByApplicationIdIn(applicationIds);
+		List<WfStatusEntity> filteredEntities = wfStatusEntities.stream()
+				.filter(e -> e.getUserId().equalsIgnoreCase(criteria.getUserId()))
+				.filter(e -> criteria.getServiceName().equalsIgnoreCase(e.getServiceName()))
+				.collect(Collectors.toList());
+		infos = filteredEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 		response.put(Constants.DATA, infos);
