@@ -263,6 +263,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 removeEnrolmentDetails(wfRequest);
                 break;
             case Constants.ENROLL_IS_IN_PROGRESS:
+            case Constants.ADMIN_ENROLL_IS_IN_PROGRESS:
                 handleEnrollmentRequest(wfRequest);
                 break;
             case Constants.ONE_STEP_MDO_APPROVAL:
@@ -442,7 +443,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 response.put(Constants.STATUS, HttpStatus.OK);
             } else {
                 response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
-                producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+               // producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
                 producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
             }
         } else {
@@ -472,7 +473,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         applicationStatus.setServiceName(wfRequest.getServiceName());
         applicationStatus.setActorUUID(wfRequest.getActorUserId());
         applicationStatus.setCreatedOn(new Date());
-        applicationStatus.setCurrentStatus(Constants.APPROVED_STATE);
+        applicationStatus.setCurrentStatus(Constants.ADMIN_ENROLL_IS_IN_PROGRESS);
         applicationStatus.setLastUpdatedOn(new Date());
         applicationStatus.setOrg(org);
         applicationStatus.setRootOrg(rootOrg);
@@ -488,9 +489,9 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
         Response response = new Response();
         HashMap<String, Object> data = new HashMap<>();
-        data.put(Constants.STATUS, Constants.APPROVED_STATE);
+        data.put(Constants.STATUS, Constants.ADMIN_ENROLL_IS_IN_PROGRESS);
         data.put(Constants.WF_IDS_CONSTANT, wfId);
-        response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.APPROVED_STATE);
+        response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.ADMIN_ENROLL_IS_IN_PROGRESS);
         response.put(Constants.DATA, data);
         
                response.put(Constants.STATUS, HttpStatus.OK);

@@ -222,5 +222,6 @@ public class Constants {
 	public static final String TWO_STEP_MDO_AND_PC_APPROVAL="twoStepMDOAndPCApproval";
 	public static final String TWO_STEP_PC_AND_MDO_APPROVAL="twoStepPCAndMDOApproval";
 
+	public static final String ADMIN_ENROLL_IS_IN_PROGRESS="ADMIN_ENROLL_IS_IN_PROGRESS";
 
 }
