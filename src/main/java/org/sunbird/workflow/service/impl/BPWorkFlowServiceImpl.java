@@ -444,6 +444,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             } else {
                 response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
                // producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+                wfRequest.setAction(Constants.INITIATE);
                 producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
             }
         } else {
