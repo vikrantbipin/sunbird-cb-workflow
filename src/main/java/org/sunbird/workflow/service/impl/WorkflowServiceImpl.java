@@ -612,7 +612,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 					eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
 					eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
 					eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
-					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds);
+					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds,criteria.getDeptName());
 				} else {
 					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
 				}
@@ -628,7 +628,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
 				eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
 				eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
-				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds);
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds);
 			}else {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
 						criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
