@@ -146,6 +146,28 @@ public class Configuration {
     @Value("${ms.system.settings.multilevelBPEnroll.path}")
     private String multilevelBPEnrolEndPoint;
 
+    @Value("${enrol.status.count.local.cache.size}")
+    private Integer enrolStatusCountLocalCacheSize;
+
+    public Integer getEnrolStatusCountLocalCacheSize() {
+        return enrolStatusCountLocalCacheSize;
+    }
+
+    public void setEnrolStatusCountLocalCacheSize(Integer enrolStatusCountLocalCacheSize) {
+        this.enrolStatusCountLocalCacheSize = enrolStatusCountLocalCacheSize;
+    }
+
+    public Integer getEnrolStatusCountLocalTimeToLive() {
+        return enrolStatusCountLocalTimeToLive;
+    }
+
+    public void setEnrolStatusCountLocalTimeToLive(Integer enrolStatusCountLocalTimeToLive) {
+        this.enrolStatusCountLocalTimeToLive = enrolStatusCountLocalTimeToLive;
+    }
+
+    @Value("${enrol.status.count.local.cache.timetolive}")
+    private Integer enrolStatusCountLocalTimeToLive;
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }

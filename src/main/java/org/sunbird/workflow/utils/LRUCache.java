@@ -1,21 +1,33 @@
 package org.sunbird.workflow.utils;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.sunbird.workflow.config.Configuration;
+
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Component
 public class LRUCache<K, V> extends LinkedHashMap<K, V> {
-    private final int maxSize;
-    private final long maxAgeInMillis;
-    private final Map<K, Long> entryTimeMap;
 
-    public LRUCache(int maxSize, long maxAgeInMillis) {
+    @Autowired
+    Configuration conf;
+    private  int maxSize;
+    private  long maxAgeInMillis;
+    private  Map<K, Long> entryTimeMap;
+
+    public LRUCache() {
         super(16, 0.75f, true);
-        this.maxSize = maxSize;
-        this.maxAgeInMillis = maxAgeInMillis;
-        this.entryTimeMap = new HashMap<>();
     }
 
+    @PostConstruct
+    public void postConstruct() {
+        this.maxSize = conf.getEnrolStatusCountLocalCacheSize();
+        this.maxAgeInMillis = conf.getEnrolStatusCountLocalTimeToLive()*60;
+        this.entryTimeMap = new HashMap<>();
+    }
     @Override
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         boolean isMaxSizeExceeded = size() > maxSize;
@@ -50,27 +62,4 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
         return (currentTime - entryTime) > maxAgeInMillis;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        int maxSize = 3;
-        long maxAgeInMillis = 60 * 1000;  // 1 minute
-
-        LRUCache<String, Integer> cache = new LRUCache<>(maxSize, maxAgeInMillis);
-
-        cache.put("A", 1);
-        cache.put("B", 2);
-        cache.put("C", 3);
-
-        System.out.println(cache);  // Output: {A=1, B=2, C=3}
-
-        // Sleep for 2 minutes to allow entries to expire
-        Thread.sleep(2 * 60 * 1000);
-
-        // Access A to reset its access time
-        cache.get("A");
-
-        // Adding D after entries have expired, should trigger eviction of A
-        cache.put("D", 4);
-
-        System.out.println("Sai"+ cache);  // Output: {B=2, C=3, D=4}
-    }
-}
+ }
