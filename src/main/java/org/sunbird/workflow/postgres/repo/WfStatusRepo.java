@@ -44,7 +44,10 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
     List<WfStatusEntity> findByServiceNameAndUserIdAndApplicationIdIn(List<String> servicesName, String userId, List<String> applicationIds);
 
     @Query(value = "select * from wingspan.wf_status where service_name IN ?1 and current_status = ?2 and application_id IN ?3", nativeQuery = true)
-    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(List<String> serviceNames, String currentStatus, List<String> applicationIds);
+    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndApplicationId(List<String> serviceNames, String currentStatus, List<String> applicationIds);
+
+    @Query(value = "select * from wingspan.wf_status where service_name IN ?1 and current_status = ?2 and dept_name = ?4 and application_id IN ?3", nativeQuery = true)
+    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(List<String> serviceNames, String currentStatus, List<String> applicationIds,String deptName);
 
     WfStatusEntity findByWfId(String wfId);
 
