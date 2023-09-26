@@ -29,6 +29,7 @@ import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.producer.Producer;
 import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
+import org.sunbird.workflow.utils.LRUCache;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -61,6 +62,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 	private Producer producer;
 
 	Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
+
+	LRUCache<String, List<WfStatusCountDTO>> localCache = new LRUCache<>(10000,30000);
 
 	/**
 	 * Change the status of workflow application
@@ -766,14 +769,22 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	public Response statusCountOnApplicationId(SearchCriteria criteria) {
-		List<Object[]> resultSet = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
 
-		List<WfStatusCountDTO> statusCountDTOs = new ArrayList<>();
-		for (Object[] result : resultSet) {
-			WfStatusCountDTO dto = new WfStatusCountDTO();
-			dto.setCurrentStatus((String) result[0]);
-			dto.setStatusCount(((BigInteger) result[1]).longValue());
-			statusCountDTOs.add(dto);
+		String applicationId = criteria.getApplicationIds().get(0);
+		List<WfStatusCountDTO> statusCountDTOs;
+		if(localCache.get(applicationId) != null){
+		 statusCountDTOs = (List<WfStatusCountDTO>)localCache.get(applicationId);
+		}
+	    else {
+			List<Object[]> resultSet = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
+			statusCountDTOs = new ArrayList<>();
+			for (Object[] result : resultSet) {
+				WfStatusCountDTO dto = new WfStatusCountDTO();
+				dto.setCurrentStatus((String) result[0]);
+				dto.setStatusCount(((BigInteger) result[1]).longValue());
+				statusCountDTOs.add(dto);
+			}
+			localCache.put(applicationId,statusCountDTOs);
 		}
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
