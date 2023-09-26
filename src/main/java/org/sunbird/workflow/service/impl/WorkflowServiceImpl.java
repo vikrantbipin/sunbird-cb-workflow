@@ -739,16 +739,21 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	public Response applicationUserSearchOnApplicationIdGroup(SearchCriteria criteria) {
 		List<String> applicationIds = criteria.getApplicationIds();
+		List<String> servicesName = new ArrayList<>();
+		if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())){
+			servicesName.add(Constants.ONE_STEP_MDO_APPROVAL);
+			servicesName.add(Constants.ONE_STEP_PC_APPROVAL);
+			servicesName.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+			servicesName.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+			servicesName.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+		}
 		Map<String, List<WfStatusEntity>> infos = null;
 		if (CollectionUtils.isEmpty(applicationIds)) {
 			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
 		}
-		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByApplicationIdIn(applicationIds);
-		List<WfStatusEntity> filteredEntities = wfStatusEntities.stream()
-				.filter(e -> e.getUserId().equalsIgnoreCase(criteria.getUserId()))
-				.filter(e -> criteria.getServiceName().equalsIgnoreCase(e.getServiceName()))
-				.collect(Collectors.toList());
-		infos = filteredEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndUserIdAndApplicationIdIn(
+				servicesName, criteria.getUserId(), applicationIds);
+		infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 		response.put(Constants.DATA, infos);
