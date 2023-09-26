@@ -66,6 +66,6 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
     List<WfStatusEntity> findByApplicationIdAndUserIdAndCurrentStatus(String applicationId, String userId ,String currentStatus);
 
     @Query(value = "SELECT current_status AS currentStatus, COUNT(*) AS statusCount FROM wingspan.wf_status WHERE application_id IN ?1 GROUP BY current_status" , nativeQuery = true )
-    List<WfStatusCountDTO> findStatusCountByApplicationId(List<String> applicationIds);
+    List<Object[]> findStatusCountByApplicationId(List<String> applicationIds);
 
 }

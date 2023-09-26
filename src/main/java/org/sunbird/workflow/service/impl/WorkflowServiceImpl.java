@@ -754,10 +754,18 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	public Response statusCountOnApplicationId(SearchCriteria criteria) {
-		List<WfStatusCountDTO> wfStatusCountDTOS = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
+		List<Object[]> resultSet = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
+
+		List<WfStatusCountDTO> statusCountDTOs = new ArrayList<>();
+		for (Object[] result : resultSet) {
+			WfStatusCountDTO dto = new WfStatusCountDTO();
+			dto.setCurrentStatus((String) result[0]);
+			dto.setStatusCount((Long) result[1]);
+			statusCountDTOs.add(dto);
+		}
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-		response.put(Constants.DATA, wfStatusCountDTOS);
+		response.put(Constants.DATA, statusCountDTOs);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
