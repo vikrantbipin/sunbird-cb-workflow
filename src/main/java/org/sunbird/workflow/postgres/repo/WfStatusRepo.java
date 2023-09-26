@@ -54,6 +54,8 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
 
     List<WfStatusEntity> findByServiceNameAndApplicationId(String serviceName, String applicationId);
 
+    List<WfStatusEntity>  findByApplicationId(String applicationId);
+
     /**
      * Query to fetch the data from the wf_status based on the service name, userId and the applicationId/BatchId
      *

@@ -82,7 +82,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         if (serviceName == null || serviceName.isEmpty()) {
             serviceName = Constants.BLENDED_PROGRAM_SERVICE_NAME;
         }
-        int totalUserEnrolCount = getTotalUserEnrolCountForBatch(serviceName, wfRequest.getApplicationId());
+        int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
         int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
         boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
                 Constants.BP_ENROLL_STATE);
@@ -204,6 +204,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     private int getTotalApprovedUserCount(WfRequest wfRequest) {
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put(Constants.BATCH_ID, wfRequest.getApplicationId());
+        propertyMap.put(Constants.CURRENT_STATUS,Constants.APPROVED_STATE);
         int totalCount = cassandraOperation.getCountByProperties(Constants.KEYSPACE_SUNBIRD_COURSES,
                 Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap);
         return totalCount;
@@ -412,6 +413,16 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 .collect(Collectors.toList());
         return wfEntries.size();
     }
+
+    private int getTotalUserEnrolCountForBatch(String applicationId) {
+        List<WfStatusEntity> wfEntries = wfStatusRepo
+                .findByApplicationId(applicationId);
+        wfEntries = wfEntries.stream().filter(wfEntry -> !configuration.getBpBatchFullValidationExcludeStates()
+                        .contains(wfEntry.getCurrentStatus()))
+                .collect(Collectors.toList());
+        return wfEntries.size();
+    }
+
 
     /**
      * Service method to handle the user enrolled by the admin.
