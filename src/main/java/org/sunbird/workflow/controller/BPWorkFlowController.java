@@ -54,7 +54,7 @@ public class BPWorkFlowController {
     @PostMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> blendedProgramWfSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
         //Department is not eligible filter for the Blended Program Search, marking it as null.
-        if(searchCriteria !=null) searchCriteria.setDeptName(null);
+        //if(searchCriteria !=null) searchCriteria.setDeptName(null);
         Response response = bPWorkFlowService.blendedProgramSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
@@ -109,5 +109,12 @@ public class BPWorkFlowController {
         Response response = bPWorkFlowService.removeBPWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
 
+    }
+
+
+    @PostMapping(path = "/enrol/status/count", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfStatusCount( @RequestBody SearchCriteria searchCriteria) {
+        Response response = bPWorkFlowService.blendedProgramStatusCount(searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 }

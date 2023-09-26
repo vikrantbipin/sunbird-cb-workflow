@@ -123,6 +123,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
     @Override
+    public Response blendedProgramStatusCount(SearchCriteria criteria) {
+        Response response = workflowService.statusCountOnApplicationId( criteria);
+        return response;
+    }
+
+    @Override
     public void updateEnrolmentDetails(WfRequest wfRequest) {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
