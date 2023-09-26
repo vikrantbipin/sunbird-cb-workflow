@@ -746,6 +746,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 			servicesName.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
 			servicesName.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
 			servicesName.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+		}else {
+			servicesName.add(criteria.getServiceName());
 		}
 		Map<String, List<WfStatusEntity>> infos = null;
 		if (CollectionUtils.isEmpty(applicationIds)) {
