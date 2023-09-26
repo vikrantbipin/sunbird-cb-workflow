@@ -63,8 +63,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
-	LRUCache<String, List<WfStatusCountDTO>> localCache = new LRUCache<>(configuration.getEnrolStatusCountLocalCacheSize(),configuration.getEnrolStatusCountLocalTimeToLive()*1000);
-
+	@Autowired
+	LRUCache<String, List<WfStatusCountDTO>> localCache ;
 	/**
 	 * Change the status of workflow application
 	 *
