@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.sunbird.workflow.config.Configuration;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,17 +14,20 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
 
     @Autowired
     Configuration conf;
-    private final int maxSize;
-    private final long maxAgeInMillis;
-    private final Map<K, Long> entryTimeMap;
+    private  int maxSize;
+    private  long maxAgeInMillis;
+    private  Map<K, Long> entryTimeMap;
 
     public LRUCache() {
         super(16, 0.75f, true);
+    }
+
+    @PostConstruct
+    public void postConstruct() {
         this.maxSize = conf.getEnrolStatusCountLocalCacheSize();
         this.maxAgeInMillis = conf.getEnrolStatusCountLocalTimeToLive()*60;
         this.entryTimeMap = new HashMap<>();
     }
-
     @Override
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         boolean isMaxSizeExceeded = size() > maxSize;
