@@ -54,4 +54,7 @@ public interface BPWorkFlowService {
      */
     public void removeEnrolmentDetails(WfRequest wfRequest);
 
-}
+    public Response blendedProgramStatusCount(SearchCriteria criteria);
+
+
+    }

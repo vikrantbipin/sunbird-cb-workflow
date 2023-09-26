@@ -110,4 +110,11 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
+
+
+    @PostMapping(path = "/enrol/status/count", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfStatusCount( @RequestBody SearchCriteria searchCriteria) {
+        Response response = bPWorkFlowService.blendedProgramStatusCount(searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
 }

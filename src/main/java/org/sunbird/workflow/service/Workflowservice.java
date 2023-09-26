@@ -30,4 +30,7 @@ public interface Workflowservice {
     public Response getUserWf(String rootOrg, String org, String wid, SearchCriteria criteria);
     
     public Response getUserWFApplicationFields(String rootOrg, String org, String wid, SearchCriteria criteria);
-}
+
+    public Response statusCountOnApplicationId(SearchCriteria criteria);
+
+    }

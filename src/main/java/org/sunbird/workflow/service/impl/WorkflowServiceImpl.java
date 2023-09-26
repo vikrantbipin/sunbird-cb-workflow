@@ -22,6 +22,7 @@ import org.sunbird.workflow.exception.BadRequestException;
 import org.sunbird.workflow.exception.InvalidDataInputException;
 import org.sunbird.workflow.models.*;
 import org.sunbird.workflow.postgres.entity.WfAuditEntity;
+import org.sunbird.workflow.postgres.entity.WfStatusCountDTO;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfAuditRepo;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
@@ -751,4 +752,14 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
+
+	public Response statusCountOnApplicationId(SearchCriteria criteria) {
+		List<WfStatusCountDTO> wfStatusCountDTOS = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, wfStatusCountDTOS);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
 }
