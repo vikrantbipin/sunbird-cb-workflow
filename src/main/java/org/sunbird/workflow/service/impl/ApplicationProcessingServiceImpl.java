@@ -50,7 +50,11 @@ public class ApplicationProcessingServiceImpl {
 				userRegService.processMessage(wfRequest);
 				break;
 			case Constants.BLENDED_PROGRAM_SERVICE_NAME:
-			        bpWorkFlowService.processWFRequest(wfRequest);
+			case Constants.ONE_STEP_MDO_APPROVAL:
+			case Constants.ONE_STEP_PC_APPROVAL:
+			case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+			case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+				bpWorkFlowService.processWFRequest(wfRequest);
 				break;
 			default:
 				break;
