@@ -225,5 +225,5 @@ public class Constants {
 	public static final String ADMIN_ENROLL_IS_IN_PROGRESS="ADMIN_ENROLL_IS_IN_PROGRESS";
 
 	public  static final String INITIATE ="INITIATE";
-
+	public static final String CURRENT_STATUS="current_status";
 }
