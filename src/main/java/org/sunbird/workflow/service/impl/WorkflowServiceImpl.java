@@ -31,6 +31,7 @@ import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -771,7 +772,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		for (Object[] result : resultSet) {
 			WfStatusCountDTO dto = new WfStatusCountDTO();
 			dto.setCurrentStatus((String) result[0]);
-			dto.setStatusCount((Long) result[1]);
+			dto.setStatusCount(((BigInteger) result[1]).longValue());
 			statusCountDTOs.add(dto);
 		}
 		Response response = new Response();
