@@ -149,6 +149,26 @@ public class Configuration {
     @Value("${enrol.status.count.local.cache.size}")
     private Integer enrolStatusCountLocalCacheSize;
 
+    @Value("${blended.program.enrol.conflict.reject.reason}")
+    private String conflictRejectReason;
+    @Value("${blended.program.enrol.batch.full.message}")
+    private String batchFullMesg;
+    public String getBatchFullMesg() {
+        return batchFullMesg;
+    }
+
+    public void setBatchFullMesg(String batchFullMesg) {
+        this.batchFullMesg = batchFullMesg;
+    }
+
+    public String getConflictRejectReason() {
+        return conflictRejectReason;
+    }
+
+    public void setConflictRejectReason(String conflictRejectReason) {
+        this.conflictRejectReason = conflictRejectReason;
+    }
+
     public Integer getEnrolStatusCountLocalCacheSize() {
         return enrolStatusCountLocalCacheSize;
     }
