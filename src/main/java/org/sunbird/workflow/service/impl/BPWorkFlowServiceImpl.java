@@ -88,7 +88,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
-            response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
+            response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
@@ -106,13 +106,27 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Override
     public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
-        if (validateBatchUserRequestAccess(wfRequest)) {
-            return workflowService.workflowTransition(rootOrg, org, wfRequest);
+        if (!validateBatchUserRequestAccess(wfRequest)) {
+            Response response = new Response();
+            response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
         }
-        Response response = new Response();
-        response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
-        response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
-        return response;
+
+        if (scheduleConflictCheck(wfRequest))
+        {
+            wfRequest.setAction(Constants.REJECT);
+            wfRequest.setComment(configuration.getConflictRejectReason());
+            workflowService.workflowTransition(rootOrg, org, wfRequest);
+            Response response = new Response();
+            response.put(Constants.ERROR_MESSAGE, configuration.getConflictRejectReason());
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+
+        return workflowService.workflowTransition(rootOrg, org, wfRequest);
+
+
     }
 
     @Override
@@ -442,7 +456,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.BP_ENROLL_STATE);
         if (!enrolAccess) {
             Response response = new Response();
-            response.put(Constants.ERROR_MESSAGE, Constants.BATCH_IS_FULL);
+            response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }

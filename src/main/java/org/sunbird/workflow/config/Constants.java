@@ -226,4 +226,7 @@ public class Constants {
 
 	public  static final String INITIATE ="INITIATE";
 	public static final String CURRENT_STATUS="current_status";
+
+	public static final String REJECT="REJECT";
+
 }
