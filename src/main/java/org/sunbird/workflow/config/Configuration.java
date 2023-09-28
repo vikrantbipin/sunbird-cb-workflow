@@ -203,6 +203,7 @@ public class Configuration {
     @Value("${enrol.status.count.local.cache.timetolive}")
     private Integer enrolStatusCountLocalTimeToLive;
 
+
     public Integer getDefaultLimit() {
         return defaultLimit;
     }
@@ -574,6 +575,7 @@ public class Configuration {
         this.multilevelBPEnrolEndPoint = multilevelBPEnrolEndPoint;
     }
 
+
     public String getLmsOrgSearchEndPoint() {
         return lmsOrgSearchEndPoint;
     }
@@ -581,4 +583,5 @@ public class Configuration {
     public void setLmsOrgSearchEndPoint(String lmsOrgSearchEndPoint) {
         this.lmsOrgSearchEndPoint = lmsOrgSearchEndPoint;
     }
+
 }

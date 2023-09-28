@@ -234,4 +234,5 @@ public class Constants {
 	public static final String PHONE_NUMBER_EXIST_ERROR = "Phone number is already registered.";
 	public static final String ORGANIZATION_EXIST_ERROR = "Organization is already registered.";
 	public static final String ORGANIZATION_NAME ="orgName";
+
 }
