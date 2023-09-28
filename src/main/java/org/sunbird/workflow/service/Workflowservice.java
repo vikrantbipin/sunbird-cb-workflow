@@ -6,7 +6,7 @@ public interface Workflowservice {
 
     public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest);
 
-    public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId);
+    public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId,String role);
 
     public Response getWfApplication(String rootOrg, String org, String wfId, String applicationId);
 
