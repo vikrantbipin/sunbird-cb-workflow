@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SearchCriteria;
+import org.sunbird.workflow.models.SearchCriteriaV2;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.service.BPWorkFlowService;
 
@@ -63,6 +64,20 @@ public class BPWorkFlowController {
         //Department is not eligible filter for the Blended Program Search, marking it as null.
         //if(searchCriteria !=null) searchCriteria.setDeptName(null);
         Response response = bPWorkFlowService.blendedProgramSearch(rootOrg, org, searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping(path = "/searchV2/pc", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfPCSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteriaV2 searchCriteria) {
+
+        Response response = bPWorkFlowService.bpPCSearch(rootOrg, org, searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping(path = "/searchV2/mdo", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfMDOSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteriaV2 searchCriteria) {
+
+        Response response = bPWorkFlowService.bpMDOSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 

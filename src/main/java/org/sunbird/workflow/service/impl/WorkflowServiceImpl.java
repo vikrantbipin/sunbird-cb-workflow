@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jcodings.util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -188,6 +187,10 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @param searchCriteria Search Criteria
 	 * @return Response of Application Search
 	 */
+	public Response appsPCSearchV2(String rootOrg, String org, SearchCriteriaV2 searchCriteria) {
+		return getResponse(rootOrg,  appsSearchV2(rootOrg,searchCriteria));
+	}
+
 	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... isSearchEnabled) {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
@@ -216,6 +219,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		return response;
 	}
+
 
 	private Response getResponse(String rootOrg, Response wfApplicationSearchResponse) {
 		Response response;
@@ -620,6 +624,29 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}*/
+
+	public Response appsSearchV2(String rootOrg, SearchCriteriaV2 criteria) {
+		Map<String, List<WfStatusEntity>> infos =null;
+		List<WfStatusEntity> wfStatusEntities = null;
+	    if(CollectionUtils.isEmpty(criteria.getDeptName())) {
+			wfStatusEntities = wfStatusRepo.findByStatusAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds());
+		}
+		else{
+			wfStatusEntities = wfStatusRepo.findByStatusAndDeptAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds(),
+					criteria.getDeptName());
+		}
+
+		infos =	wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, infos);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
 
 	public Response applicationSearchOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... isSearchEnabled) {
 		boolean searchEnabled = (isSearchEnabled.length < 1)?false:isSearchEnabled[0];

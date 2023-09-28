@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import org.sunbird.workflow.postgres.entity.WfStatusCountDTO;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 
 import java.util.List;
@@ -72,5 +71,15 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
 
     @Query(value = "SELECT current_status AS currentStatus, COUNT(*) AS statusCount FROM wingspan.wf_status WHERE application_id IN ?1 GROUP BY current_status" , nativeQuery = true )
     List<Object[]> findStatusCountByApplicationId(List<String> applicationIds);
+
+
+    @Query(value = "SELECT * FROM wingspan.wf_status WHERE " +
+            "current_status IN (?1) AND " +
+            "application_id IN (?2) AND " +
+            "dept_name = (?3)", nativeQuery = true)
+    List<WfStatusEntity> findByStatusAndDeptAndAppIds(List<String> currentStatus, List<String> applicationIds, List<String> deptName);
+
+    @Query(value = "SELECT * FROM wingspan.wf_status WHERE current_status IN (?1) AND application_id IN (?2) ", nativeQuery = true)
+    List<WfStatusEntity> findByStatusAndAppIds(List<String> currentStatus, List<String> applicationIds);
 
 }

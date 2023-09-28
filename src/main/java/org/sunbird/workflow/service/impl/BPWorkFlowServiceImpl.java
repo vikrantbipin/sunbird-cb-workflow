@@ -140,6 +140,16 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         return response;
     }
 
+    public Response bpPCSearch(String rootOrg, String org, SearchCriteriaV2 criteria) {
+        Response response = workflowService.appsPCSearchV2(rootOrg, org, criteria);
+        return response;
+    }
+
+    public Response bpMDOSearch(String rootOrg, String org, SearchCriteriaV2 criteria) {
+        Response response = workflowService.appsPCSearchV2(rootOrg, org, criteria);
+        return response;
+    }
+
     @Override
     public Response blendedProgramStatusCount(SearchCriteria criteria) {
         Response response = workflowService.statusCountOnApplicationId( criteria);
