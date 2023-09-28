@@ -74,7 +74,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @return
 	 */
 
-	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId) {
 		HashMap<String, String> changeStatusResponse;
 		List<String> wfIds = new ArrayList<>();
 		String changedStatus = null;
@@ -83,12 +83,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
 				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
 				wfRequest.setWfId(wfId);
-				changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+				changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId);
 				wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 				changedStatus = changeStatusResponse.get(Constants.STATUS);
 			}
 		} else {
-			changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+			changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId);
 			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 			changedStatus = changeStatusResponse.get(Constants.STATUS);
 		}
@@ -102,7 +102,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}
 
-	private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest) {
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+		return workflowTransition( rootOrg,  org,  wfRequest,null);
+	}
+
+		private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest,String userId) {
 		String wfId = wfRequest.getWfId();
 		String nextState = null;
 		HashMap<String, String> data = new HashMap<>();
@@ -145,6 +149,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setDeptName(wfRequest.getDeptName());
 			applicationStatus.setComment(wfRequest.getComment());
 			applicationStatus.setServiceName(wfRequest.getServiceName());
+			addModificationEntry(applicationStatus,userId,wfRequest.getAction());
 			wfStatusRepo.save(applicationStatus);
 			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
@@ -157,12 +162,35 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return data;
 	}
 
+	private void addModificationEntry(WfStatusEntity applicationStatus,String userId,String action) throws IOException {
+		if(!StringUtils.isEmpty(userId) &&
+				Arrays.asList(configuration.getModificationRecordAllowActions().split(Constants.COMMA)).contains(action)) {
+			List<Map<String, Object>> historyMap = null;
+			String history = applicationStatus.getModificationHistory();
+			if (!StringUtils.isEmpty(history))
+				historyMap = mapper.readValue(history, List.class);
+			else
+				historyMap = new ArrayList<>();
+			Map<String, Object> newModification = new HashMap<>();
+			newModification.put("modifiedDate", new Date());
+			newModification.put("modifiedBy", userId);
+			newModification.put("action", action);
+			historyMap.add(newModification);
+			applicationStatus.setModificationHistory(mapper.writeValueAsString(historyMap));
+		}
+
+	}
+
 	/**
 	 * @param rootOrg        root Org
 	 * @param org            org
 	 * @param searchCriteria Search Criteria
 	 * @return Response of Application Search
 	 */
+	public Response appsPCSearchV2(String rootOrg, String org, SearchCriteriaV2 searchCriteria) {
+		return getResponse(rootOrg,  appsSearchV2(rootOrg,searchCriteria));
+	}
+
 	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... isSearchEnabled) {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
@@ -191,6 +219,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		return response;
 	}
+
 
 	private Response getResponse(String rootOrg, Response wfApplicationSearchResponse) {
 		Response response;
@@ -595,6 +624,29 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}*/
+
+	public Response appsSearchV2(String rootOrg, SearchCriteriaV2 criteria) {
+		Map<String, List<WfStatusEntity>> infos =null;
+		List<WfStatusEntity> wfStatusEntities = null;
+	    if(CollectionUtils.isEmpty(criteria.getDeptName())) {
+			wfStatusEntities = wfStatusRepo.findByStatusAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds());
+		}
+		else{
+			wfStatusEntities = wfStatusRepo.findByStatusAndDeptAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds(),
+					criteria.getDeptName());
+		}
+
+		infos =	wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, infos);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
 
 	public Response applicationSearchOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... isSearchEnabled) {
 		boolean searchEnabled = (isSearchEnabled.length < 1)?false:isSearchEnabled[0];

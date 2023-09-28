@@ -151,8 +151,19 @@ public class Configuration {
 
     @Value("${blended.program.enrol.conflict.reject.reason}")
     private String conflictRejectReason;
+
+    public String getModificationRecordAllowActions() {
+        return modificationRecordAllowActions;
+    }
+
+    public void setModificationRecordAllowActions(String modificationRecordAllowActions) {
+        this.modificationRecordAllowActions = modificationRecordAllowActions;
+    }
+
     @Value("${blended.program.enrol.batch.full.message}")
     private String batchFullMesg;
+    @Value("${wfstatus.allowed.action.for.modification.history.entry}")
+    private String modificationRecordAllowActions;
     public String getBatchFullMesg() {
         return batchFullMesg;
     }

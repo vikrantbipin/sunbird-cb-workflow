@@ -105,7 +105,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
     @Override
-    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
+    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId) {
         if (!validateBatchUserRequestAccess(wfRequest)) {
             Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
@@ -124,9 +124,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return response;
         }
 
-        return workflowService.workflowTransition(rootOrg, org, wfRequest);
-
-
+        return workflowService.workflowTransition(rootOrg, org, wfRequest,userId);
     }
 
     @Override
@@ -139,6 +137,16 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     public Response blendedProgramSearch(String rootOrg, String org, SearchCriteria criteria) {
         Response response = workflowService.applicationsSearch(rootOrg, org, criteria,
                 Constants.BLENDED_PROGRAM_SEARCH_ENABLED);
+        return response;
+    }
+
+    public Response bpPCSearch(String rootOrg, String org, SearchCriteriaV2 criteria) {
+        Response response = workflowService.appsPCSearchV2(rootOrg, org, criteria);
+        return response;
+    }
+
+    public Response bpMDOSearch(String rootOrg, String org, SearchCriteriaV2 criteria) {
+        Response response = workflowService.appsPCSearchV2(rootOrg, org, criteria);
         return response;
     }
 

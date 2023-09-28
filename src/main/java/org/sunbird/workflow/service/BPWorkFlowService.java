@@ -4,13 +4,14 @@ import java.util.Map;
 
 import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SearchCriteria;
+import org.sunbird.workflow.models.SearchCriteriaV2;
 import org.sunbird.workflow.models.WfRequest;
 
 public interface BPWorkFlowService {
 
     public Response enrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
 
-    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
+    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId);
 
     public Response readBPWFApplication(String rootOrg, String org, String wfId, String applicationId);
 
@@ -56,5 +57,6 @@ public interface BPWorkFlowService {
 
     public Response blendedProgramStatusCount(SearchCriteria criteria);
 
-
+    public Response bpPCSearch(String rootOrg, String org, SearchCriteriaV2 criteria);
+    public Response bpMDOSearch(String rootOrg, String org, SearchCriteriaV2 criteria);
     }
