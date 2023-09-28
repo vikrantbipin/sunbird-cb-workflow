@@ -38,6 +38,13 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
+    @PostMapping("/unenrol")
+    public ResponseEntity<Response> blendedProgramUnEnrolWf(@RequestHeader String rootOrg, @RequestHeader String org,
+                                                            @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest,wfRequest.getUserId(), "");
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
     @PostMapping("/update/pc")
     public ResponseEntity<Response> blendedProgramWfPCUpdate(@RequestHeader(Constants.X_AUTH_USER_ID) String userId,@RequestHeader String rootOrg, @RequestHeader String org,
                                              @RequestBody WfRequest wfRequest) {

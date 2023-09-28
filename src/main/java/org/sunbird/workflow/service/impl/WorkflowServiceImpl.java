@@ -347,6 +347,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		for (WfStatus status : workFlowModel.getWfstates()) {
 			if (status.getState().equals(state)) {
 				wfStatus = status;
+				break;
 			}
 		}
 		if (ObjectUtils.isEmpty(wfStatus)) {
