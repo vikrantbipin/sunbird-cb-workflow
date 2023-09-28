@@ -16,8 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SearchCriteria;
+import org.sunbird.workflow.models.SearchCriteriaV2;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.service.BPWorkFlowService;
+
+import org.sunbird.workflow.service.DomainWhiteListWorkFlowService;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/v1/blendedprogram/workflow")
@@ -33,10 +38,17 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<Response> blendedProgramWfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
+    @PostMapping("/update/pc")
+    public ResponseEntity<Response> blendedProgramWfPCUpdate(@RequestHeader(Constants.X_AUTH_USER_ID) String userId,@RequestHeader String rootOrg, @RequestHeader String org,
                                              @RequestBody WfRequest wfRequest) {
-        Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest);
+        Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest,userId,Constants.PROGRAM_COORDINATOR);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping("/update/mdo")
+    public ResponseEntity<Response> blendedProgramWfMDOUpdate(@RequestHeader(Constants.X_AUTH_USER_ID) String userId,@RequestHeader String rootOrg, @RequestHeader String org,
+                                                           @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest,userId,Constants.MDO_ADMIN);
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
@@ -50,8 +62,22 @@ public class BPWorkFlowController {
     @PostMapping(path = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> blendedProgramWfSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteria searchCriteria) {
         //Department is not eligible filter for the Blended Program Search, marking it as null.
-        if(searchCriteria !=null) searchCriteria.setDeptName(null);
+        //if(searchCriteria !=null) searchCriteria.setDeptName(null);
         Response response = bPWorkFlowService.blendedProgramSearch(rootOrg, org, searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping(path = "/searchV2/pc", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfPCSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteriaV2 searchCriteria) {
+
+        Response response = bPWorkFlowService.bpPCSearch(rootOrg, org, searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping(path = "/searchV2/mdo", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfMDOSearch(@RequestHeader String rootOrg, @RequestHeader String org, @RequestBody SearchCriteriaV2 searchCriteria) {
+
+        Response response = bPWorkFlowService.bpMDOSearch(rootOrg, org, searchCriteria);
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
@@ -75,9 +101,42 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
+
     @PostMapping(path = "/stats")
     public ResponseEntity<Response> getBatchStats(@RequestBody Map<String, Object> request) {
         Response response = bPWorkFlowService.readStats(request);
         return new ResponseEntity<Response>(response, response.getResponseCode());
+    }
+
+    /**
+     * @param rootOrg   - Root Organization Name ex: "igot"
+     * @param org       - Organization name ex: "dopt"
+     * @param wfRequests - Bulk WorkFlow requests which needs to be processed.
+     * @return - Return the response of success/failure after processing the request.
+     */
+    @PostMapping("/admin/enrol")
+    public ResponseEntity<List<Response>> blendedProgramAdminEnrolWf(@RequestHeader String rootOrg, @RequestHeader String org,
+                                                                     @RequestBody List<WfRequest> wfRequests)  {
+        List<Response> responses = new ArrayList<>();
+        for(WfRequest wfRequest:wfRequests){
+            Response response = bPWorkFlowService.adminEnrolBPWorkFlow(rootOrg, org, wfRequest);
+            responses.add(response);
+        }
+        return new ResponseEntity<>(responses,HttpStatus.OK);
+    }
+
+    @PostMapping("/remove")
+    public ResponseEntity<Response> blendedProgramWfRemove(@RequestHeader String rootOrg, @RequestHeader String org,
+                                                           @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.removeBPWorkFlow(rootOrg, org, wfRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
+
+
+    @PostMapping(path = "/enrol/status/count", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Response> blendedProgramWfStatusCount( @RequestBody SearchCriteria searchCriteria) {
+        Response response = bPWorkFlowService.blendedProgramStatusCount(searchCriteria);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 }

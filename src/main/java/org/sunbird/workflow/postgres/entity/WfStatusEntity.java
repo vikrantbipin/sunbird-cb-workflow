@@ -52,6 +52,17 @@ public class WfStatusEntity {
 	@Column(name = "comment")
 	private String comment;
 
+	@Column(name = "modification_history")
+	private String modificationHistory;
+
+	public String getModificationHistory() {
+		return modificationHistory;
+	}
+
+	public void setModificationHistory(String modificationHistory) {
+		this.modificationHistory = modificationHistory;
+	}
+
 	public String getComment() {
 		return comment;
 	}

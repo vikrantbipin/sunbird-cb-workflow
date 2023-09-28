@@ -192,6 +192,7 @@ public class Constants {
 	public static final String MISSING_APPLICATION_IDS_ERROR_MESSAGE = "Application Ids are missing in the request";
 	public static final String ADDITIONAL_PROPERTIES = "additionalProperties";
 	public static final String TAG = "tag";
+
 	public static final String BP_ENROLL_STATE = "ENROLL_STATE";
 	public static final String BP_UPDATE_STATE = "UPDATE_STATE";
 	public static final String COURSE_ID_LIST = "courseIdList";
@@ -206,10 +207,32 @@ public class Constants {
 	public static final String TOTAL_LEARNER_COUNT = "totalLearnerCount";
 	public static final String TOTAL_REJECTED_COUNT = "totalRejectedCount";
 	public static final String COUNT = "count";
+	public static final String USER_ENROLMENTS="user_enrolments";
+	public static final String START_DATE="start_date";
+	public static final String ENROLLMENT_TYPE= "enrollmenttype";
+	public static final String INVITE_ONLY="invite-only";
+	public static final String REMOVED = "REMOVED";
+
+	public static final String MULTILEVEL_BP_ENROLL_FIELDS="primaryCategory,wfApprovalType";
+	public static final String BATCH_IS_FULL="BATCH_IS_FULL";
+	public static final String ENROLL_IS_IN_PROGRESS="ENROLL_IS_IN_PROGRESS";
+	public static final String ONE_STEP_MDO_APPROVAL="oneStepMDOApproval";
+	public static final String ONE_STEP_PC_APPROVAL="oneStepPCApproval";
+	public static final String TWO_STEP_MDO_AND_PC_APPROVAL="twoStepMDOAndPCApproval";
+	public static final String TWO_STEP_PC_AND_MDO_APPROVAL="twoStepPCAndMDOApproval";
+
+	public static final String ADMIN_ENROLL_IS_IN_PROGRESS="ADMIN_ENROLL_IS_IN_PROGRESS";
+
+	public  static final String INITIATE ="INITIATE";
+	public static final String CURRENT_STATUS="current_status";
+
+	public static final String REJECT="REJECT";
+
 	public static final String FILTERS = "filters";
 	public static final String PHONE = "phone";
 	public static final String EMAIL_EXIST_ERROR = "Email id already registered";
 	public static final String PHONE_NUMBER_EXIST_ERROR = "Phone number is already registered.";
 	public static final String ORGANIZATION_EXIST_ERROR = "Organization is already registered.";
 	public static final String ORGANIZATION_NAME ="orgName";
+
 }

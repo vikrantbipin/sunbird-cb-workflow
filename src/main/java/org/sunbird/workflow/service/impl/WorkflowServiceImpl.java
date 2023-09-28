@@ -22,14 +22,17 @@ import org.sunbird.workflow.exception.BadRequestException;
 import org.sunbird.workflow.exception.InvalidDataInputException;
 import org.sunbird.workflow.models.*;
 import org.sunbird.workflow.postgres.entity.WfAuditEntity;
+import org.sunbird.workflow.postgres.entity.WfStatusCountDTO;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfAuditRepo;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.producer.Producer;
 import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
+import org.sunbird.workflow.utils.LRUCache;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,6 +63,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	Logger log = LogManager.getLogger(WorkflowServiceImpl.class);
 
+	@Autowired
+	LRUCache<String, List<WfStatusCountDTO>> localCache ;
 	/**
 	 * Change the status of workflow application
 	 *
@@ -69,7 +74,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @return
 	 */
 
-	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
 		HashMap<String, String> changeStatusResponse;
 		List<String> wfIds = new ArrayList<>();
 		String changedStatus = null;
@@ -78,12 +83,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
 				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
 				wfRequest.setWfId(wfId);
-				changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+				changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
 				wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 				changedStatus = changeStatusResponse.get(Constants.STATUS);
 			}
 		} else {
-			changeStatusResponse = changeStatus(rootOrg, org, wfRequest);
+			changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
 			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 			changedStatus = changeStatusResponse.get(Constants.STATUS);
 		}
@@ -97,7 +102,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}
 
-	private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest) {
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+		return workflowTransition( rootOrg,  org,  wfRequest,null,null);
+	}
+
+		private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
 		String wfId = wfRequest.getWfId();
 		String nextState = null;
 		HashMap<String, String> data = new HashMap<>();
@@ -105,7 +114,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 			validateWfRequest(wfRequest);
 			WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
 					wfRequest.getApplicationId(), wfRequest.getWfId());
-			WorkFlowModel workFlowModel = getWorkFlowConfig(wfRequest.getServiceName());
+			String serviceName=wfRequest.getServiceName();
+			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName()) && !StringUtils.isEmpty(applicationStatus.getServiceName())) {
+				serviceName = applicationStatus.getServiceName();
+			}
+			WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
 			WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
 			validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
 			WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
@@ -117,7 +130,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicationStatus = new WfStatusEntity();
 				wfId = UUID.randomUUID().toString();
 				applicationStatus.setWfId(wfId);
-				applicationStatus.setServiceName(wfRequest.getServiceName());
+				applicationStatus.setServiceName(serviceName);
 				applicationStatus.setUserId(wfRequest.getUserId());
 				applicationStatus.setApplicationId(wfRequest.getApplicationId());
 				applicationStatus.setRootOrg(rootOrg);
@@ -135,6 +148,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
 			applicationStatus.setDeptName(wfRequest.getDeptName());
 			applicationStatus.setComment(wfRequest.getComment());
+			applicationStatus.setServiceName(wfRequest.getServiceName());
+			addModificationEntry(applicationStatus,userId,wfRequest.getAction(),role);
 			wfStatusRepo.save(applicationStatus);
 			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
@@ -147,12 +162,36 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return data;
 	}
 
+	private void addModificationEntry(WfStatusEntity applicationStatus,String userId,String action,String role) throws IOException {
+		if(!StringUtils.isEmpty(userId) &&
+				Arrays.asList(configuration.getModificationRecordAllowActions().split(Constants.COMMA)).contains(action)) {
+			List<Map<String, Object>> historyMap = null;
+			String history = applicationStatus.getModificationHistory();
+			if (!StringUtils.isEmpty(history))
+				historyMap = mapper.readValue(history, List.class);
+			else
+				historyMap = new ArrayList<>();
+			Map<String, Object> newModification = new HashMap<>();
+			newModification.put("modifiedDate", new Date());
+			newModification.put("modifiedBy", userId);
+			newModification.put("action", action);
+			newModification.put("role", role);
+			historyMap.add(newModification);
+			applicationStatus.setModificationHistory(mapper.writeValueAsString(historyMap));
+		}
+
+	}
+
 	/**
 	 * @param rootOrg        root Org
 	 * @param org            org
 	 * @param searchCriteria Search Criteria
 	 * @return Response of Application Search
 	 */
+	public Response appsPCSearchV2(String rootOrg, String org, SearchCriteriaV2 searchCriteria) {
+		return getResponse(rootOrg,  appsSearchV2(rootOrg,searchCriteria));
+	}
+
 	public Response applicationsSearch(String rootOrg, String org, SearchCriteria searchCriteria, boolean... isSearchEnabled) {
 		Response response = null;
 		Response wfApplicationSearchResponse = null;
@@ -181,6 +220,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		return response;
 	}
+
 
 	private Response getResponse(String rootOrg, Response wfApplicationSearchResponse) {
 		Response response;
@@ -586,6 +626,29 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return response;
 	}*/
 
+	public Response appsSearchV2(String rootOrg, SearchCriteriaV2 criteria) {
+		Map<String, List<WfStatusEntity>> infos =null;
+		List<WfStatusEntity> wfStatusEntities = null;
+	    if(CollectionUtils.isEmpty(criteria.getDeptName())) {
+			wfStatusEntities = wfStatusRepo.findByStatusAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds());
+		}
+		else{
+			wfStatusEntities = wfStatusRepo.findByStatusAndDeptAndAppIds(
+					criteria.getApplicationStatus(),
+					criteria.getApplicationIds(),
+					criteria.getDeptName());
+		}
+
+		infos =	wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, infos);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
 	public Response applicationSearchOnApplicationIdGroup(String rootOrg, SearchCriteria criteria, boolean... isSearchEnabled) {
 		boolean searchEnabled = (isSearchEnabled.length < 1)?false:isSearchEnabled[0];
 		Pageable pageable = getPageReqForApplicationSearch(criteria);
@@ -599,7 +662,13 @@ public class WorkflowServiceImpl implements Workflowservice {
 		if (!StringUtils.isEmpty(criteria.getDeptName())) {
 			if (searchEnabled==true) {
 				if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())) {
-					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
+					List<String> eligibleServiceNames = new ArrayList<>();
+					eligibleServiceNames.add(Constants.ONE_STEP_MDO_APPROVAL);
+					eligibleServiceNames.add(Constants.ONE_STEP_PC_APPROVAL);
+					eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+					eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+					eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds,criteria.getDeptName());
 				} else {
 					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
 				}
@@ -608,8 +677,18 @@ public class WorkflowServiceImpl implements Workflowservice {
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
 			}
 		} else {
-			wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
-					criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())) {
+				List<String> eligibleServiceNames = new ArrayList<>();
+				eligibleServiceNames.add(Constants.ONE_STEP_MDO_APPROVAL);
+				eligibleServiceNames.add(Constants.ONE_STEP_PC_APPROVAL);
+				eligibleServiceNames.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+				eligibleServiceNames.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+				eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds);
+			}else {
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndApplicationIdIn(
+						criteria.getServiceName(), criteria.getApplicationStatus(), applicationIds);
+			}
 		}
 		if (criteria.getServiceName().equalsIgnoreCase(Constants.BLENDED_PROGRAM_SERVICE_NAME)) {
 			infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
@@ -689,6 +768,18 @@ public class WorkflowServiceImpl implements Workflowservice {
 				case Constants.BLENDED_PROGRAM_SERVICE_NAME:
 					uri.append(configuration.getLmsServiceHost() + configuration.getBlendedProgramServicePath());
 					break;
+				case Constants.ONE_STEP_PC_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_PC_APPROVAL);
+					break;
+				case Constants.ONE_STEP_MDO_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.ONE_STEP_MDO_APPROVAL);
+					break;
+				case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+					break;
+				case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+					uri.append(configuration.getLmsServiceHost()).append(configuration.getMultilevelBPEnrolEndPoint()).append(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+					break;
 				default:
 					break;
 			}
@@ -706,12 +797,22 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	public Response applicationUserSearchOnApplicationIdGroup(SearchCriteria criteria) {
 		List<String> applicationIds = criteria.getApplicationIds();
+		List<String> servicesName = new ArrayList<>();
+		if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(criteria.getServiceName())){
+			servicesName.add(Constants.ONE_STEP_MDO_APPROVAL);
+			servicesName.add(Constants.ONE_STEP_PC_APPROVAL);
+			servicesName.add(Constants.TWO_STEP_MDO_AND_PC_APPROVAL);
+			servicesName.add(Constants.TWO_STEP_PC_AND_MDO_APPROVAL);
+			servicesName.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+		}else {
+			servicesName.add(criteria.getServiceName());
+		}
 		Map<String, List<WfStatusEntity>> infos = null;
 		if (CollectionUtils.isEmpty(applicationIds)) {
 			throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE);
 		}
 		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.findByServiceNameAndUserIdAndApplicationIdIn(
-					criteria.getServiceName(), criteria.getUserId(), applicationIds);
+				servicesName, criteria.getUserId(), applicationIds);
 		infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
@@ -719,4 +820,30 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
+
+	public Response statusCountOnApplicationId(SearchCriteria criteria) {
+
+		String applicationId = criteria.getApplicationIds().get(0);
+		List<WfStatusCountDTO> statusCountDTOs;
+		if(localCache.get(applicationId) != null){
+		 statusCountDTOs = (List<WfStatusCountDTO>)localCache.get(applicationId);
+		}
+	    else {
+			List<Object[]> resultSet = wfStatusRepo.findStatusCountByApplicationId(criteria.getApplicationIds());
+			statusCountDTOs = new ArrayList<>();
+			for (Object[] result : resultSet) {
+				WfStatusCountDTO dto = new WfStatusCountDTO();
+				dto.setCurrentStatus((String) result[0]);
+				dto.setStatusCount(((BigInteger) result[1]).longValue());
+				statusCountDTOs.add(dto);
+			}
+			localCache.put(applicationId,statusCountDTOs);
+		}
+		Response response = new Response();
+		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+		response.put(Constants.DATA, statusCountDTOs);
+		response.put(Constants.STATUS, HttpStatus.OK);
+		return response;
+	}
+
 }

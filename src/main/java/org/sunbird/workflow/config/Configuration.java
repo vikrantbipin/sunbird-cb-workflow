@@ -110,6 +110,9 @@ public class Configuration {
     @Value("${mdo.email.template}")
     private String mdoEmailTemplate;
 
+    @Value("${notification.email.body}")
+    private String mailBody;
+
     @Value("${lms.system.settings.wfUserRegistrationService.path}")
     private String userRegistrationServiceConfigPath;
 
@@ -135,6 +138,71 @@ public class Configuration {
     private Integer bpBatchEnrolLimitBufferSize;
 
 
+    @Value("${course.admin.unenrol}")
+    private String adminUnEnrolEndPoint;
+
+    @Value("${content.service.host}")
+    private String contentServiceHost;
+
+    @Value("${content.read.search}")
+    private String contentReadSearchEndPoint;
+
+    @Value("${ms.system.settings.multilevelBPEnroll.path}")
+    private String multilevelBPEnrolEndPoint;
+
+    @Value("${enrol.status.count.local.cache.size}")
+    private Integer enrolStatusCountLocalCacheSize;
+
+    @Value("${blended.program.enrol.conflict.reject.reason}")
+    private String conflictRejectReason;
+
+    public String getModificationRecordAllowActions() {
+        return modificationRecordAllowActions;
+    }
+
+    public void setModificationRecordAllowActions(String modificationRecordAllowActions) {
+        this.modificationRecordAllowActions = modificationRecordAllowActions;
+    }
+
+    @Value("${blended.program.enrol.batch.full.message}")
+    private String batchFullMesg;
+    @Value("${wfstatus.allowed.action.for.modification.history.entry}")
+    private String modificationRecordAllowActions;
+    public String getBatchFullMesg() {
+        return batchFullMesg;
+    }
+
+    public void setBatchFullMesg(String batchFullMesg) {
+        this.batchFullMesg = batchFullMesg;
+    }
+
+    public String getConflictRejectReason() {
+        return conflictRejectReason;
+    }
+
+    public void setConflictRejectReason(String conflictRejectReason) {
+        this.conflictRejectReason = conflictRejectReason;
+    }
+
+    public Integer getEnrolStatusCountLocalCacheSize() {
+        return enrolStatusCountLocalCacheSize;
+    }
+
+    public void setEnrolStatusCountLocalCacheSize(Integer enrolStatusCountLocalCacheSize) {
+        this.enrolStatusCountLocalCacheSize = enrolStatusCountLocalCacheSize;
+    }
+
+    public Integer getEnrolStatusCountLocalTimeToLive() {
+        return enrolStatusCountLocalTimeToLive;
+    }
+
+    public void setEnrolStatusCountLocalTimeToLive(Integer enrolStatusCountLocalTimeToLive) {
+        this.enrolStatusCountLocalTimeToLive = enrolStatusCountLocalTimeToLive;
+    }
+
+    @Value("${enrol.status.count.local.cache.timetolive}")
+    private Integer enrolStatusCountLocalTimeToLive;
+
 
     public Integer getDefaultLimit() {
         return defaultLimit;
@@ -155,7 +223,13 @@ public class Configuration {
     public Integer getMaxLimit() {
         return maxLimit;
     }
+    public String getMailBody() {
+        return mailBody;
+    }
 
+    public void setMailBody(String mailBody) {
+        this.mailBody = mailBody;
+    }
     public void setMaxLimit(Integer maxLimit) {
         this.maxLimit = maxLimit;
     }
@@ -469,6 +543,38 @@ public class Configuration {
         this.bpBatchEnrolLimitBufferSize = bpBatchEnrolLimitBufferSize;
     }
 
+    public String getAdminUnEnrolEndPoint() {
+        return adminUnEnrolEndPoint;
+    }
+
+    public void setAdminUnEnrolEndPoint(String adminUnEnrolEndPoint) {
+        this.adminUnEnrolEndPoint = adminUnEnrolEndPoint;
+    }
+
+    public String getContentServiceHost() {
+        return contentServiceHost;
+    }
+
+    public void setContentServiceHost(String contentServiceHost) {
+        this.contentServiceHost = contentServiceHost;
+    }
+
+    public String getContentReadSearchEndPoint() {
+        return contentReadSearchEndPoint;
+    }
+
+    public void setContentReadSearchEndPoint(String contentReadSearchEndPoint) {
+        this.contentReadSearchEndPoint = contentReadSearchEndPoint;
+    }
+
+    public String getMultilevelBPEnrolEndPoint() {
+        return multilevelBPEnrolEndPoint;
+    }
+
+    public void setMultilevelBPEnrolEndPoint(String multilevelBPEnrolEndPoint) {
+        this.multilevelBPEnrolEndPoint = multilevelBPEnrolEndPoint;
+    }
+
 
     public String getLmsOrgSearchEndPoint() {
         return lmsOrgSearchEndPoint;
@@ -477,4 +583,5 @@ public class Configuration {
     public void setLmsOrgSearchEndPoint(String lmsOrgSearchEndPoint) {
         this.lmsOrgSearchEndPoint = lmsOrgSearchEndPoint;
     }
+
 }
