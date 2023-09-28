@@ -11,7 +11,7 @@ public interface BPWorkFlowService {
 
     public Response enrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
 
-    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId);
+    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role);
 
     public Response readBPWFApplication(String rootOrg, String org, String wfId, String applicationId);
 

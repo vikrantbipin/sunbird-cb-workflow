@@ -105,7 +105,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
     @Override
-    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId) {
+    public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
         if (!validateBatchUserRequestAccess(wfRequest)) {
             Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
@@ -124,7 +124,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return response;
         }
 
-        return workflowService.workflowTransition(rootOrg, org, wfRequest,userId);
+        return workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
     }
 
     @Override

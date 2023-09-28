@@ -74,7 +74,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	 * @return
 	 */
 
-	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId) {
+	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
 		HashMap<String, String> changeStatusResponse;
 		List<String> wfIds = new ArrayList<>();
 		String changedStatus = null;
@@ -83,12 +83,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
 				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
 				wfRequest.setWfId(wfId);
-				changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId);
+				changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
 				wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 				changedStatus = changeStatusResponse.get(Constants.STATUS);
 			}
 		} else {
-			changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId);
+			changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
 			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 			changedStatus = changeStatusResponse.get(Constants.STATUS);
 		}
@@ -103,10 +103,10 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest) {
-		return workflowTransition( rootOrg,  org,  wfRequest,null);
+		return workflowTransition( rootOrg,  org,  wfRequest,null,null);
 	}
 
-		private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest,String userId) {
+		private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
 		String wfId = wfRequest.getWfId();
 		String nextState = null;
 		HashMap<String, String> data = new HashMap<>();
@@ -149,7 +149,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setDeptName(wfRequest.getDeptName());
 			applicationStatus.setComment(wfRequest.getComment());
 			applicationStatus.setServiceName(wfRequest.getServiceName());
-			addModificationEntry(applicationStatus,userId,wfRequest.getAction());
+			addModificationEntry(applicationStatus,userId,wfRequest.getAction(),role);
 			wfStatusRepo.save(applicationStatus);
 			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
@@ -162,7 +162,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return data;
 	}
 
-	private void addModificationEntry(WfStatusEntity applicationStatus,String userId,String action) throws IOException {
+	private void addModificationEntry(WfStatusEntity applicationStatus,String userId,String action,String role) throws IOException {
 		if(!StringUtils.isEmpty(userId) &&
 				Arrays.asList(configuration.getModificationRecordAllowActions().split(Constants.COMMA)).contains(action)) {
 			List<Map<String, Object>> historyMap = null;
@@ -175,6 +175,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			newModification.put("modifiedDate", new Date());
 			newModification.put("modifiedBy", userId);
 			newModification.put("action", action);
+			newModification.put("role", role);
 			historyMap.add(newModification);
 			applicationStatus.setModificationHistory(mapper.writeValueAsString(historyMap));
 		}
