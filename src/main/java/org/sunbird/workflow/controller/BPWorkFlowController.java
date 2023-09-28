@@ -37,9 +37,16 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<Response> blendedProgramWfUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
+    @PostMapping("/update/pc")
+    public ResponseEntity<Response> blendedProgramWfPCUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
                                              @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
+
+    @PostMapping("/update/mdo")
+    public ResponseEntity<Response> blendedProgramWfMDOUpdate(@RequestHeader String rootOrg, @RequestHeader String org,
+                                                           @RequestBody WfRequest wfRequest) {
         Response response = bPWorkFlowService.updateBPWorkFlow(rootOrg, org, wfRequest);
         return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
     }
