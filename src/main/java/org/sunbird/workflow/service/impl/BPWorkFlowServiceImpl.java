@@ -485,7 +485,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         } else {
             response = new Response();
             response.put(Constants.MESSAGE, "Not allowed to enroll the user to the Blended Program since there is a schedule conflict");
-            response.put(Constants.STATUS, HttpStatus.OK);
+            response.put(Constants.STATUS, HttpStatus.NOT_ACCEPTABLE);
         }
         return response;
     }
