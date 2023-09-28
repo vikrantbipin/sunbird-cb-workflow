@@ -39,13 +39,47 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
     @Query(value = "select * from wingspan.wf_status where service_name= ?1 and current_status = ?2 and dept_Name = ?3", nativeQuery = true)
     List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptName(String serviceName, String currentStatus, String deptName);
 
-    @Query(value = "select * from wingspan.wf_status where service_name = ?1 and userid = ?2 and application_id IN ?3", nativeQuery = true)
-    List<WfStatusEntity> findByServiceNameAndUserIdAndApplicationIdIn(String serviceName, String userId, List<String> applicationIds);
+    @Query(value = "select * from wingspan.wf_status where service_name IN ?1 and userid = ?2 and application_id IN ?3", nativeQuery = true)
+    List<WfStatusEntity> findByServiceNameAndUserIdAndApplicationIdIn(List<String> servicesName, String userId, List<String> applicationIds);
 
-    @Query(value = "select * from wingspan.wf_status where service_name= ?1 and current_status = ?2 and dept_Name = ?3 and application_id IN ?4", nativeQuery = true)
-    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(String serviceName, String currentStatus, String deptName, List<String> applicationIds);
+    @Query(value = "select * from wingspan.wf_status where service_name IN ?1 and current_status = ?2 and application_id IN ?3", nativeQuery = true)
+    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndApplicationId(List<String> serviceNames, String currentStatus, List<String> applicationIds);
+
+    @Query(value = "select * from wingspan.wf_status where service_name IN ?1 and current_status = ?2 and dept_name = ?4 and application_id IN ?3", nativeQuery = true)
+    List<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(List<String> serviceNames, String currentStatus, List<String> applicationIds,String deptName);
 
     WfStatusEntity findByWfId(String wfId);
 
+
     List<WfStatusEntity> findByServiceNameAndApplicationId(String serviceName, String applicationId);
+
+    List<WfStatusEntity>  findByApplicationId(String applicationId);
+
+    /**
+     * Query to fetch the data from the wf_status based on the service name, userId and the applicationId/BatchId
+     *
+     * @param serviceName   -Blended Program.
+     * @param userId        - user id of the learner to be enrolled in the Blended program.
+     * @param applicationId - batch id of the blended program to be enrolled.
+     * @return - Return the data if the user is already enrolled or not using the wf_status table.
+     */
+    @Query(value = "select * from wingspan.wf_status where service_name= ?1 and userid = ?2 and application_id = ?3", nativeQuery = true)
+    List<WfStatusEntity> findByServiceNameAndUserIdAndApplicationId(String serviceName, String userId, String applicationId);
+
+    @Query(value = "select * from wingspan.wf_status where application_id = ?1 and  userid= ?2 and current_status=?3", nativeQuery = true)
+    List<WfStatusEntity> findByApplicationIdAndUserIdAndCurrentStatus(String applicationId, String userId ,String currentStatus);
+
+    @Query(value = "SELECT current_status AS currentStatus, COUNT(*) AS statusCount FROM wingspan.wf_status WHERE application_id IN ?1 GROUP BY current_status" , nativeQuery = true )
+    List<Object[]> findStatusCountByApplicationId(List<String> applicationIds);
+
+
+    @Query(value = "SELECT * FROM wingspan.wf_status WHERE " +
+            "current_status IN (?1) AND " +
+            "application_id IN (?2) AND " +
+            "dept_name = (?3)", nativeQuery = true)
+    List<WfStatusEntity> findByStatusAndDeptAndAppIds(List<String> currentStatus, List<String> applicationIds, List<String> deptName);
+
+    @Query(value = "SELECT * FROM wingspan.wf_status WHERE current_status IN (?1) AND application_id IN (?2) ", nativeQuery = true)
+    List<WfStatusEntity> findByStatusAndAppIds(List<String> currentStatus, List<String> applicationIds);
+
 }

@@ -1,13 +1,12 @@
 package org.sunbird.workflow.service;
 
-import org.sunbird.workflow.models.Response;
-import org.sunbird.workflow.models.SearchCriteria;
-import org.sunbird.workflow.models.WfRequest;
-import org.sunbird.workflow.models.WfStatus;
+import org.sunbird.workflow.models.*;
 
 public interface Workflowservice {
 
     public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest);
+
+    public Response workflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId,String role);
 
     public Response getWfApplication(String rootOrg, String org, String wfId, String applicationId);
 
@@ -30,4 +29,9 @@ public interface Workflowservice {
     public Response getUserWf(String rootOrg, String org, String wid, SearchCriteria criteria);
     
     public Response getUserWFApplicationFields(String rootOrg, String org, String wid, SearchCriteria criteria);
-}
+
+    public Response statusCountOnApplicationId(SearchCriteria criteria);
+
+    public Response appsPCSearchV2(String rootOrg, String org, SearchCriteriaV2 criteria);
+
+    }
