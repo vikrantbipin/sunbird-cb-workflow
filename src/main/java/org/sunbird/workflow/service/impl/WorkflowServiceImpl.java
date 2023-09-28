@@ -148,7 +148,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
 			applicationStatus.setDeptName(wfRequest.getDeptName());
 			applicationStatus.setComment(wfRequest.getComment());
-			applicationStatus.setServiceName(wfRequest.getServiceName());
+			applicationStatus.setServiceName(serviceName);
 			addModificationEntry(applicationStatus,userId,wfRequest.getAction(),role);
 			wfStatusRepo.save(applicationStatus);
 			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
