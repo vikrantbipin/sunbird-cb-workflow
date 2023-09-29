@@ -132,14 +132,21 @@ public class BPWorkFlowController {
         return new ResponseEntity<>(responses,HttpStatus.OK);
     }
 
-    @PostMapping("/remove")
-    public ResponseEntity<Response> blendedProgramWfRemove(@RequestHeader String rootOrg, @RequestHeader String org,
+    @PostMapping("/remove/pc")
+    public ResponseEntity<Response> bpPCWfRemove(@RequestHeader(Constants.X_AUTH_USER_ID) String userId,@RequestHeader String rootOrg, @RequestHeader String org,
                                                            @RequestBody WfRequest wfRequest) {
-        Response response = bPWorkFlowService.removeBPWorkFlow(rootOrg, org, wfRequest);
+        Response response = bPWorkFlowService.removeBPWorkFlow(rootOrg, org, wfRequest,userId,Constants.PROGRAM_COORDINATOR);
         return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
 
+    @PostMapping("/remove/mdo")
+    public ResponseEntity<Response> bpMDOWfRemove(@RequestHeader(Constants.X_AUTH_USER_ID) String userId,@RequestHeader String rootOrg, @RequestHeader String org,
+                                                           @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.removeBPWorkFlow(rootOrg, org, wfRequest,userId,Constants.MDO_ADMIN);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
 
     @PostMapping(path = "/enrol/status/count", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> blendedProgramWfStatusCount( @RequestBody SearchCriteria searchCriteria) {
