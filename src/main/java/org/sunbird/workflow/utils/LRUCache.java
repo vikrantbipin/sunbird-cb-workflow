@@ -42,7 +42,11 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     public V get(Object key) {
         V value = super.get(key);
         if (value != null) {
-            entryTimeMap.put((K) key, System.currentTimeMillis());
+            long currentTime = System.currentTimeMillis();
+            if((currentTime - entryTimeMap.get(key)) > maxAgeInMillis) {
+                entryTimeMap.remove(key);
+                value = null;
+            }
         }
         return value;
     }
