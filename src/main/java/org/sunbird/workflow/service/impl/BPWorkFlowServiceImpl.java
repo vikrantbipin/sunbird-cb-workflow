@@ -535,7 +535,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
     @Override
-    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
+    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
         Response response = new Response();
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
@@ -547,7 +547,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.ERROR_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR);
         } else if (approvedLearners.size() == 1)
             wfRequest.setWfId(approvedLearners.get(0).getWfId());
-        response = workflowService.workflowTransition(rootOrg, org, wfRequest);
+        response = workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
 
         response.put(Constants.STATUS, HttpStatus.OK);
         return response;
@@ -737,10 +737,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     public void removeEnrolmentDetails(WfRequest wfRequest) {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
-                Constants.BP_UPDATE_STATE);
-        if (enrolAccess) {
+
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put(Constants.USER_ID, wfRequest.getUserId());
             requestBody.put(Constants.BATCH_ID, wfRequest.getApplicationId());
@@ -763,7 +760,6 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             } catch (Exception e) {
                 logger.error("Exception while un-enrol user");
             }
-        }
     }
 
     /**

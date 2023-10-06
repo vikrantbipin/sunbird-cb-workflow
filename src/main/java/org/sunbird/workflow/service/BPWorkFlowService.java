@@ -46,7 +46,7 @@ public interface BPWorkFlowService {
      */
     Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
 
-    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest);
+    public Response removeBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role);
 
     /**
      * This method is responsible for removing a user enrollment details
