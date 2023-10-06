@@ -137,7 +137,6 @@ public class Configuration {
     @Value("${bp.batch.enrol.limit.buffer.size}")
     private Integer bpBatchEnrolLimitBufferSize;
 
-
     @Value("${course.admin.unenrol}")
     private String adminUnEnrolEndPoint;
 
@@ -156,6 +155,15 @@ public class Configuration {
     @Value("${blended.program.enrol.conflict.reject.reason}")
     private String conflictRejectReason;
 
+    @Value("${blended.program.enrol.batch.full.message}")
+    private String batchFullMesg;
+
+    @Value("${wfstatus.allowed.action.for.modification.history.entry}")
+    private String modificationRecordAllowActions;
+
+    @Value("${blended.program.batch.in.progress.message}")
+    private String batchInProgressMessage;
+
     public String getModificationRecordAllowActions() {
         return modificationRecordAllowActions;
     }
@@ -164,10 +172,6 @@ public class Configuration {
         this.modificationRecordAllowActions = modificationRecordAllowActions;
     }
 
-    @Value("${blended.program.enrol.batch.full.message}")
-    private String batchFullMesg;
-    @Value("${wfstatus.allowed.action.for.modification.history.entry}")
-    private String modificationRecordAllowActions;
     public String getBatchFullMesg() {
         return batchFullMesg;
     }
@@ -582,6 +586,15 @@ public class Configuration {
 
     public void setLmsOrgSearchEndPoint(String lmsOrgSearchEndPoint) {
         this.lmsOrgSearchEndPoint = lmsOrgSearchEndPoint;
+    }
+
+
+    public String getBatchInProgressMessage() {
+        return batchInProgressMessage;
+    }
+
+    public void setBatchInProgressMessage(String batchInProgressMessage) {
+        this.batchInProgressMessage = batchInProgressMessage;
     }
 
 }
