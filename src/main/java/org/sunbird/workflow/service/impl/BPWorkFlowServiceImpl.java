@@ -737,10 +737,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     public void removeEnrolmentDetails(WfRequest wfRequest) {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
-        boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, 0,
-                Constants.BP_UPDATE_STATE);
-        if (enrolAccess) {
+
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put(Constants.USER_ID, wfRequest.getUserId());
             requestBody.put(Constants.BATCH_ID, wfRequest.getApplicationId());
@@ -763,7 +760,6 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             } catch (Exception e) {
                 logger.error("Exception while un-enrol user");
             }
-        }
     }
 
     /**
