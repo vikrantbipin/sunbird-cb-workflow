@@ -339,7 +339,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     private boolean validateBatchStartDate(Map<String, Object> courseBatchDetails) {
         Date batchStartDate = (Date) courseBatchDetails.get(Constants.START_DATE);
         Date todaysDate = new Date();
-        return batchStartDate.after(todaysDate) || batchStartDate.compareTo(todaysDate) == 0;
+        return batchStartDate.after(todaysDate);
     }
 
 
