@@ -106,24 +106,26 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Override
     public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
-        if (!validateBatchUserRequestAccess(wfRequest)) {
-            Response response = new Response();
+        Response response = new Response();
+        String validationError = validateBatchUserRequestAccess(wfRequest);
+        if (Constants.BATCH_START_DATE_ERROR.equals(validationError)) {
+            response.put(Constants.ERROR_MESSAGE, configuration.getBatchInProgressMessage());
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+        if (Constants.BATCH_SIZE_ERROR.equals(validationError)) {
             response.put(Constants.ERROR_MESSAGE, configuration.getBatchFullMesg());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-
-        if (scheduleConflictCheck(wfRequest))
-        {
+        if (scheduleConflictCheck(wfRequest)) {
             wfRequest.setAction(Constants.REJECT);
             wfRequest.setComment(configuration.getConflictRejectReason());
             workflowService.workflowTransition(rootOrg, org, wfRequest);
-            Response response = new Response();
             response.put(Constants.ERROR_MESSAGE, configuration.getConflictRejectReason());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-
         return workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
     }
 
@@ -198,7 +200,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 Constants.KEYSPACE_SUNBIRD_COURSES,
                 Constants.TABLE_COURSE_BATCH,
                 propertyMap,
-                Arrays.asList(Constants.BATCH_ATTRIBUTES, Constants.ENROLMENT_END_DATE));
+                Arrays.asList(Constants.BATCH_ATTRIBUTES, Constants.ENROLMENT_END_DATE, Constants.START_DATE));
         if (CollectionUtils.isNotEmpty(batchAttributesDetails)) {
             Map<String, Object> courseBatch = (Map<String, Object>) batchAttributesDetails.get(0);
             if (courseBatch.containsKey(Constants.BATCH_ATTRIBUTES)) {
@@ -216,9 +218,13 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                     Date enrollmentEndDate = courseBatch.containsKey(Constants.ENROLMENT_END_DATE)
                             ? (Date) courseBatch.get(Constants.ENROLMENT_END_DATE)
                             : null;
+                    Date batchStartDate = courseBatch.containsKey(Constants.START_DATE)
+                            ? (Date) courseBatch.get(Constants.START_DATE)
+                            : null;
                     Map<String, Object> result = new HashMap<>();
                     result.put(Constants.CURRENT_BATCH_SIZE, currentBatchSize);
                     result.put(Constants.ENROLMENT_END_DATE, enrollmentEndDate);
+                    result.put(Constants.START_DATE, batchStartDate);
                     return result;
                 } catch (Exception e) {
                     logger.error(String.format("Failed to retrieve course batch details. CourseId: %s, BatchId: %s",
@@ -249,15 +255,14 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         if (totalApprovedUserCount >= currentBatchSize) {
             return false;
         }
-        Date enrollmentEndDate = (Date) courseBatchDetails.get(Constants.ENROLMENT_END_DATE);
+
         if (currentBatchSize != 0 && Constants.BP_ENROLL_STATE.equals(bpState)) {
             currentBatchSize = (int) (currentBatchSize
                     + (((double) configuration.getBpBatchEnrolLimitBufferSize() / 100) * currentBatchSize));
         } else {
             totalUserEnrolCount = totalApprovedUserCount;
         }
-        boolean enrolAccess = (totalUserEnrolCount < currentBatchSize) && (enrollmentEndDate.after(new Date()));
-        return enrolAccess;
+        return totalUserEnrolCount < currentBatchSize;
     }
 
     @Override
@@ -314,14 +319,26 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     }
 
 
-    private boolean validateBatchUserRequestAccess(WfRequest wfRequest) {
-        if (configuration.getBpBatchFullValidationExcludeStates().contains(wfRequest.getAction())) {
-            return true;
-        }
+    private String validateBatchUserRequestAccess(WfRequest wfRequest) {
+        boolean nonEnrolmentState = configuration.getBpBatchFullValidationExcludeStates().contains(wfRequest.getAction());
+        if(nonEnrolmentState)
+            return "";
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        return validateBatchEnrolment(courseBatchDetails, getTotalApprovedUserCount(wfRequest), 0,
+        boolean batchStartDateValid = validateBatchStartDate(courseBatchDetails);
+        if(!batchStartDateValid)
+            return Constants.BATCH_START_DATE_ERROR;
+        boolean batchSizeValidation =  validateBatchEnrolment(courseBatchDetails, getTotalApprovedUserCount(wfRequest), 0,
                 Constants.BP_UPDATE_STATE);
+        if(!batchSizeValidation)
+            return Constants.BATCH_SIZE_ERROR;
+        return "";
+    }
+
+
+    private boolean validateBatchStartDate(Map<String, Object> courseBatchDetails) {
+        Date batchStartDate = (Date) courseBatchDetails.get(Constants.START_DATE);
+        return batchStartDate.after(new Date());
     }
 
 

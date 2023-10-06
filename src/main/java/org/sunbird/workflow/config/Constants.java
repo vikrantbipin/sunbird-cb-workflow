@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Constants {
 
-	private Constants() {
+    private Constants() {
 	}
 
 	public static final String ROOT_ORG = "igot";
@@ -234,5 +234,7 @@ public class Constants {
 	public static final String PHONE_NUMBER_EXIST_ERROR = "Phone number is already registered.";
 	public static final String ORGANIZATION_EXIST_ERROR = "Organization is already registered.";
 	public static final String ORGANIZATION_NAME ="orgName";
+	public static final String BATCH_START_DATE_ERROR = "Batch Start Date Error";
+	public static final String BATCH_SIZE_ERROR = "Batch Size Error";;
 
 }
