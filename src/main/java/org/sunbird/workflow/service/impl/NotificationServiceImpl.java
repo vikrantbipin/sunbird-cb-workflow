@@ -96,7 +96,7 @@ public class NotificationServiceImpl {
 		if (!ObjectUtils.isEmpty(wfStatus.getNotificationEnable()) && wfStatus.getNotificationEnable()) {
 			logger.info("Enter's in the notification block");
             Set<String> usersId = new HashSet<>();
-            usersId.add(wfRequest.getActorUserId());
+            usersId.add(wfRequest.getUserId());
 			switch (wfRequest.getServiceName()) {
 				case Constants.BLENDED_PROGRAM_SERVICE_NAME:
 				case Constants.ONE_STEP_MDO_APPROVAL:
@@ -110,7 +110,7 @@ public class NotificationServiceImpl {
 			HashMap<String, Object> usersObj = userProfileWfService.getUsersResult(usersId);
 			Map<String, Object> recipientInfo;
 			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName())) {
-				recipientInfo = (Map<String, Object>)usersObj.get(wfRequest.getActorUserId());
+				recipientInfo = (Map<String, Object>)usersObj.get(wfRequest.getUserId());
 			} else {
 				recipientInfo = (Map<String, Object>)usersObj.get(wfStatusEntity.getApplicationId());
 			}
