@@ -232,7 +232,6 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     private int getTotalApprovedUserCount(WfRequest wfRequest) {
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put(Constants.BATCH_ID, wfRequest.getApplicationId());
-        propertyMap.put(Constants.ACTIVE,Constants.TRUE);
         int totalCount = cassandraOperation.getCountByProperties(Constants.KEYSPACE_SUNBIRD_COURSES,
                 Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap);
         return totalCount;
