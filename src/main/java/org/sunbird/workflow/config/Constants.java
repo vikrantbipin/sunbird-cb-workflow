@@ -237,4 +237,6 @@ public class Constants {
 	public static final String BATCH_START_DATE_ERROR = "Batch Start Date Error";
 	public static final String BATCH_SIZE_ERROR = "Batch Size Error";;
 
+	public static final String TRUE="True";
+	public static final String ACTIVE = "active";
 }
