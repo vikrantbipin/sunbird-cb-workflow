@@ -232,13 +232,13 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put(Constants.BATCH_ID, wfRequest.getApplicationId());
         List<Map<String, Object>>  list =  cassandraOperation.getRecordsByProperties(Constants.KEYSPACE_SUNBIRD_COURSES,
-                Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap,Arrays.asList(Constants.BATCH_ID, Constants.USER_ID,Constants.ACTIVE)));
+                Constants.TABLE_ENROLMENT_BATCH_LOOKUP, propertyMap,Arrays.asList(Constants.BATCH_ID, Constants.USER_ID,Constants.ACTIVE));
            // Stream to filter and collect only non-null "endDate" maps
         return list.stream()
                 .filter(item -> {
                     return item != null && item.containsKey("active") && (boolean) item.get("active") == true;
                 })
-                .collect(Collectors.toList()).size();;
+                .collect(Collectors.toList()).size();
     }
     private boolean validateBatchEnrolment(Map<String, Object> courseBatchDetails, int totalApprovedUserCount,
             int totalUserEnrolCount, String bpState) {
