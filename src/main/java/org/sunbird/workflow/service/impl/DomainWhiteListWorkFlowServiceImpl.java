@@ -1,12 +1,12 @@
 package org.sunbird.workflow.service.impl;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.exception.BadRequestException;
@@ -17,10 +17,9 @@ import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.service.DomainWhiteListWorkFlowService;
 import org.sunbird.workflow.service.Workflowservice;
+import org.sunbird.workflow.utils.CassandraOperation;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +33,9 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
 
     @Autowired
     private WfStatusRepo wfStatusRepo;
+
+    @Autowired
+    CassandraOperation cassandraOperation;
 
     @Override
     public Response createDomainWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
@@ -96,5 +98,34 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
             offset = criteria.getOffset();
         pageable = PageRequest.of(offset, limit);
         return pageable;
+    }
+
+    @Override
+    public void processDomainRequest(WfRequest wfRequest) {
+        if (Constants.APPROVE_STATE.equalsIgnoreCase(wfRequest.getAction())) {
+            List<HashMap<String, Object>> updatedFieldValues = wfRequest.getUpdateFieldValues();
+            String approvedDomain = "";
+            for (HashMap<String, Object> updatedFieldValue : updatedFieldValues) {
+                if (updatedFieldValue.containsKey(Constants.TO_VALUE)) {
+                    Map<String, Object> toValueMap = (Map<String, Object>) updatedFieldValue.get(Constants.TO_VALUE);
+                    approvedDomain = (String) toValueMap.get(Constants.DOMAIN);
+                }
+            }
+            if (StringUtils.isNotEmpty(approvedDomain) && !isAlreadyApprovedDomains(approvedDomain)) {
+                Map<String, Object> propertyMap = new HashMap<>();
+                propertyMap.put(Constants.CONTEXT_TYPE, Constants.USER_REGISTRATION_PRE_APPROVED_DOMAIN);
+                propertyMap.put(Constants.CONTEXT_NAME, approvedDomain);
+                cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD, Constants.TABLE_MASTER_DATA, propertyMap);
+            }
+        }
+    }
+
+    private Boolean isAlreadyApprovedDomains(String emailDomain) {
+        Map<String, Object> propertyMap = new HashMap<>();
+        propertyMap.put(Constants.CONTEXT_TYPE, Constants.USER_REGISTRATION_PRE_APPROVED_DOMAIN);
+        propertyMap.put(Constants.CONTEXT_NAME, emailDomain);
+        List<Map<String, Object>> listOfDomains = cassandraOperation.getRecordsByProperties(
+                Constants.KEYSPACE_SUNBIRD, Constants.TABLE_MASTER_DATA, propertyMap, Arrays.asList(Constants.CONTEXT_TYPE, Constants.CONTEXT_NAME));
+        return CollectionUtils.isNotEmpty(listOfDomains);
     }
 }
