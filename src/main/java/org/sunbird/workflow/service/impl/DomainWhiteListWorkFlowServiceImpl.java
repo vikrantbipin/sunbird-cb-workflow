@@ -16,10 +16,14 @@ import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.postgres.entity.WfStatusEntity;
 import org.sunbird.workflow.postgres.repo.WfStatusRepo;
 import org.sunbird.workflow.service.DomainWhiteListWorkFlowService;
+import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.CassandraOperation;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +37,9 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
 
     @Autowired
     private WfStatusRepo wfStatusRepo;
+
+    @Autowired
+    private UserProfileWfService userProfileWfService;
 
     @Autowired
     CassandraOperation cassandraOperation;
@@ -57,11 +64,11 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
 
     @Override
     public Response domainSearch(String rootOrg, String org, SearchCriteria criteria) {
-        Response response = applicationSearchOnApplicationIdGroup(criteria);
+        Response response = applicationSearchOnApplicationIdGroup(criteria, rootOrg);
         return response;
     }
 
-    public Response applicationSearchOnApplicationIdGroup(SearchCriteria criteria) {
+    public Response applicationSearchOnApplicationIdGroup(SearchCriteria criteria, String rootOrg) {
         Pageable pageable = getPageReqForApplicationSearch(criteria);
         List<String> applicationIds = criteria.getApplicationIds();
         Map<String, List<WfStatusEntity>> infos = null;
@@ -78,7 +85,7 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
         response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
         response.put(Constants.DATA, infos);
         response.put(Constants.STATUS, HttpStatus.OK);
-        return response;
+        return getResponse(rootOrg, response);
     }
 
     private Pageable getPageReqForApplicationSearch(SearchCriteria criteria) {
@@ -98,6 +105,17 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
             offset = criteria.getOffset();
         pageable = PageRequest.of(offset, limit);
         return pageable;
+    }
+
+    private Response getResponse(String rootOrg, Response wfApplicationSearchResponse) {
+        Response response;
+        List<Map<String, Object>> userProfiles = userProfileWfService.enrichUserData(
+                (Map<String, List<WfStatusEntity>>) wfApplicationSearchResponse.get(Constants.DATA), rootOrg);
+        response = new Response();
+        response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+        response.put(Constants.DATA, userProfiles);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
     }
 
     @Override
