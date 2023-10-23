@@ -83,5 +83,5 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
     List<WfStatusEntity> findByStatusAndAppIds(List<String> currentStatus, List<String> applicationIds);
 
     @Query(value = "select application_id from wingspan.wf_status where service_name = ?1 and current_status = ?2 and dept_name = ?3 group by application_id", countQuery = "select count(application_id) from wingspan.wf_status where service_name = ?1 and current_status = ?2 group by application_id", nativeQuery = true)
-    List<String> getListOfDistinctApplicationUsingDept(String serviceName, String currentStatus, String deptName, Pageable pageable);
+    Page<String> getListOfDistinctApplicationUsingDept(String serviceName, String currentStatus, String deptName, Pageable pageable);
 }
