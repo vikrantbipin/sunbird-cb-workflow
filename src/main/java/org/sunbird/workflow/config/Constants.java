@@ -236,7 +236,11 @@ public class Constants {
 	public static final String ORGANIZATION_NAME ="orgName";
 	public static final String BATCH_START_DATE_ERROR = "Batch Start Date Error";
 	public static final String BATCH_SIZE_ERROR = "Batch Size Error";;
-
 	public static final String TRUE="True";
 	public static final String ACTIVE = "active";
+	public static final String DOMAIN ="domain";
+	public static final String TABLE_MASTER_DATA = "master_data";
+	public static final String CONTEXT_TYPE = "contextType";
+	public static final String CONTEXT_NAME = "contextName";
+	public static final String USER_REGISTRATION_PRE_APPROVED_DOMAIN = "userRegistrationPreApprovedDomain";
 }
