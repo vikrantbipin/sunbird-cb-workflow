@@ -3,6 +3,7 @@ package org.sunbird.workflow.service.impl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -72,20 +73,24 @@ public class DomainWhiteListWorkFlowServiceImpl implements DomainWhiteListWorkFl
         Pageable pageable = getPageReqForApplicationSearch(criteria);
         List<String> applicationIds = criteria.getApplicationIds();
         Map<String, List<WfStatusEntity>> infos = null;
+        long totalDomainRequestCount = 0;
         if (CollectionUtils.isEmpty(applicationIds)) {
-            applicationIds = wfStatusRepo.getListOfDistinctApplicationUsingDept(criteria.getServiceName(),
+            Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctApplicationUsingDept(criteria.getServiceName(),
                     criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
+            applicationIds = applicationIdsPage.getContent();
+            totalDomainRequestCount = applicationIdsPage.getTotalElements();
         }
         List<WfStatusEntity> wfStatusEntities = null;
         wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(
                 criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds);
-
         infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
         Response response = new Response();
         response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
         response.put(Constants.DATA, infos);
         response.put(Constants.STATUS, HttpStatus.OK);
-        return getResponse(rootOrg, response);
+        response = getResponse(rootOrg, response);
+        response.put(Constants.COUNT, totalDomainRequestCount);
+        return response;
     }
 
     private Pageable getPageReqForApplicationSearch(SearchCriteria criteria) {
