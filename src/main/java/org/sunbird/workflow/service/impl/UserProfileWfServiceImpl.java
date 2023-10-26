@@ -106,6 +106,12 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				failedCase(wfRequest);
 				return;
 			}
+			//This field is updated via approval
+			/*if (validateJsonAgainstSchema(updateRequest)) {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, true);
+			} else {
+				updateRequest.put(Constants.VERIFIED_KARMAYOGI, false);
+			}*/
 			Map<String, Object> updateUserApiResp = requestServiceImpl
 					.fetchResultUsingPatch(configuration.getLmsServiceHost() + configuration.getUserProfileUpdateEndPoint(), getUpdateRequest(wfRequest, updateRequest), getHeaders());
 			if (null != updateUserApiResp && !Constants.OK.equals(updateUserApiResp.get(Constants.RESPONSE_CODE))) {
