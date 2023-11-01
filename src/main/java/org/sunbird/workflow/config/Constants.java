@@ -239,4 +239,17 @@ public class Constants {
 
 	public static final String TRUE="True";
 	public static final String ACTIVE = "active";
+
+	public static final String DESCRIPTION = "description";
+	public static final String COURSE_NAME = "courseName";
+	public static final String BATCH_NAME = "batchName";
+	public static final String BATCH_START_DATE = "batchStartDate";
+	public static final String FROM_EMAIL = "fromEmail";
+	public static final String DEV_HIERARCHY_STORE = "dev_hierarchy_store";
+	public static final String CONTENT_HIERARCHY = "content_hierarchy";
+	public static final String IDENTIFIER = "identifier";
+	public static final String HIERARCHY = "hierarchy";
+	public static final Object KARMYOGI_BHARAT = "Karmyogi Bharat";
+	public static final String TO_PROGRAMME_COORDINATOR = "Programme Coordinator";
+	public static final String TO_MDO_ADMIN = "MDO Admin";
 }
