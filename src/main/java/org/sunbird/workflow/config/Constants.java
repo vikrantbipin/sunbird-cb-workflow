@@ -236,10 +236,8 @@ public class Constants {
 	public static final String ORGANIZATION_NAME ="orgName";
 	public static final String BATCH_START_DATE_ERROR = "Batch Start Date Error";
 	public static final String BATCH_SIZE_ERROR = "Batch Size Error";;
-
 	public static final String TRUE="True";
 	public static final String ACTIVE = "active";
-
 	public static final String DESCRIPTION = "description";
 	public static final String COURSE_NAME = "courseName";
 	public static final String BATCH_NAME = "batchName";
@@ -252,4 +250,10 @@ public class Constants {
 	public static final Object KARMYOGI_BHARAT = "Karmyogi Bharat";
 	public static final String TO_PROGRAMME_COORDINATOR = "Programme Coordinator";
 	public static final String TO_MDO_ADMIN = "MDO Admin";
+	public static final String DOMAIN ="domain";
+	public static final String TABLE_MASTER_DATA = "master_data";
+	public static final String CONTEXT_TYPE = "contextType";
+	public static final String CONTEXT_NAME = "contextName";
+	public static final String USER_REGISTRATION_PRE_APPROVED_DOMAIN = "userRegistrationPreApprovedDomain";
+	public static final String DOMAIN_NAME_REQUEST_EXIST_MSG = "Already a request is raised for domain";
 }
