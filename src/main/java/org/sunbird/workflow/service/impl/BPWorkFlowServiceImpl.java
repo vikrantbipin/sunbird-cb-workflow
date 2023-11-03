@@ -98,11 +98,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
+        wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
         WfNotification wfNotification = getWorkFlowNotificationRequest(wfRequest);
         wfNotification.setBatchName((String) courseBatchDetails.get(Constants.BATCH_NAME));
         wfNotification.setBatchStartDate((Date) courseBatchDetails.get(Constants.START_DATE));
-        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
-        wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
+        Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfNotification);
         producer.push(configuration.getWorkflowApplicationTopic(), wfNotification);
         return response;
     }
@@ -125,10 +125,10 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        if (scheduleConflictCheck(wfRequest)) {
-            wfRequest.setAction(Constants.REJECT);
-            wfRequest.setComment(configuration.getConflictRejectReason());
-            workflowService.workflowTransition(rootOrg, org, wfRequest);
+        if (scheduleConflictCheck(wfNotification)) {
+            wfNotification.setAction(Constants.REJECT);
+            wfNotification.setComment(configuration.getConflictRejectReason());
+            workflowService.workflowTransition(rootOrg, org, wfNotification);
             response.put(Constants.ERROR_MESSAGE, configuration.getConflictRejectReason());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
@@ -511,13 +511,13 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 response.put(Constants.MESSAGE, "Not allowed to enroll the user to the Blended Program");
                 response.put(Constants.STATUS, HttpStatus.OK);
             } else {
+                wfRequest.setAction(Constants.INITIATE);
                 WfNotification wfNotification = getWorkFlowNotificationRequest(wfRequest);
                 wfNotification.setBatchName((String) courseBatchDetails.get(Constants.BATCH_NAME));
                 wfNotification.setBatchStartDate((Date) courseBatchDetails.get(Constants.START_DATE));
-                response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
+                response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfNotification);
                // producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
-                wfRequest.setAction(Constants.INITIATE);
-                producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+                producer.push(configuration.getWorkflowApplicationTopic(), wfNotification);
             }
         } else {
             response = new Response();
