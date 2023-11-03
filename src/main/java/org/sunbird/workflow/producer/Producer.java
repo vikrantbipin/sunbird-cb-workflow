@@ -26,4 +26,14 @@ public class Producer {
             logger.error("Exception while serializing the value", e);
         }
     }
+    public void push(String topic, String key,Object value) {
+        ObjectMapper mapper = new ObjectMapper();
+        String message = null;
+        try {
+            message = mapper.writeValueAsString(value);
+            kafkaTemplate.send(topic, key, message);
+        } catch (JsonProcessingException e) {
+            logger.error("Exception while serializing the value", e);
+        }
+    }
 }

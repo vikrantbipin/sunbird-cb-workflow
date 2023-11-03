@@ -151,7 +151,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			applicationStatus.setServiceName(serviceName);
 			addModificationEntry(applicationStatus,userId,wfRequest.getAction(),role);
 			wfStatusRepo.save(applicationStatus);
-			producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+			producer.push(configuration.getWorkFlowNotificationTopic(),userId, wfRequest);
 			producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
 
 		} catch (IOException e) {
