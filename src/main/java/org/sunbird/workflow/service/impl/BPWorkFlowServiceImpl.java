@@ -103,7 +103,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         wfNotification.setBatchStartDate((Date) courseBatchDetails.get(Constants.START_DATE));
         Response response = saveEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
         wfRequest.setServiceName(Constants.BLENDED_PROGRAM_SERVICE_NAME);
-        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+        producer.push(configuration.getWorkflowApplicationTopic(), wfNotification);
         return response;
     }
 
@@ -133,7 +133,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        return workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
+        return workflowService.workflowTransition(rootOrg, org, wfNotification, userId,role);
     }
 
     @Override
