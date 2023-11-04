@@ -109,6 +109,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Override
     public Response updateBPWorkFlow(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
+        logger.info("Workflow request Body received: " + wfRequest);
         Response response = new Response();
         Map<String, Object> batchDetailsMap = new HashMap<>();
         WfNotification wfNotification = getWorkFlowNotificationRequest(wfRequest);
@@ -1027,7 +1028,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         wfNotification.setComment(wfRequest.getComment());
         wfNotification.setWfId(wfRequest.getWfId());
         wfNotification.setServiceName(wfRequest.getServiceName());
-        wfNotification.setActorUserId(wfNotification.getActorUserId());
+        wfNotification.setActorUserId(wfRequest.getActorUserId());
         wfNotification.setCourseId(wfRequest.getCourseId());
         wfNotification.setUpdateFieldValues(wfRequest.getUpdateFieldValues());
         wfNotification.setRootOrgId(wfRequest.getRootOrgId());
