@@ -78,7 +78,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         validateWfRequestMultilevelEnrol(wfRequest);
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
+        String serviceName = (String)contentReadService.getServiceNameDetails(wfRequest.getCourseId()).get("wfApprovalType");
         if (serviceName == null || serviceName.isEmpty()) {
             serviceName = Constants.BLENDED_PROGRAM_SERVICE_NAME;
         }
@@ -474,10 +474,17 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
     public Response adminEnrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
         Map<String, Object> courseBatchDetails = getCurrentBatchAttributes(wfRequest.getApplicationId(),
                 wfRequest.getCourseId());
-        String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
+        Map<String,Object> status =  contentReadService.getServiceNameDetails(wfRequest.getCourseId());
+        String serviceName = (String) status.get("wfApprovalType");;
         if (serviceName == null || serviceName.isEmpty()) {
             serviceName = Constants.BLENDED_PROGRAM_SERVICE_NAME;
         }
+        ArrayList<Map<String,Object>>  batches = (ArrayList<Map<String,Object>>)status.get("batches");
+        ArrayList<String> courseBatchIds = batches.stream()
+                .map(m -> m.get("batchId"))
+                .map(Object::toString)
+                .collect(Collectors.toCollection(ArrayList::new));
+
         int totalUserEnrolCount = getTotalUserEnrolCountForBatch(wfRequest.getApplicationId());
         int totalApprovedUserCount = getTotalApprovedUserCount(wfRequest);
         boolean enrolAccess = validateBatchEnrolment(courseBatchDetails, totalApprovedUserCount, totalUserEnrolCount,
@@ -489,7 +496,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             return response;
         }
         Response response;
-        if (!scheduleConflictCheck(wfRequest)) {
+        if (!scheduleConflictCheck(wfRequest) && !alreadyEnrolledToSomeBatch(wfRequest.getUserId(),courseBatchIds)) {
             List<WfStatusEntity> enrollmentStatus = wfStatusRepo.findByServiceNameAndUserIdAndApplicationId(wfRequest.getServiceName(), wfRequest.getUserId(), wfRequest.getApplicationId());
 
             if (!enrollmentStatus.isEmpty()) {
@@ -510,6 +517,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         return response;
     }
 
+    private boolean alreadyEnrolledToSomeBatch (String userId,ArrayList<String> batches) {
+        ArrayList<String> status = new ArrayList();
+        status.add(Constants.REMOVED);
+        status.add(Constants.REJECTED);
+        return wfStatusRepo.findByNOTStatusAndAppIdsAndUserId(userId,status,batches) > 0 ;
+    }
     /**
      * Save Method to save the admin enrolled data into the wf_status table.
      *
@@ -796,7 +809,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      * @param wfRequest - WorkFlow request which needs to be processed.
      */
     private void handleEnrollmentRequest(WfRequest wfRequest) {
-        String serviceName = contentReadService.getServiceNameDetails(wfRequest.getCourseId());
+        String serviceName = (String)contentReadService.getServiceNameDetails(wfRequest.getCourseId()).get("wfApprovalType");;
         if (serviceName == null || serviceName.isEmpty()) {
             serviceName = wfRequest.getServiceName();
         }

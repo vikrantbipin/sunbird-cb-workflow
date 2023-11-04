@@ -8,6 +8,7 @@ import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.service.ContentReadService;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +31,8 @@ public class ContentReadServiceImpl implements ContentReadService {
      * @param courseId - Blended course -courseId based on this field the content service API is called.
      * @return - returns the serviceName based on which the enrollment configuration json is fetched.
      */
-    public String getServiceNameDetails(String courseId) {
+    public Map<String,Object> getServiceNameDetails(String courseId) {
+        Map<String,Object> returnValues= new HashMap<>();
         try {
             StringBuilder builder = new StringBuilder(configuration.getContentServiceHost());
             builder.append(configuration.getContentReadSearchEndPoint());
@@ -42,12 +44,13 @@ public class ContentReadServiceImpl implements ContentReadService {
                 Map<String, Object> map = (Map<String, Object>) response.get(Constants.RESULT);
                 if (map.get(Constants.CONTENT) != null) {
                     Map<String, Object> responseObj = (Map<String, Object>) map.get(Constants.CONTENT);
-                    return (String) responseObj.get("wfApprovalType");
+                    returnValues.put("wfApprovalType",(String) responseObj.get("wfApprovalType"));
+                    returnValues.put("batches",responseObj.get("batches"));
                 }
             }
         } catch (Exception e) {
             logger.info("There is a error occured while searching for the Org details : " + e);
         }
-        return null;
+        return returnValues;
     }
 }

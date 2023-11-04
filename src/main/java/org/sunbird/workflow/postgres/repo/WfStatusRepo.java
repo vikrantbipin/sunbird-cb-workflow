@@ -82,4 +82,7 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
     @Query(value = "SELECT * FROM wingspan.wf_status WHERE current_status IN (?1) AND application_id IN (?2) ", nativeQuery = true)
     List<WfStatusEntity> findByStatusAndAppIds(List<String> currentStatus, List<String> applicationIds);
 
+    @Query(value = "SELECT count(1) FROM wingspan.wf_status WHERE userid = ?1 and current_status NOT IN (?2) AND application_id IN (?3) ", nativeQuery = true)
+    Integer findByNOTStatusAndAppIdsAndUserId(String userid, List<String> currentStatus, List<String> applicationIds);
+
 }
