@@ -794,9 +794,10 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                         .fetchResultUsingPost(builder, request, Map.class, headersValue);
                 if (enrolResp != null
                         && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
-                    logger.info("User un-enrollment success");
+                    logger.info("User un-enrollment success UserId :"+wfRequest.getUserId() + " BatchId :"+wfRequest.getApplicationId() +"CourseId :"+wfRequest.getCourseId());
                 } else {
-                    logger.error("user un-enrollment failed" + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+                    logger.error("user un-enrollment failed UserId :"+wfRequest.getUserId() + " BatchId :"+wfRequest.getApplicationId() +"CourseId :"+wfRequest.getCourseId() + " : "+
+                            ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
                 }
             } catch (Exception e) {
                 logger.error("Exception while un-enrol user");
