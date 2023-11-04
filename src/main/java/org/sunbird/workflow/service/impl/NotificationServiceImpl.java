@@ -439,13 +439,15 @@ public class NotificationServiceImpl {
 		StringBuilder builder = new StringBuilder();
 		builder.append(configuration.getNotifyServiceHost()).append(configuration.getNotifyServicePath());
 		try {
-			requestService.fetchResultUsingPost(builder, request, Map.class, null);
+			Object response = requestService.fetchResultUsingPost(builder, request, Map.class, null);
+			logger.info("Notification sent successfully, response is: " + response);
 		} catch (Exception e) {
 			logger.error("Exception while posting the data in notification service: ", e);
 		}
 	}
 
 	private void sendNotificationEmail(Map<String, Object> mailNotificationDetails){
+		logger.info("Mail Notification Details: " + mailNotificationDetails);
 		Map<String, Object> params = new HashMap<>();
 		NotificationRequest request = new NotificationRequest();
 		List<String> emailList = (List<String>) mailNotificationDetails.get("emailList");
