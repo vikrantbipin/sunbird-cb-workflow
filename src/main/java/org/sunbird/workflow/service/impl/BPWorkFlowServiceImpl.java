@@ -181,13 +181,13 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                         .fetchResultUsingPost(builder, request, Map.class, headersValue);
                 if (enrolResp != null
                         && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
-                    logger.info("User enrolment success");
+                    logger.info("User enrolment success UserId :"+wfRequest.getUserId() + " BatchId :"+wfRequest.getApplicationId() +"CourseId :"+wfRequest.getCourseId());
                 } else {
-                    logger.error("user enrolment failed"
+                    logger.error("user enrolment failed UserId :"+wfRequest.getUserId() + " BatchId :"+wfRequest.getApplicationId() +"CourseId :"+wfRequest.getCourseId()
                             + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
                 }
             } catch (Exception e) {
-                logger.error("Exception while enrol user");
+                logger.error("Exception while enrol user " + e);
             }
         }
     }
