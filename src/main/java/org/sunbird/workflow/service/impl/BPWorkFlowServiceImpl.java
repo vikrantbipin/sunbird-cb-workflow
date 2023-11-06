@@ -497,11 +497,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         }
         Response response;
         if (!scheduleConflictCheck(wfRequest) && !alreadyEnrolledToSomeBatch(wfRequest.getUserId(),courseBatchIds)) {
-            List<WfStatusEntity> enrollmentStatus = wfStatusRepo.findByServiceNameAndUserIdAndApplicationId(wfRequest.getServiceName(), wfRequest.getUserId(), wfRequest.getApplicationId());
+            List<WfStatusEntity> enrollmentStatus = wfStatusRepo.findByUserIdAndApplicationId(wfRequest.getUserId(), wfRequest.getApplicationId());
 
             if (!enrollmentStatus.isEmpty()) {
                 response = new Response();
-                response.put(Constants.MESSAGE, "Not allowed to enroll the user to the Blended Program");
+                response.put(Constants.MESSAGE, "User previously existed, was removed, or was declined by an administrator within this batch.");
                 response.put(Constants.STATUS, HttpStatus.OK);
             } else {
                 response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
