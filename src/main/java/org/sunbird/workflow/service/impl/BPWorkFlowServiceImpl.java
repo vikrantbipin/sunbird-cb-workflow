@@ -502,7 +502,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             if (!enrollmentStatus.isEmpty()) {
                 response = new Response();
                 response.put(Constants.MESSAGE, "User previously existed, was removed, or was declined by an administrator within this batch.");
-                response.put(Constants.STATUS, HttpStatus.OK);
+                response.put(Constants.STATUS, HttpStatus.PRECONDITION_FAILED);
             } else {
                 response = saveAdminEnrollUserIntoWfStatus(rootOrg, org, wfRequest);
                // producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
@@ -512,7 +512,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         } else {
             response = new Response();
             response.put(Constants.MESSAGE, "Not allowed to enroll the user to the Blended Program since there is a schedule conflict");
-            response.put(Constants.STATUS, HttpStatus.NOT_ACCEPTABLE);
+            response.put(Constants.STATUS, HttpStatus.PRECONDITION_FAILED);
         }
         return response;
     }
