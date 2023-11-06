@@ -121,12 +121,12 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         if (scheduleConflictCheck(wfRequest)) {
             wfRequest.setAction(Constants.REJECT);
             wfRequest.setComment(configuration.getConflictRejectReason());
-            workflowService.workflowTransition(rootOrg, org, wfRequest);
+            bpWorkflowTransition(rootOrg, org, wfRequest);
             response.put(Constants.ERROR_MESSAGE, configuration.getConflictRejectReason());
             response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
             return response;
         }
-        return workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
+        return bpWorkflowTransition(rootOrg, org, wfRequest,userId,role);
     }
 
     @Override
@@ -580,7 +580,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             response.put(Constants.ERROR_MESSAGE, HttpStatus.INTERNAL_SERVER_ERROR);
         } else if (approvedLearners.size() == 1)
             wfRequest.setWfId(approvedLearners.get(0).getWfId());
-        response = workflowService.workflowTransition(rootOrg, org, wfRequest,userId,role);
+        response = bpWorkflowTransition(rootOrg, org, wfRequest,userId,role);
 
         response.put(Constants.STATUS, HttpStatus.OK);
         return response;
@@ -1011,6 +1011,124 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
         }
 
+
+    }
+    private void validateUserAndWfStatus(WfRequest wfRequest, WfStatus wfStatus, WfStatusEntity applicationStatus) {
+
+        if (org.springframework.util.StringUtils.isEmpty(wfRequest.getWfId()) && !wfStatus.getStartState()) {
+            throw new ApplicationException(Constants.WORKFLOW_ID_ERROR_MESSAGE);
+        }
+        if ((!ObjectUtils.isEmpty(applicationStatus))
+                && (!wfRequest.getState().equalsIgnoreCase(applicationStatus.getCurrentStatus()))) {
+            throw new BadRequestException("Application is in " + applicationStatus.getCurrentStatus()
+                    + " State but trying to be move in " + wfRequest.getState() + " state!");
+        }
+    }
+    public Response bpWorkflowTransition(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
+        HashMap<String, String> changeStatusResponse;
+        List<String> wfIds = new ArrayList<>();
+        String changedStatus = null;
+        if (configuration.getMultipleWfCreationEnable() && !CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
+            String wfId = wfRequest.getWfId();
+            for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
+                wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
+                wfRequest.setWfId(wfId);
+                changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
+                wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
+                changedStatus = changeStatusResponse.get(Constants.STATUS);
+            }
+        } else {
+            changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
+            wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
+            changedStatus = changeStatusResponse.get(Constants.STATUS);
+        }
+        Response response = new Response();
+        HashMap<String, Object> data = new HashMap<>();
+        data.put(Constants.STATUS, changedStatus);
+        data.put(Constants.WF_IDS_CONSTANT, wfIds);
+        response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changedStatus);
+        response.put(Constants.DATA, data);
+        response.put(Constants.STATUS, HttpStatus.OK);
+        return response;
+    }
+
+    public Response bpWorkflowTransition(String rootOrg, String org, WfRequest wfRequest) {
+        return bpWorkflowTransition( rootOrg,  org,  wfRequest,null,null);
+    }
+
+    private HashMap<String, String> changeStatus(String rootOrg, String org, WfRequest wfRequest,String userId,String role) {
+        String wfId = wfRequest.getWfId();
+        String nextState = null;
+        HashMap<String, String> data = new HashMap<>();
+        try {
+            validateWfRequest(wfRequest);
+            WfStatusEntity applicationStatus = wfStatusRepo.findByRootOrgAndOrgAndApplicationIdAndWfId(rootOrg, org,
+                    wfRequest.getApplicationId(), wfRequest.getWfId());
+            String serviceName=wfRequest.getServiceName();
+            if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName()) && !StringUtils.isEmpty(applicationStatus.getServiceName())) {
+                serviceName = applicationStatus.getServiceName();
+            }
+            WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
+            WfStatus wfStatus = getWfStatus(wfRequest.getState(), workFlowModel);
+            validateUserAndWfStatus(wfRequest, wfStatus, applicationStatus);
+            WfAction wfAction = getWfAction(wfRequest.getAction(), wfStatus);
+
+            // actor has proper role to take the workflow action
+
+            nextState = wfAction.getNextState();
+            if (ObjectUtils.isEmpty(applicationStatus)) {
+                applicationStatus = new WfStatusEntity();
+                wfId = UUID.randomUUID().toString();
+                applicationStatus.setWfId(wfId);
+                applicationStatus.setServiceName(serviceName);
+                applicationStatus.setUserId(wfRequest.getUserId());
+                applicationStatus.setApplicationId(wfRequest.getApplicationId());
+                applicationStatus.setRootOrg(rootOrg);
+                applicationStatus.setOrg(org);
+                applicationStatus.setCreatedOn(new Date());
+                wfRequest.setWfId(wfId);
+            }
+
+            WfStatus wfStatusCheckForNextState = getWfStatus(nextState, workFlowModel);
+
+            applicationStatus.setLastUpdatedOn(new Date());
+            applicationStatus.setCurrentStatus(nextState);
+            applicationStatus.setActorUUID(wfRequest.getActorUserId());
+            applicationStatus.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+            applicationStatus.setInWorkflow(!wfStatusCheckForNextState.getIsLastState());
+            applicationStatus.setDeptName(wfRequest.getDeptName());
+            applicationStatus.setComment(wfRequest.getComment());
+            applicationStatus.setServiceName(serviceName);
+            addModificationEntry(applicationStatus,userId,wfRequest.getAction(),role);
+            wfStatusRepo.save(applicationStatus);
+            producer.push(configuration.getWorkFlowNotificationTopic(),userId, wfRequest);
+           // producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+            processWFRequest(wfRequest);
+        } catch (IOException e) {
+            throw new ApplicationException(Constants.WORKFLOW_PARSING_ERROR_MESSAGE, e);
+        }
+        data.put(Constants.STATUS, nextState);
+        data.put(Constants.WF_ID_CONSTANT, wfId);
+        return data;
+    }
+
+    private void addModificationEntry(WfStatusEntity applicationStatus,String userId,String action,String role) throws IOException {
+        if(!org.springframework.util.StringUtils.isEmpty(userId) &&
+                Arrays.asList(configuration.getModificationRecordAllowActions().split(Constants.COMMA)).contains(action)) {
+            List<Map<String, Object>> historyMap = null;
+            String history = applicationStatus.getModificationHistory();
+            if (!org.springframework.util.StringUtils.isEmpty(history))
+                historyMap = mapper.readValue(history, List.class);
+            else
+                historyMap = new ArrayList<>();
+            Map<String, Object> newModification = new HashMap<>();
+            newModification.put("modifiedDate", new Date());
+            newModification.put("modifiedBy", userId);
+            newModification.put("action", action);
+            newModification.put("role", role);
+            historyMap.add(newModification);
+            applicationStatus.setModificationHistory(mapper.writeValueAsString(historyMap));
+        }
 
     }
 }
