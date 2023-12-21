@@ -724,14 +724,14 @@ public class WorkflowServiceImpl implements Workflowservice {
 		List<String> updatedFieldValues = wfStatusRepo.findWfFieldsForUser(rootOrg, org, criteria.getServiceName(), criteria.getApplicationStatus(), wid);
 		TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {
 		};
-		Set<String> fieldsSet = new HashSet<>();
+		Map<String,Object> toValuesMap = new HashMap<>();
 		for (String fields : updatedFieldValues) {
 			if (!StringUtils.isEmpty(fields)) {
 				try {
 					List<HashMap<String, Object>> values = mapper.readValue(fields, typeRef);
 					for (HashMap<String, Object> wffieldReq : values) {
 						HashMap<String, Object> toValueMap = (HashMap<String, Object>) wffieldReq.get("toValue");
-						fieldsSet.add(toValueMap.entrySet().iterator().next().getKey());
+						toValuesMap.put(toValueMap.entrySet().iterator().next().getKey(),toValueMap.entrySet().iterator().next().getValue());
 					}
 				} catch (IOException e) {
 					log.error("Exception occurred while parsing wf fields!");
@@ -741,7 +741,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		Response response = new Response();
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
-		response.put(Constants.DATA, fieldsSet);
+		response.put(Constants.DATA, toValuesMap);
 		response.put(Constants.STATUS, HttpStatus.OK);
 		return response;
 	}
