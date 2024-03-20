@@ -191,6 +191,27 @@ public class Configuration {
     @Value("${env.hierarchy.keystore.keyspace}")
     private String envHierarchyKeystoreKeyspaceName;
 
+    @Value("${cloud.storage.type.name}")
+    private String cloudStorageTypeName;
+
+    @Value("${cloud.storage.key}")
+    private String cloudStorageKey;
+
+    @Value("${cloud.storage.secret}")
+    private String cloudStorageSecret;
+
+    @Value("${cloud.storage.cephs3.endpoint}")
+    private String cloudStorageCephs3Endpoint;
+
+    @Value("${workflow.cloud.container.name}")
+    private String workflowCloudContainerName;
+
+    @Value("${user.bulk.update.folder.name}")
+    private String userBulkUpdateFolderName;
+
+    @Value("${kafka.topics.user.bulk.update}")
+    private String userBulkUpdateTopic;
+
     public String getModificationRecordAllowActions() {
         return modificationRecordAllowActions;
     }
@@ -693,5 +714,61 @@ public class Configuration {
 
     public void setEnvHierarchyKeystoreKeyspaceName(String envHierarchyKeystoreKeyspaceName) {
         this.envHierarchyKeystoreKeyspaceName = envHierarchyKeystoreKeyspaceName;
+    }
+
+    public String getCloudStorageTypeName() {
+        return cloudStorageTypeName;
+    }
+
+    public void setCloudStorageTypeName(String cloudStorageTypeName) {
+        this.cloudStorageTypeName = cloudStorageTypeName;
+    }
+
+    public String getCloudStorageKey() {
+        return cloudStorageKey;
+    }
+
+    public void setCloudStorageKey(String cloudStorageKey) {
+        this.cloudStorageKey = cloudStorageKey;
+    }
+
+    public String getCloudStorageSecret() {
+        return cloudStorageSecret;
+    }
+
+    public void setCloudStorageSecret(String cloudStorageSecret) {
+        this.cloudStorageSecret = cloudStorageSecret;
+    }
+
+    public String getCloudStorageCephs3Endpoint() {
+        return cloudStorageCephs3Endpoint;
+    }
+
+    public void setCloudStorageCephs3Endpoint(String cloudStorageCephs3Endpoint) {
+        this.cloudStorageCephs3Endpoint = cloudStorageCephs3Endpoint;
+    }
+
+    public String getWorkflowCloudContainerName() {
+        return workflowCloudContainerName;
+    }
+
+    public void setWorkflowCloudContainerName(String workflowCloudContainerName) {
+        this.workflowCloudContainerName = workflowCloudContainerName;
+    }
+
+    public String getUserBulkUpdateFolderName() {
+        return userBulkUpdateFolderName;
+    }
+
+    public void setUserBulkUpdateFolderName(String userBulkUpdateFolderName) {
+        this.userBulkUpdateFolderName = userBulkUpdateFolderName;
+    }
+
+    public String getUserBulkUpdateTopic() {
+        return userBulkUpdateTopic;
+    }
+
+    public void setUserBulkUpdateTopic(String userBulkUpdateTopic) {
+        this.userBulkUpdateTopic = userBulkUpdateTopic;
     }
 }

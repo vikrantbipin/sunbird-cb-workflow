@@ -1,8 +1,16 @@
 package org.sunbird.workflow.service;
 
-import org.sunbird.workflow.models.*;
-
 import java.util.Map;
+
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import org.sunbird.workflow.models.Response;
+import org.sunbird.workflow.models.SBApiResponse;
+import org.sunbird.workflow.models.SearchCriteria;
+import org.sunbird.workflow.models.SearchCriteriaV2;
+import org.sunbird.workflow.models.WfRequest;
+import org.sunbird.workflow.models.WfStatus;
 
 public interface Workflowservice {
 
@@ -38,4 +46,9 @@ public interface Workflowservice {
 
     public Response updatePendingRequestsToNewMDO(Map<String, Object> request);
 
-    }
+    public SBApiResponse workflowBulkUpdateTransition(String userAuthToken, MultipartFile file);
+
+    public SBApiResponse getBulkUpdateStatus(String userAuthToken);
+
+    public ResponseEntity<InputStreamResource> downloadBulkUploadFile(String fileName);
+}
