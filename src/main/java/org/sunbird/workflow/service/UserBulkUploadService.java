@@ -234,11 +234,20 @@ public class UserBulkUploadService {
                         }
                     }
                     if (nextRow.getCell(2) != null && nextRow.getCell(2).getCellType() != CellType.BLANK) {
-                        String dateOfJoining = nextRow.getCell(2).getStringCellValue().trim();
-                        if(ValidationUtil.validateDate(dateOfJoining)){
-                            valuesToBeUpdate.put(Constants.DATE_OF_JOINING, dateOfJoining);
-                        }else{
-                            errList.add("Invalid Date Of Joining");
+                        String dateOfJoining = null;
+                        if (nextRow.getCell(2).getCellType() == CellType.NUMERIC) {
+                            dateOfJoining = NumberToTextConverter.toText(nextRow.getCell(2).getNumericCellValue());
+                        } else if (nextRow.getCell(2).getCellType() == CellType.STRING) {
+                            dateOfJoining = nextRow.getCell(2).getStringCellValue().trim();
+                        } else {
+                            errList.add("Invalid format of Date Of Joining. Expecting number/string format");
+                        }
+                        if(null != dateOfJoining){
+                            if(Boolean.TRUE.equals(ValidationUtil.validateDate(dateOfJoining))){
+                                valuesToBeUpdate.put(Constants.DATE_OF_JOINING, dateOfJoining);
+                            }else{
+                                errList.add("Invalid Date Of Joining");
+                            }
                         }
                     }
                     if (nextRow.getCell(3) != null && nextRow.getCell(3).getCellType() != CellType.BLANK) {
@@ -383,8 +392,8 @@ public class UserBulkUploadService {
                 wb.close();
             if (fis != null)
                 fis.close();
-            if (file != null)
-                file.delete();
+            /*if (file != null)
+                file.delete();*/
         }
     }
 
