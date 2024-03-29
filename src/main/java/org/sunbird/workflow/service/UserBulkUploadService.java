@@ -5,19 +5,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.NumberToTextConverter;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -196,6 +189,8 @@ public class UserBulkUploadService {
                         if(ValidationUtil.validateEmailPattern(email)){
                             userDetails = new HashMap<>();
                             isEmailOrPhoneNumberValid = this.verifyUserRecordExists(Constants.EMAIL, email, userDetails);
+                        } else{
+                            errList.add("The email provided in Invalid");
                         }
                     }
                     if(!isEmailOrPhoneNumberValid){
@@ -217,12 +212,15 @@ public class UserBulkUploadService {
                             if(isValidPhoneNumber){
                                 userDetails = new HashMap<>();
                                 isEmailOrPhoneNumberValid = this.verifyUserRecordExists(Constants.PHONE, phoneNumber, userDetails);
+                            } else{
+                                errList.add("The phone number provided is Invalid");
                             }
                         }
                     }
                     if(!isEmailOrPhoneNumberValid){
                         errList.add("User record does not exist with given email and/or phone number");
                     } else{
+                        errList.clear();
                         String userRootOrgId = (String) userDetails.get(Constants.ROOT_ORG_ID);
                         String mdoAdminRootOrgId = inputDataMap.get(Constants.ROOT_ORG_ID);
                         if(!mdoAdminRootOrgId.equalsIgnoreCase(userRootOrgId)){
@@ -235,8 +233,13 @@ public class UserBulkUploadService {
                     }
                     if (nextRow.getCell(2) != null && nextRow.getCell(2).getCellType() != CellType.BLANK) {
                         String dateOfJoining = null;
+                        Date date = null;
                         if (nextRow.getCell(2).getCellType() == CellType.NUMERIC) {
-                            dateOfJoining = NumberToTextConverter.toText(nextRow.getCell(2).getNumericCellValue());
+                            if(DateUtil.isCellDateFormatted(nextRow.getCell(2))){
+                                date = nextRow.getCell(2).getDateCellValue();
+                                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+                                dateOfJoining = dateFormat.format(date);
+                            }
                         } else if (nextRow.getCell(2).getCellType() == CellType.STRING) {
                             dateOfJoining = nextRow.getCell(2).getStringCellValue().trim();
                         } else {
