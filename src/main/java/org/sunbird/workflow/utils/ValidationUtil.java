@@ -35,10 +35,14 @@ public class ValidationUtil {
 	}
 
 	public static Boolean validateDate(String dateString){
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 		try {
+			Date todaysDate = new Date();
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.YEAR, -65);
+			Date pastDate = calendar.getTime();
 			Date date = dateFormat.parse(dateString);
-			return true;
+			return date.after(pastDate) && (date.before(todaysDate) || date.equals(todaysDate));
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
