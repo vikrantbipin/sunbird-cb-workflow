@@ -1100,7 +1100,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 		response.put(Constants.STATUS, HttpStatus.OK);
 		response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 		try {
-			List<Object[]> updatedFieldValues = wfStatusRepo.findWfFieldsForUserV2(criteria.getServiceName(), criteria.getApplicationStatus(), wid);
+			List<Object[]> updatedFieldValues = null;
+			if (!StringUtils.isEmpty(criteria.getApplicationStatus())) {
+				updatedFieldValues = wfStatusRepo.findWfFieldsForUserV2(criteria.getServiceName(), criteria.getApplicationStatus(), wid);
+			} else {
+				updatedFieldValues = wfStatusRepo.findWfFieldsForUserV2(criteria.getServiceName(), wid);
+			}
 			TypeReference<List<HashMap<String, Object>>> typeRef = new TypeReference<List<HashMap<String, Object>>>() {
 			};
 			List<Map<String, Object>> result = new ArrayList<>();
@@ -1115,6 +1120,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 						resultData.put(toValueMap.entrySet().iterator().next().getKey(), toValueMap.entrySet().iterator().next().getValue());
 						resultData.put(Constants.COMMENT, fields[2]);
 						resultData.put(Constants.LAST_UPDATED_ON, fields[3]);
+						resultData.put(Constants.CURRENT_STATUS_KEY, fields[4]);
 						result.add(resultData);
 					}
 				}
