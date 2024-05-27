@@ -219,7 +219,9 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				} else {
 					updatedProfMap.put(Constants.PROFILE_STATUS, Constants.NOT_VERIFIED);
 				}
-				String timeStamp = new SimpleDateFormat("dd-MM-yyyy HH.mm.ss").format(new java.util.Date());
+				SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH.mm.ss");
+				sdf.setTimeZone(TimeZone.getTimeZone("GMT+05:30"));
+				String timeStamp = sdf.format(new java.util.Date());
 				existingProfileDetail.put(Constants.PROFILE_STATUS_UPDATED_ON, timeStamp);
 				Map<String, Object> additionalProperties = (Map<String, Object>) existingProfileDetail
 						.get(Constants.ADDITIONAL_PROPERTIES);
