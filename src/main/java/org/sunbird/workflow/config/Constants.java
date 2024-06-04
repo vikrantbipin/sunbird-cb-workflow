@@ -331,5 +331,8 @@ public class Constants {
 	public static final String CURRENT_STATUS_KEY = "currentStatus";
 	public static final String PROFILE_STATUS_UPDATED_ON = "profileStatusUpdatedOn";
 	public static final String PROFILE_STATUS_UPDATED_MSG_VIEWED = "isProfileUpdatedMsgViewed";
+	public static final String REDIS_COMMON_KEY = "workflow_";
+	public static final String PROFILE_GROUP_STATUS = "profileGroupStatus";
+	public static final String PROFILE_DESIGNATION_STATUS = "profileDesignationStatus";
 
 }
