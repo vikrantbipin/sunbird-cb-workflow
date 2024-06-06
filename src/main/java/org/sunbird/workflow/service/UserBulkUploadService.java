@@ -25,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.sunbird.workflow.config.Configuration;
 import org.sunbird.workflow.config.Constants;
+import org.sunbird.workflow.config.RedisCacheMgr;
 import org.sunbird.workflow.exception.ApplicationException;
 import org.sunbird.workflow.models.SBApiResponse;
 import org.sunbird.workflow.models.WfRequest;
@@ -63,10 +64,11 @@ public class UserBulkUploadService {
     @Autowired
     private ObjectMapper mapper;
 
-
-
     @Autowired
     StorageService storageService;
+
+    @Autowired
+    RedisCacheMgr redisCacheMgr;
 
     public void initiateUserBulkUploadProcess(String inputData) {
         logger.info("UserBulkUploadService:: initiateUserBulkUploadProcess: Started");
@@ -242,10 +244,15 @@ public class UserBulkUploadService {
                         }
                     }
                     if (nextRow.getCell(3) != null && nextRow.getCell(3).getCellType() != CellType.BLANK) {
+                        String groupValue = null;
                         if (nextRow.getCell(3).getCellType() == CellType.STRING) {
-                            valuesToBeUpdate.put(Constants.GROUP, nextRow.getCell(3).getStringCellValue().trim());
+                            groupValue = nextRow.getCell(3).getStringCellValue().trim();
+                            valuesToBeUpdate.put(Constants.GROUP, groupValue);
                         } else {
                             errList.add("Invalid value for Group type. Expecting string format");
+                        }
+                        if (!this.validateGroupValue(groupValue)) {
+                            errList.add("invalid value of Group Type, please choose a valid value from the default list");
                         }
                     }
                     if (nextRow.getCell(4) != null && nextRow.getCell(4).getCellType() != CellType.BLANK) {
@@ -255,6 +262,9 @@ public class UserBulkUploadService {
                             if (org.apache.commons.lang.StringUtils.isNotBlank(designation)) {
                                 if (!ValidationUtil.validateRegexPatternWithNoSpecialCharacter(designation)) {
                                     errList.add("Invalid Designation: Designation should be added from default list and cannot contain special character");
+                                }
+                                if(this.validateFieldValue("position", designation)){
+                                    errList.add("Invalid Value of Designation, please choose a valid value from the default list");
                                 }
                             }
                         } else {
@@ -310,9 +320,10 @@ public class UserBulkUploadService {
                     }
                     if (nextRow.getCell(8) != null && nextRow.getCell(8).getCellType() != CellType.BLANK) {
                         if (nextRow.getCell(8).getCellType() == CellType.STRING) {
-                            valuesToBeUpdate.put(Constants.DOMICILE_MEDIUM, nextRow.getCell(8).getStringCellValue().trim());
-                            if (!ValidationUtil.validateRegexPatternWithNoSpecialCharacter(nextRow.getCell(8).getStringCellValue().trim())) {
-                                errList.add("Invalid Mother Tongue: Mother Tongue should be added from default list and cannot contain special character");
+                            String language = nextRow.getCell(8).getStringCellValue().trim();
+                            valuesToBeUpdate.put(Constants.DOMICILE_MEDIUM, language);
+                            if (!ValidationUtil.validateRegexPatternWithNoSpecialCharacter(language) || this.validateFieldValue("languages", language)) {
+                                errList.add("Invalid Mother Tongue: Mother Tongue should be added from default list and/or cannot contain special character(s)");
                             }
                         } else {
                             errList.add("Invalid value for Mother Tongue type. Expecting string format");
@@ -335,10 +346,10 @@ public class UserBulkUploadService {
                         String pinCode = "";
                         if (nextRow.getCell(10).getCellType() == CellType.NUMERIC) {
                             pinCode = NumberToTextConverter.toText(nextRow.getCell(10).getNumericCellValue());
-                            valuesToBeUpdate.put(Constants.PINCODE, pinCode);
+                            valuesToBeUpdate.put(Constants.PIN_CODE, pinCode);
                         } else if (nextRow.getCell(10).getCellType() == CellType.STRING) {
                             pinCode = nextRow.getCell(10).getStringCellValue().trim();
-                            valuesToBeUpdate.put(Constants.PINCODE, pinCode);
+                            valuesToBeUpdate.put(Constants.PIN_CODE, pinCode);
                         } else {
                             errList.add("Invalid value for Office Pin Code type. Expecting number/string format");
                         }
@@ -411,18 +422,24 @@ public class UserBulkUploadService {
                             for(Map.Entry<String, String> entry : toValue.entrySet()){
                                 if(valuesToBeUpdate.containsKey(entry.getKey())){
                                     WfRequest wfRequest = this.getWFRequest(wfStatusEntity, null);
-                                    wfStatusEntity.setCurrentStatus(Constants.APPROVED);
+                                    if (entry.getValue().equalsIgnoreCase((String) valuesToBeUpdate.get(entry.getKey()))){
+                                        wfStatusEntity.setCurrentStatus(Constants.APPROVED);
+                                    } else {
+                                        wfStatusEntity.setCurrentStatus(Constants.REJECTED);
+                                    }
                                     wfStatusEntity.setInWorkflow(false);
                                     wfStatusRepo.save(wfStatusEntity);
-                                    userProfileWfService.updateUserProfile(wfRequest);
-                                    WfStatusEntity wfStatusEntityFailed = wfStatusRepo.findByWfId(wfRequest.getWfId());
-                                    if(Constants.REJECTED.equalsIgnoreCase(wfStatusEntityFailed.getCurrentStatus())){
-                                        userRecordUpdate = false;
-                                        this.setErrorDetails(str, Collections.singletonList(Constants.UPDATE_FAILED), statusCell, errorDetails);
-                                    } else{
-                                        statusCell.setCellValue(Constants.SUCCESS_UPPERCASE);
+                                    if (Constants.APPROVED.equalsIgnoreCase(wfStatusEntity.getCurrentStatus())) {
+                                        userProfileWfService.updateUserProfile(wfRequest);
+                                        WfStatusEntity wfStatusEntityFailed = wfStatusRepo.findByWfId(wfRequest.getWfId());
+                                        if(Constants.REJECTED.equalsIgnoreCase(wfStatusEntityFailed.getCurrentStatus())){
+                                            userRecordUpdate = false;
+                                            this.setErrorDetails(str, Collections.singletonList(Constants.UPDATE_FAILED), statusCell, errorDetails);
+                                        } else{
+                                            statusCell.setCellValue(Constants.SUCCESS_UPPERCASE);
+                                        }
+                                        valuesToBeUpdate.remove(entry.getKey());
                                     }
-                                    valuesToBeUpdate.remove(entry.getKey());
                                 }
                             }
                         }
@@ -438,6 +455,7 @@ public class UserBulkUploadService {
 
                     Set<String> employmentDetailsKey = new HashSet<>();
                     employmentDetailsKey.add(Constants.EMPLOYEE_CODE);
+                    employmentDetailsKey.add(Constants.PIN_CODE);
 
                     Set<String> professionalDetailsKey = new HashSet<>();
                     professionalDetailsKey.add(Constants.GROUP);
@@ -448,7 +466,6 @@ public class UserBulkUploadService {
                     personalDetailsKey.add(Constants.DOB);
                     personalDetailsKey.add(Constants.DOMICILE_MEDIUM);
                     personalDetailsKey.add(Constants.CATEGORY);
-                    personalDetailsKey.add(Constants.PINCODE);
                     personalDetailsKey.add(Constants.GENDER);
 
                     WfRequest wfRequest = this.getWFRequest(valuesToBeUpdate, userId);
@@ -627,6 +644,29 @@ public class UserBulkUploadService {
     private boolean validateCategory(String category) {
         List<String> categoryValues = configuration.getBulkUploadCategoryValue();
         return categoryValues != null && categoryValues.contains(category);
+    }
+
+    private boolean validateGroupValue(String groupValue){
+        List<String> groupValuesList = configuration.getGroupValues();
+        return groupValuesList.contains(groupValue);
+    }
+
+    private boolean validateFieldValue(String fieldKey, String fieldValue) throws IOException {
+        if(redisCacheMgr.keyExists(fieldKey)){
+            return !redisCacheMgr.valueExists(fieldKey, fieldValue);
+        } else{
+            Set<String> designationsSet = new HashSet<>();
+            Map<String,Object> propertiesMap = new HashMap<>();
+            propertiesMap.put(Constants.CONTEXT_TYPE, fieldKey);
+            List<Map<String, Object>> languagesList = cassandraOperation.getRecordsByProperties(Constants.KEYSPACE_SUNBIRD, Constants.TABLE_MASTER_DATA, propertiesMap, Collections.singletonList(Constants.CONTEXT_NAME));
+            if(!CollectionUtils.isEmpty(languagesList)) {
+                for(Map<String, Object> languageMap : languagesList){
+                    designationsSet.add((String)languageMap.get("contextname"));
+                }
+            }
+            redisCacheMgr.putCache(fieldKey, designationsSet.toArray(new String[0]), null);
+            return !designationsSet.contains(fieldValue);
+        }
     }
 
 }
