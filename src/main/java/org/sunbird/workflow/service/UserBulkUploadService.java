@@ -653,6 +653,7 @@ public class UserBulkUploadService {
     }
 
     private boolean validateFieldValue(String fieldKey, String fieldValue) {
+        fieldValue = fieldValue.toLowerCase();
         if(redisCacheMgr.keyExists(fieldKey)){
             return !redisCacheMgr.valueExists(fieldKey, fieldValue);
         } else{
@@ -663,7 +664,7 @@ public class UserBulkUploadService {
             if(!CollectionUtils.isEmpty(fieldValueList)) {
                 String columnName = fieldValueList.get(0).get("contextname") != null ? "contextname" : "contextName";
                 for(Map<String, Object> languageMap : fieldValueList){
-                    designationsSet.add((String)languageMap.get(columnName));
+                    designationsSet.add(((String)languageMap.get(columnName)).toLowerCase());
                 }
             }
             redisCacheMgr.putCache(fieldKey, designationsSet.toArray(new String[0]), null);
