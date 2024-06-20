@@ -20,6 +20,7 @@ import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SBApiResponse;
 import org.sunbird.workflow.models.SearchCriteria;
 import org.sunbird.workflow.models.WfRequest;
+import org.sunbird.workflow.service.UserBulkUploadService;
 import org.sunbird.workflow.service.Workflowservice;
 
 @RestController
@@ -121,5 +122,18 @@ public class WorkFlowController {
 	@GetMapping(path = "/admin/bulkbuplodfile/download/{fileName}")
 	public ResponseEntity<?> downloadBulkuplodFile(@PathVariable("fileName") String fileName) {
 		return workflowService.downloadBulkUploadFile(fileName);
+	}
+
+	@PostMapping(path = "/admin/v2/bulkupdate/transition", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<SBApiResponse> wfBulkUpdateTransitionV1(@RequestHeader(Constants.X_AUTH_TOKEN) String userAuthToken,
+																  @RequestParam("file")MultipartFile file) {
+		SBApiResponse response = workflowService.workflowBulkUpdateTransitionV1(userAuthToken, file);
+		return new ResponseEntity<>(response, response.getResponseCode());
+	}
+
+
+	@GetMapping(path = "/admin/pendingRequest/download")
+	public ResponseEntity<?> downloadPendingRequestFile(@RequestHeader(Constants.X_AUTH_TOKEN) String userAuthToken) {
+		return workflowService.downloadPendingRequestFile(userAuthToken);
 	}
 }
