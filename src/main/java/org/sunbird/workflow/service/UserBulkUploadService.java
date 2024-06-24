@@ -724,7 +724,7 @@ public class UserBulkUploadService {
                     if (emailExists) {
                         if (ValidationUtil.validateEmailPattern(email)) {
                             userDetails = new HashMap<>();
-                            isEmailOrPhoneNumberValid = this.verifyUserRecordExists("EMAIL", email, userDetails);
+                            isEmailOrPhoneNumberValid = this.verifyUserRecordExists(Constants.EMAIL, email, userDetails);
                         } else {
                             errList.add("Invalid Email format");
                         }
@@ -734,7 +734,7 @@ public class UserBulkUploadService {
                     if (!isEmailOrPhoneNumberValid) {
                         if (ValidationUtil.validateContactPattern(phone)) {
                             userDetails = new HashMap<>();
-                            isEmailOrPhoneNumberValid = this.verifyUserRecordExists("PHONE", phone, userDetails);
+                            isEmailOrPhoneNumberValid = this.verifyUserRecordExists(Constants.PHONE, phone, userDetails);
                         } else {
                             errList.add("Invalid Phone number format");
                         }
