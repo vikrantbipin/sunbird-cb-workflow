@@ -701,7 +701,6 @@ public class UserBulkUploadService {
                 }
 
                 for (CSVRecord record : csvRecords) {
-                    totalRecordsCount++;
                     long duration = 0;
                     long startTime = System.currentTimeMillis();
                     logger.info("UserBulkUploadService:: Record {}", record.getRecordNumber());
@@ -885,10 +884,15 @@ public class UserBulkUploadService {
                             valuesToBeUpdate.put(Constants.TAG, tagList);
                         }
 
-
-                        String statusValue = errList.isEmpty() ? Constants.SUCCESSFUL_UPERCASE : Constants.FAILED_UPPERCASE;
-                        csvValues.put("Status", statusValue);
-                        csvValues.put("Error Details", errList.isEmpty() ? "" : String.join(", ", errList));
+                        if(!CollectionUtils.isEmpty(errList)) {
+                            String statusValue = errList.isEmpty() ? Constants.SUCCESSFUL_UPERCASE : Constants.FAILED_UPPERCASE;
+                            csvValues.put("Status", statusValue);
+                            csvValues.put("Error Details", errList.isEmpty() ? "" : String.join(", ", errList));
+                            failedRecordsCount++;
+                            totalRecordsCount++;
+                            updatedRecords.add(csvValues);
+                            continue;
+                        }
 
                         String userId = null;
                         if (!CollectionUtils.isEmpty(userDetails)) {
