@@ -3,6 +3,7 @@ package org.sunbird.workflow.models;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
 public class SearchCriteria {
 
@@ -19,6 +20,8 @@ public class SearchCriteria {
 	private String deptName;
 
 	private String userId;
+
+	private Map<String, String> sortBy;
 
 	public String getServiceName() {
 		return serviceName;
@@ -80,4 +83,11 @@ public class SearchCriteria {
 		this.userId = userId;
 	}
 
+	public Map<String, String> getSortBy() {
+		return sortBy;
+	}
+
+	public void setSortBy(Map<String, String> sortBy) {
+		this.sortBy = sortBy;
+	}
 }
