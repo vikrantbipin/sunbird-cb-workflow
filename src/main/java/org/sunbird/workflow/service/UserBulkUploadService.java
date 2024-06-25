@@ -747,10 +747,12 @@ public class UserBulkUploadService {
                         String userRootOrgId = (String) userDetails.get(Constants.ROOT_ORG_ID);
                         String mdoAdminRootOrgId = inputDataMap.get(Constants.ROOT_ORG_ID);
                         if (!mdoAdminRootOrgId.equalsIgnoreCase(userRootOrgId)) {
+                            logger.info("The User belongs to a different MDO Organisation");
                             errList.add("The User belongs to a different MDO Organisation");
                             csvValues.put("Error Details", String.join(",", errList));
                             failedRecordsCount++;
                             totalRecordsCount++;
+                            updatedRecords.add(csvValues);
                             continue;
                         }
                     }
@@ -940,6 +942,7 @@ public class UserBulkUploadService {
                             else
                                 failedRecordsCount++;
                             totalRecordsCount++;
+                            updatedRecords.add(csvValues);
                             continue;
                         }
 
