@@ -279,6 +279,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 				response = applicationSearchOnApplicationIdGroup(rootOrg, searchCriteria);
 				break;
 		}
+
+		if (searchCriteria.getSortBy() != null && !searchCriteria.getSortBy().isEmpty()) {
+			log.info("sortBy invoked");
+			List<Map<String, Object>> sortedData = sortDataByCriteria((List<Map<String, Object>>) response.get("data"), searchCriteria);
+			response.put("data", sortedData);
+		}
 		return response;
 	}
 
@@ -1094,6 +1100,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		HttpHeaders headers = new HttpHeaders();
 		try{
 			storageService.downloadFile(fileName);
+			log.info("starting downloadBulkUploadFile function");
 			headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"");
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 			Path filePath = Paths.get(String.format("%s/%s", Constants.LOCAL_BASE_PATH, fileName));
@@ -1105,7 +1112,7 @@ public class WorkflowServiceImpl implements Workflowservice {
                     .contentLength(Files.size(filePath))
                     .body(fileStream);
 		}catch(Exception e){
-			log.error("An error occured while downloading file", e);
+			log.info("An error occured while downloading file", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
@@ -1429,5 +1436,33 @@ public class WorkflowServiceImpl implements Workflowservice {
 		InputStream inputStream = new ByteArrayInputStream(message.getBytes());
 		InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
 		return ResponseEntity.status(HttpStatus.OK).headers(httpHeaders).body(inputStreamResource);
+	}
+	private List<Map<String, Object>> sortDataByCriteria(List<Map<String, Object>> data, SearchCriteria searchCriteria) {
+		if (searchCriteria.getSortBy() != null && !searchCriteria.getSortBy().isEmpty()) {
+			String sortByField = searchCriteria.getSortBy().keySet().iterator().next();
+			String sortOrder = searchCriteria.getSortBy().get(sortByField);
+			log.info("sortDataByCriteria field {}",sortByField);
+			Comparator<Map<String, Object>> comparator = null;
+
+			switch (sortByField) {
+				case "first_name":
+					comparator = Comparator.comparing(entry -> (String) ((Map<String, Object>) entry.get("userInfo")).get("first_name"));
+					break;
+				case "createdOn":
+					comparator = Comparator.comparing(entry -> (Long) ((List<Map<String, Object>>) entry.get("wfInfo"))
+							.get(0).get("createdOn"));
+					break;
+				default:
+					throw new IllegalArgumentException("Unsupported sortBy field: " + sortByField);
+			}
+
+			if ("desc".equalsIgnoreCase(sortOrder)) {
+				comparator = comparator.reversed();
+			}
+
+			data.sort(comparator);
+		}
+
+		return data;
 	}
 }
