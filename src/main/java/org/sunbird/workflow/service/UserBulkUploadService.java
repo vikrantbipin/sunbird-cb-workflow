@@ -707,7 +707,8 @@ public class UserBulkUploadService {
                     logger.info("UserBulkUploadService:: Record {}", record.getRecordNumber());
                     StringBuffer str = new StringBuffer();
                     List<String> errList = new ArrayList<>();
-                    Map<String, Object> valuesToBeUpdate = new HashMap<>(record.toMap());
+                    Map<String, Object> csvValues = new HashMap<>(record.toMap());
+                    Map<String, Object> valuesToBeUpdate = new HashMap<>();
                     Map<String, Object> userDetails = null;
                     boolean isEmailOrPhoneNumberValid = false;
 
@@ -748,7 +749,7 @@ public class UserBulkUploadService {
                         String mdoAdminRootOrgId = inputDataMap.get(Constants.ROOT_ORG_ID);
                         if (!mdoAdminRootOrgId.equalsIgnoreCase(userRootOrgId)) {
                             errList.add("The User belongs to a different MDO Organisation");
-                            valuesToBeUpdate.put("Error Details", String.join(",", errList));
+                            csvValues.put("Error Details", String.join(",", errList));
                             failedRecordsCount++;
                             totalRecordsCount++;
                             continue;
@@ -881,13 +882,13 @@ public class UserBulkUploadService {
                                 errList.add("Invalid Tag: " + tagStrList +
                                         " Tags are separated by '&' and can contain only alphabets with spaces. e.g., Bihar Circle&Patna Division");
                             }
-                            valuesToBeUpdate.put(Constants.TAG, tagStrList);
+                            valuesToBeUpdate.put(Constants.TAG, tagList);
                         }
 
 
                         String statusValue = errList.isEmpty() ? Constants.SUCCESSFUL_UPERCASE : Constants.FAILED_UPPERCASE;
-                        valuesToBeUpdate.put("Status", statusValue);
-                        valuesToBeUpdate.put("Error Details", errList.isEmpty() ? "" : String.join(", ", errList));
+                        csvValues.put("Status", statusValue);
+                        csvValues.put("Error Details", errList.isEmpty() ? "" : String.join(", ", errList));
 
                         String userId = null;
                         if (!CollectionUtils.isEmpty(userDetails)) {
@@ -916,10 +917,10 @@ public class UserBulkUploadService {
                                             WfStatusEntity wfStatusEntityFailed = wfStatusRepo.findByWfId(wfRequest.getWfId());
                                             if (Constants.REJECTED.equalsIgnoreCase(wfStatusEntityFailed.getCurrentStatus())) {
                                                 userRecordUpdate = false;
-                                                valuesToBeUpdate.put("Status", Constants.FAILED_UPPERCASE);
-                                                valuesToBeUpdate.put("Error Details", Constants.UPDATE_FAILED);
+                                                csvValues.put("Status", Constants.FAILED_UPPERCASE);
+                                                csvValues.put("Error Details", Constants.UPDATE_FAILED);
                                             } else {
-                                                valuesToBeUpdate.put("Status", Constants.SUCCESSFUL_UPERCASE);
+                                                csvValues.put("Status", Constants.SUCCESSFUL_UPERCASE);
                                             }
                                             valuesToBeUpdate.remove(entry.getKey());
                                         }
@@ -982,17 +983,17 @@ public class UserBulkUploadService {
                         }
                         if (userRecordUpdate) {
                             noOfSuccessfulRecords++;
-                            valuesToBeUpdate.put("Status", Constants.SUCCESSFUL_UPERCASE);
-                            valuesToBeUpdate.put("Error Details", "NA");
+                            csvValues.put("Status", Constants.SUCCESSFUL_UPERCASE);
+                            csvValues.put("Error Details", "NA");
                         } else {
                             failedRecordsCount++;
-                            valuesToBeUpdate.put("Status", Constants.UPDATE_FAILED);
-                            valuesToBeUpdate.put("Error Details", Constants.UPDATE_FAILED);
+                            csvValues.put("Status", Constants.UPDATE_FAILED);
+                            csvValues.put("Error Details", Constants.UPDATE_FAILED);
                         }
                         totalRecordsCount++;
                         duration = System.currentTimeMillis() - startTime;
                         logger.info("UserBulkUploadService:: Record Completed. Time taken: {} milli-seconds", duration);
-                    updatedRecords.add(valuesToBeUpdate);
+                    updatedRecords.add(csvValues);
                 }
                     // Write back updated records to the same CSV file
                     fileWriter = new FileWriter(file);
