@@ -886,6 +886,7 @@ public class UserBulkUploadService {
                             valuesToBeUpdate.put(Constants.TAG, tagList);
                         }
 
+
                         if(!CollectionUtils.isEmpty(errList)) {
                             String statusValue = errList.isEmpty() ? Constants.SUCCESSFUL_UPERCASE : Constants.FAILED_UPPERCASE;
                             csvValues.put("Status", statusValue);
@@ -895,6 +896,7 @@ public class UserBulkUploadService {
                             updatedRecords.add(csvValues);
                             continue;
                         }
+
 
                         String userId = null;
                         if (!CollectionUtils.isEmpty(userDetails)) {
