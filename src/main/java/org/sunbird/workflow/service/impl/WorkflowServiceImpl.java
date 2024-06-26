@@ -281,7 +281,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 
 		if (searchCriteria.getSortBy() != null && !searchCriteria.getSortBy().isEmpty()) {
-			log.info("sortBy invoked");
+			log.info("sortBy invoked {}", response);
 			List<Map<String, Object>> sortedData = sortDataByCriteria((List<Map<String, Object>>) response.get("data"), searchCriteria);
 			response.put("data", sortedData);
 		}
@@ -1449,8 +1449,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 					comparator = Comparator.comparing(entry -> (String) ((Map<String, Object>) entry.get("userInfo")).get("first_name"));
 					break;
 				case "createdOn":
-					comparator = Comparator.comparing(entry -> (Long) ((List<Map<String, Object>>) entry.get("wfInfo"))
-							.get(0).get("createdOn"));
+					comparator = Comparator.comparing(entry -> (Date) ((List<WfStatusEntity>) entry.get("wfInfo"))
+							.get(0).getCreatedOn());
 					break;
 				default:
 					throw new IllegalArgumentException("Unsupported sortBy field: " + sortByField);
