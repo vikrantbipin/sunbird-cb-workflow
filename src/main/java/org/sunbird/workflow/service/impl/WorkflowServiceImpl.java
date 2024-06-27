@@ -1097,7 +1097,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	public ResponseEntity<InputStreamResource> downloadBulkUploadFile(String fileName){
-		log.info("downloadBulkUploadFile function invoked "+fileName);
+		log.info("downloadBulkUploadFile function invoked {}",fileName);
 		HttpHeaders headers = new HttpHeaders();
 		try{
 			log.info("downloadBulkUploadFile {}", fileName);

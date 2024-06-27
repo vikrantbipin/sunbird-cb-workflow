@@ -28,9 +28,6 @@ import org.sunbird.workflow.service.Workflowservice;
 @RestController
 @RequestMapping("/v1/workflow")
 public class WorkFlowController {
-
-	private static final Logger log = LogManager.getLogger(WorkFlowController.class);
-
 	@Autowired
 	private Workflowservice workflowService;
 
@@ -125,7 +122,6 @@ public class WorkFlowController {
 
 	@GetMapping(path = "/admin/bulkbuplodfile/download/{fileName}")
 	public ResponseEntity<?> downloadBulkuplodFile(@PathVariable("fileName") String fileName) {
-		log.info("downloadBulkuplodFile called with this fileName "+fileName);
 		return workflowService.downloadBulkUploadFile(fileName);
 	}
 
