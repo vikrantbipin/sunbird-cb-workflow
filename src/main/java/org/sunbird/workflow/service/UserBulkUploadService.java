@@ -83,8 +83,14 @@ public class UserBulkUploadService {
                         0,
                         0,
                         0);
-                storageService.downloadFile(inputDataMap.get(Constants.FILE_NAME));
-                this.processBulkUploadV1(inputDataMap);
+                String fileName = inputDataMap.get(Constants.FILE_NAME);
+                logger.info("fileName {} ", fileName);
+                storageService.downloadFile(fileName);
+                if (fileName.endsWith(Constants.CSV_FILE)) {
+                    this.processBulkUploadV1(inputDataMap);
+                } else if (fileName.endsWith(Constants.XLSX_FILE)) {
+                    this.processBulkUpload(inputDataMap);
+                }
             } else {
                 logger.error("Error in the Kafka Message Received");
             }

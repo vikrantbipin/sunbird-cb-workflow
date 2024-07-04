@@ -338,6 +338,8 @@ public class Constants {
 	public static final String PINCODE = "pincode";
 	public static final String FIRST_NAME_CAMEL_CASE = "firstName";
 	public static final String SUCCESSFUL_UPERCASE = "SUCCESSFUL";
+	public static final String CSV_FILE = "csv";
+	public static final String XLSX_FILE = "xlsx";
 
 	public static final String MOBILE = "mobile";
 	public static final String FIELDS_CONSTANT = "fields";
