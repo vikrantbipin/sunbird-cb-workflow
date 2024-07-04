@@ -83,8 +83,19 @@ public class UserBulkUploadService {
                         0,
                         0,
                         0);
-                storageService.downloadFile(inputDataMap.get(Constants.FILE_NAME));
-                this.processBulkUploadV1(inputDataMap);
+                String fileName = inputDataMap.get(Constants.FILE_NAME);
+                logger.info("fileName {} ", fileName);
+                storageService.downloadFile(fileName);
+                switch (getFileExtension(fileName)) {
+                    case Constants.CSV_FILE:
+                        this.processBulkUploadV1(inputDataMap);
+                        break;
+                    case Constants.XLSX_FILE:
+                        this.processBulkUpload(inputDataMap);
+                        break;
+                    default:
+                        logger.error("Unsupported file type: {}", fileName);
+                }
             } else {
                 logger.error("Error in the Kafka Message Received");
             }
@@ -1069,6 +1080,11 @@ public class UserBulkUploadService {
             return Constants.FAILED_UPPERCASE;
         }
         return Constants.SUCCESS_UPPERCASE;
+    }
+
+    private String getFileExtension(String fileName) {
+        int lastIndexOfDot= fileName.lastIndexOf('.');
+        return lastIndexOfDot == -1 ? "" : fileName.substring(lastIndexOfDot);
     }
 
 }
