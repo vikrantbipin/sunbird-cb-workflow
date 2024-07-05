@@ -338,6 +338,8 @@ public class Constants {
 	public static final String PINCODE = "pincode";
 	public static final String FIRST_NAME_CAMEL_CASE = "firstName";
 	public static final String SUCCESSFUL_UPERCASE = "SUCCESSFUL";
+	public static final String CSV_FILE = ".csv";
+	public static final String XLSX_FILE = ".xlsx";
 
 	public static final String MOBILE = "mobile";
 	public static final String FIELDS_CONSTANT = "fields";
@@ -347,5 +349,6 @@ public class Constants {
 	public static final String PROFILE_DETAILS_PERSONAL_DETAILS_FIRST_NAME = "profileDetails.personalDetails.firstname";
 	public static final String PROFILE_DETAILS_PERSONAL_DETAILS_PRIMARY_EMAIL = "profileDetails.personalDetails.primaryEmail";
 	public static final String NO_PENDING_REQUEST_AVAILABLE_MESSAGE = "There are no approval requests pending for approval with the MDO";
+	public static final String NO_PENDING_GROUP_DESIGNATION_REQUEST_AVAILABLE_MESSAGE = "There are no approval requests pending for designation and/or group approval with the MDO";
 
 }
