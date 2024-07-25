@@ -132,7 +132,14 @@ public class WorkflowServiceImpl implements Workflowservice {
 					return response;
 				}
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				String errorMessage = String.format("Error while validating WF request for user: %s. Exception message: %s",
+						wfRequest.getUserId(), e.getMessage());
+
+				response.put(Constants.ERROR_MESSAGE, errorMessage);
+				response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+				response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
+				log.error(errorMessage, e);
+				return response;
 			}
 		}
 		if (configuration.getMultipleWfCreationEnable() && !CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
@@ -1497,7 +1504,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 		for (WfStatusEntity wfStatusEntity : wfStatusEntities) {
 			String existingRequestKey = getKeyFromUpdateFieldValues(wfStatusEntity.getUpdateFieldValues());
-			if (!StringUtils.isEmpty(existingRequestKey) && existingRequestKey.equalsIgnoreCase(newRequestKey)) {
+			if (org.apache.commons.lang3.StringUtils.isNotEmpty(existingRequestKey) && existingRequestKey.equalsIgnoreCase(newRequestKey)) {
 				response.put(Constants.IS_WF_REQUEST_EXIST, true);
 				response.put(Constants.WF_ID_CONSTANT, wfStatusEntity.getWfId());
 				return response;
@@ -1513,7 +1520,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		});
 		Map<String, Object> toValue = (Map<String, Object>) updatedFieldValues.get(0).get(Constants.TO_VALUE);
 
-		if (toValue != null && !toValue.isEmpty()) {
+		if (!MapUtils.isEmpty(toValue)) {
 			return toValue.keySet().iterator().next();
 		} else {
 			return null;
