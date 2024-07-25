@@ -116,6 +116,32 @@ public class WorkflowServiceImpl implements Workflowservice {
 		HashMap<String, String> changeStatusResponse;
 		List<String> wfIds = new ArrayList<>();
 		String changedStatus = null;
+		Response response = new Response();
+		HashMap<String, Object> data = new HashMap<>();
+
+		if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
+			try {
+				Map<String, Object> isWFRequestExistResponse = isWFRequestExist(wfRequest);
+				boolean isWFRequestExist = (boolean) isWFRequestExistResponse.get(Constants.IS_WF_REQUEST_EXIST);
+				if (isWFRequestExist) {
+					data.put(Constants.STATUS, Constants.SEND_FOR_APPROVAL);
+					data.put(Constants.WF_IDS_CONSTANT, Arrays.asList(isWFRequestExistResponse.get(Constants.WF_ID_CONSTANT)));
+					response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.SEND_FOR_APPROVAL);
+					response.put(Constants.DATA, data);
+					response.put(Constants.STATUS, HttpStatus.OK);
+					return response;
+				}
+			} catch (IOException e) {
+				String errorMessage = String.format("Error while validating WF request for user: %s. Exception message: %s",
+						wfRequest.getUserId(), e.getMessage());
+
+				response.put(Constants.ERROR_MESSAGE, errorMessage);
+				response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+				response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
+				log.error(errorMessage, e);
+				return response;
+			}
+		}
 		if (configuration.getMultipleWfCreationEnable() && !CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
 			String wfId = wfRequest.getWfId();
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
@@ -130,8 +156,6 @@ public class WorkflowServiceImpl implements Workflowservice {
 			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 			changedStatus = changeStatusResponse.get(Constants.STATUS);
 		}
-		Response response = new Response();
-		HashMap<String, Object> data = new HashMap<>();
 		data.put(Constants.STATUS, changedStatus);
 		data.put(Constants.WF_IDS_CONSTANT, wfIds);
 		response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + changedStatus);
@@ -1466,5 +1490,40 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 
 		return data;
+	}
+
+	private Map<String, Object> isWFRequestExist(WfRequest wfRequest) throws IOException {
+
+		if (wfRequest == null || wfRequest.getUpdateFieldValues() == null || wfRequest.getUpdateFieldValues().isEmpty()) {
+			throw new IllegalArgumentException("Invalid WfRequest or updateFieldValues");
+		}
+
+		Map<String, Object> response = new HashMap<>();
+		String newRequestKey = ((Map<String, Object>) wfRequest.getUpdateFieldValues().get(0).get(Constants.TO_VALUE)).keySet().iterator().next();
+		List<WfStatusEntity> wfStatusEntities = wfStatusRepo.getPendingRequests(wfRequest.getUserId(), wfRequest.getServiceName(), Constants.SEND_FOR_APPROVAL);
+
+		for (WfStatusEntity wfStatusEntity : wfStatusEntities) {
+			String existingRequestKey = getKeyFromUpdateFieldValues(wfStatusEntity.getUpdateFieldValues());
+			if (org.apache.commons.lang3.StringUtils.isNotEmpty(existingRequestKey) && existingRequestKey.equalsIgnoreCase(newRequestKey)) {
+				response.put(Constants.IS_WF_REQUEST_EXIST, true);
+				response.put(Constants.WF_ID_CONSTANT, wfStatusEntity.getWfId());
+				return response;
+			}
+		}
+		response.put(Constants.IS_WF_REQUEST_EXIST, false);
+		response.put(Constants.WF_ID_CONSTANT, wfRequest.getWfId());
+		return response;
+	}
+
+	private String getKeyFromUpdateFieldValues(String updateFieldValues) throws IOException {
+		List<Map<String, Object>> updatedFieldValues = mapper.readValue(updateFieldValues, new TypeReference<List<Map<String, Object>>>() {
+		});
+		Map<String, Object> toValue = (Map<String, Object>) updatedFieldValues.get(0).get(Constants.TO_VALUE);
+
+		if (!MapUtils.isEmpty(toValue)) {
+			return toValue.keySet().iterator().next();
+		} else {
+			return null;
+		}
 	}
 }

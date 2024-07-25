@@ -67,6 +67,8 @@ public class Constants {
 
 	public static final String PROFILE_SERVICE_NAME = "profile";
 
+	public static final String IS_WF_REQUEST_EXIST = "isWFRequestExist";
+
 	public static final String BLENDED_PROGRAM_SERVICE_NAME = "blendedprogram";
 	public static final String POSITION_SERVICE_NAME = "position";
 	public static final String ORGANISATION_SERVICE_NAME = "organisation";
