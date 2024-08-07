@@ -195,7 +195,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			}
 			if(!StringUtils.isEmpty(fieldKey) && Constants.NAME.equalsIgnoreCase(fieldKey)){
 				Map<String, Object> propertyMap = new HashMap<>();
-				propertyMap.put(Constants.USER_ID, wfRequest.getApplicationId());
+				propertyMap.put(Constants.ID, wfRequest.getApplicationId());
 				List<Map<String, Object>> userDetails = cassandraOperation.getRecordsByProperties(
 						Constants.KEYSPACE_SUNBIRD, Constants.USER_TABLE, propertyMap, Arrays.asList(Constants.ROOT_ORG_ID));
 				String rootOrgId = null;
