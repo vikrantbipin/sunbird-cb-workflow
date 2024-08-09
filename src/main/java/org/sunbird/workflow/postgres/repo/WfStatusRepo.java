@@ -106,5 +106,8 @@ public interface WfStatusRepo extends JpaRepository<WfStatusEntity, String> {
 
     @Query(value = "select * from wingspan.wf_status where service_name = ?1 and current_status = ?2 and dept_name = ?3 limit ?4", nativeQuery = true)
     List<WfStatusEntity> getListOfApplicationUsingDept(String serviceName, String currentStatus, String deptName, int limit);
+
+    @Query(value = "select * from wingspan.wf_status where service_name= ?1 and current_status = ?2 and dept_Name = ?3 order by lastupdated_on desc", nativeQuery = true)
+    Page<WfStatusEntity> findByServiceNameAndCurrentStatusAndDeptNamePaginatedList(String serviceName, String currentStatus, String deptName, Pageable pageable);
 }
 

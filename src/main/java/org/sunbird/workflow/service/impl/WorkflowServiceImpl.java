@@ -769,7 +769,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 					eligibleServiceNames.add(Constants.BLENDED_PROGRAM_SERVICE_NAME);
 					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationId(eligibleServiceNames, criteria.getApplicationStatus(), applicationIds,criteria.getDeptName());
 				} else {
-					wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptName(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName());
+					Page<WfStatusEntity> paginatedWfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNamePaginatedList(criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), pageable);
+					wfStatusEntities = paginatedWfStatusEntities.getContent();
 				}
 			} else {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndApplicationIdIn(
