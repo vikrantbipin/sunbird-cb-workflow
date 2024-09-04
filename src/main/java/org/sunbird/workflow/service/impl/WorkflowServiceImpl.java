@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections.MapUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.formula.atp.Switch;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -130,6 +131,22 @@ public class WorkflowServiceImpl implements Workflowservice {
 					response.put(Constants.DATA, data);
 					response.put(Constants.STATUS, HttpStatus.OK);
 					return response;
+				} else {
+
+					String requestKey = ((Map<String, Object>) wfRequest.getUpdateFieldValues().get(0).get(Constants.TO_VALUE)).keySet().iterator().next();
+					switch (requestKey) {
+						case "group":
+							wfRequest.setRequestType("GROUP_CHANGE");
+							break;
+						case "designation":
+							wfRequest.setRequestType("DESIGNATION_CHANGE");
+							break;
+						case "name":
+							wfRequest.setRequestType("ORG_TRANSFER");
+							break;
+						default:
+							wfRequest.setRequestType(requestKey);
+					}
 				}
 			} catch (IOException e) {
 				String errorMessage = String.format("Error while validating WF request for user: %s. Exception message: %s",
@@ -198,6 +215,9 @@ public class WorkflowServiceImpl implements Workflowservice {
 				applicationStatus.setRootOrg(rootOrg);
 				applicationStatus.setOrg(org);
 				applicationStatus.setCreatedOn(new Date());
+				if (!StringUtils.isEmpty(wfRequest.getRequestType())) {
+					applicationStatus.setRequestType(wfRequest.getRequestType());
+				}
 				wfRequest.setWfId(wfId);
 			}
 
@@ -1346,6 +1366,57 @@ public class WorkflowServiceImpl implements Workflowservice {
 		return responseEntity;
 	}
 
+	@Override
+	public Response getUserProfileApprovalRequest(String rootOrg, String org, SearchCriteria criteria) {
+		Response response = new Response();
+
+		try {
+			if (ObjectUtils.isEmpty(criteria.getRequestType())) {
+				return applicationsSearch(rootOrg, org, criteria);
+			}
+
+			Pageable pageable = getPageReqForApplicationSearch(criteria);
+			List<String> applicationIds = criteria.getApplicationIds();
+			long totalRequestCount = 0;
+
+			if (CollectionUtils.isEmpty(applicationIds)) {
+				Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
+						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType(), pageable);
+				applicationIds = applicationIdsPage.getContent();
+				totalRequestCount = applicationIdsPage.getTotalElements();
+			}
+
+			List<WfStatusEntity> wfStatusEntities = null;
+			if (!StringUtils.isEmpty(criteria.getDeptName()) && !CollectionUtils.isEmpty(applicationIds)) {
+				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndUserIdInAndRequestTypeIn(
+						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds, criteria.getRequestType());
+			}
+
+			List<Map<String, Object>> userProfiles = CollectionUtils.isEmpty(wfStatusEntities) ?
+					Collections.emptyList() :
+					userProfileWfService.enrichUserData(wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId)), rootOrg);
+
+			if (criteria.getSortBy() != null && !criteria.getSortBy().isEmpty()) {
+				log.info("sortBy invoked {}", userProfiles);
+				userProfiles = sortDataByCriteria(userProfiles, criteria);
+			}
+
+			response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
+			response.put(Constants.DATA, userProfiles);
+			response.put(Constants.STATUS, HttpStatus.OK);
+			response.put(Constants.COUNT, totalRequestCount);
+			this.identifyAndMarkOrgTransferRequest(response);
+		} catch (Exception e) {
+			log.error("Error occurred while processing getUserProfileApprovalRequest", e);
+			response.put(Constants.MESSAGE, Constants.FAILED);
+			response.put(Constants.ERROR, e.getMessage());
+			response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+	}
+
+
 	private void populateSheetWithPendingRequests(Map<String, Object> allPendingRequestMap, Map<String, Object> allUserDetails, String csvFilePath) throws IOException {
 		PrintWriter writer = new PrintWriter(new FileWriter(csvFilePath));
 		writer.println("Full Name,Email,Mobile Number,Group,Designation,Gender,Category,Date of Birth (dd-mm-yyy),Mother Tongue,Employee ID,Office Pin Code,External System ID,External System Name,Tags");
@@ -1527,4 +1598,6 @@ public class WorkflowServiceImpl implements Workflowservice {
 			return null;
 		}
 	}
+
+
 }

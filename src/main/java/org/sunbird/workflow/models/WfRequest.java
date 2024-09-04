@@ -34,6 +34,8 @@ public class WfRequest {
 	private boolean isNominatedByMdo;
 	private String previousRootOrgId;
 
+	private String requestType;
+
 	public String getState() {
 		return state;
 	}
@@ -168,5 +170,13 @@ public class WfRequest {
 
 	public void setPreviousRootOrgId(String previousRootOrgId) {
 		this.previousRootOrgId = previousRootOrgId;
+	}
+
+	public String getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
 	}
 }

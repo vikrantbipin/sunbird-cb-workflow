@@ -137,4 +137,11 @@ public class WorkFlowController {
 	public ResponseEntity<?> downloadPendingRequestFile(@RequestHeader(Constants.X_AUTH_TOKEN) String userAuthToken) {
 		return workflowService.downloadPendingRequestFile(userAuthToken);
 	}
+
+	@PostMapping(path = "/profile/approvalRequest/search", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Response> getUserProfileApprovalRequest(@RequestHeader String rootOrg, @RequestHeader String org,
+														@RequestBody SearchCriteria searchCriteria) {
+		Response response = workflowService.getUserProfileApprovalRequest(rootOrg, org, searchCriteria);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }

@@ -23,6 +23,8 @@ public class SearchCriteria {
 
 	private Map<String, String> sortBy;
 
+	private List<String> requestType;
+
 	public String getServiceName() {
 		return serviceName;
 	}
@@ -89,5 +91,13 @@ public class SearchCriteria {
 
 	public void setSortBy(Map<String, String> sortBy) {
 		this.sortBy = sortBy;
+	}
+
+	public List<String> getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(List<String> requestType) {
+		this.requestType = requestType;
 	}
 }
