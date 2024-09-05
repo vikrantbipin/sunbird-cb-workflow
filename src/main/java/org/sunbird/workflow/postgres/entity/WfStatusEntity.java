@@ -58,6 +58,9 @@ public class WfStatusEntity {
 	@Column(name = "additional_properties")
 	private String additionalProperties;
 
+	@Column(name = "request_type")
+	private String requestType;
+
 	@Transient
 	private boolean isOrgTansferRequest = false;
 
@@ -195,5 +198,13 @@ public class WfStatusEntity {
 
 	public void setOrgTansferRequest(boolean isOrgTansferRequest) {
 		this.isOrgTansferRequest = isOrgTansferRequest;
+	}
+
+	public String getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
 	}
 }

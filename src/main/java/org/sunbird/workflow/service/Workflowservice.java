@@ -57,4 +57,8 @@ public interface Workflowservice {
     public SBApiResponse workflowBulkUpdateTransitionV1(String userAuthToken, MultipartFile mFile);
 
     public ResponseEntity<?> downloadPendingRequestFile(String userAuthToken);
+
+    public Response getUserProfileApprovalRequest(String rootOrg, String org, SearchCriteria searchCriteria);
+
+
 }
