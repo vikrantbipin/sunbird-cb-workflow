@@ -119,56 +119,27 @@ public class WorkflowServiceImpl implements Workflowservice {
 		Response response = new Response();
 		HashMap<String, Object> data = new HashMap<>();
 
-		if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
-			try {
-				Map<String, Object> isWFRequestExistResponse = isWFRequestExist(wfRequest);
-				boolean isWFRequestExist = (boolean) isWFRequestExistResponse.get(Constants.IS_WF_REQUEST_EXIST);
-				if (isWFRequestExist) {
-					data.put(Constants.STATUS, Constants.SEND_FOR_APPROVAL);
-					data.put(Constants.WF_IDS_CONSTANT, Arrays.asList(isWFRequestExistResponse.get(Constants.WF_ID_CONSTANT)));
-					response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.SEND_FOR_APPROVAL);
-					response.put(Constants.DATA, data);
-					response.put(Constants.STATUS, HttpStatus.OK);
-					return response;
-				} else {
-
-					String requestKey = ((Map<String, Object>) wfRequest.getUpdateFieldValues().get(0).get(Constants.TO_VALUE)).keySet().iterator().next();
-					switch (requestKey) {
-						case "group":
-							wfRequest.setRequestType("GROUP_CHANGE");
-							break;
-						case "designation":
-							wfRequest.setRequestType("DESIGNATION_CHANGE");
-							break;
-						case "name":
-							wfRequest.setRequestType("ORG_TRANSFER");
-							break;
-						default:
-							wfRequest.setRequestType(requestKey);
-					}
-				}
-			} catch (IOException e) {
-				String errorMessage = String.format("Error while validating WF request for user: %s. Exception message: %s",
-						wfRequest.getUserId(), e.getMessage());
-
-				response.put(Constants.ERROR_MESSAGE, errorMessage);
-				response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
-				response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
-				log.error(errorMessage, e);
-				return response;
-			}
-		}
 		if (configuration.getMultipleWfCreationEnable() && !CollectionUtils.isEmpty(wfRequest.getUpdateFieldValues())) {
 			String wfId = wfRequest.getWfId();
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
 				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
 				wfRequest.setWfId(wfId);
-				changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
+				if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
+					if (handleProfileServiceWorkflow(wfRequest, response, data)) {
+						return response;
+					}
+				}
+				changeStatusResponse = changeStatus(rootOrg, org, wfRequest, userId, role);
 				wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 				changedStatus = changeStatusResponse.get(Constants.STATUS);
 			}
 		} else {
-			changeStatusResponse = changeStatus(rootOrg, org, wfRequest,userId,role);
+			if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
+				if (handleProfileServiceWorkflow(wfRequest, response, data)) {
+					return response;
+				}
+			}
+			changeStatusResponse = changeStatus(rootOrg, org, wfRequest, userId, role);
 			wfIds.add(changeStatusResponse.get(Constants.WF_ID_CONSTANT));
 			changedStatus = changeStatusResponse.get(Constants.STATUS);
 		}
@@ -1595,6 +1566,49 @@ public class WorkflowServiceImpl implements Workflowservice {
 			return toValue.keySet().iterator().next();
 		} else {
 			return null;
+		}
+	}
+
+	private boolean handleProfileServiceWorkflow(WfRequest wfRequest, Response response, Map<String, Object> data) {
+		try {
+			Map<String, Object> wfRequestExistResponse = isWFRequestExist(wfRequest);
+			boolean isWFRequestExist = (boolean) wfRequestExistResponse.get(Constants.IS_WF_REQUEST_EXIST);
+
+			if (isWFRequestExist) {
+				data.put(Constants.STATUS, Constants.SEND_FOR_APPROVAL);
+				data.put(Constants.WF_IDS_CONSTANT, Arrays.asList(wfRequestExistResponse.get(Constants.WF_ID_CONSTANT)));
+				response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.SEND_FOR_APPROVAL);
+				response.put(Constants.DATA, data);
+				response.put(Constants.STATUS, HttpStatus.OK);
+				return true;
+			} else {
+				addRequestTypeInProfileWF(wfRequest);
+			}
+		} catch (IOException e) {
+			String errorMessage = String.format("Error while validating WF request for user: %s. Exception message: %s", wfRequest.getUserId(), e.getMessage());
+			response.put(Constants.ERROR_MESSAGE, errorMessage);
+			response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+			response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
+			log.error(errorMessage, e);
+			return true;
+		}
+		return false;
+	}
+
+	private void addRequestTypeInProfileWF(WfRequest wfRequest){
+		String requestKey = ((Map<String, Object>) wfRequest.getUpdateFieldValues().get(0).get(Constants.TO_VALUE)).keySet().iterator().next();
+		switch (requestKey) {
+			case "group":
+				wfRequest.setRequestType("GROUP_CHANGE");
+				break;
+			case "designation":
+				wfRequest.setRequestType("DESIGNATION_CHANGE");
+				break;
+			case "name":
+				wfRequest.setRequestType("ORG_TRANSFER");
+				break;
+			default:
+				wfRequest.setRequestType(requestKey);
 		}
 	}
 }
