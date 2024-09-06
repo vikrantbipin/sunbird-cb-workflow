@@ -124,9 +124,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 			for (HashMap<String, Object> updatedField : wfRequest.getUpdateFieldValues()) {
 				wfRequest.setUpdateFieldValues(new ArrayList<>(Arrays.asList(updatedField)));
 				wfRequest.setWfId(wfId);
-				if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
-					if (handleProfileServiceWorkflow(wfRequest, response, data)) {
-						return response;
+				if (!StringUtils.isEmpty(wfRequest.getServiceName())) {
+					if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
+						if (handleProfileServiceWorkflow(wfRequest, response, data)) {
+							return response;
+						}
 					}
 				}
 				changeStatusResponse = changeStatus(rootOrg, org, wfRequest, userId, role);
@@ -134,9 +136,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 				changedStatus = changeStatusResponse.get(Constants.STATUS);
 			}
 		} else {
-			if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
-				if (handleProfileServiceWorkflow(wfRequest, response, data)) {
-					return response;
+			if (!StringUtils.isEmpty(wfRequest.getServiceName())) {
+				if (StringUtils.isEmpty(wfRequest.getWfId()) && wfRequest.getServiceName().equalsIgnoreCase(Constants.PROFILE_SERVICE_NAME)) {
+					if (handleProfileServiceWorkflow(wfRequest, response, data)) {
+						return response;
+					}
 				}
 			}
 			changeStatusResponse = changeStatus(rootOrg, org, wfRequest, userId, role);
