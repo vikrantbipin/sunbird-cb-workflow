@@ -4,6 +4,7 @@ import java.io.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -726,7 +727,9 @@ public class UserBulkUploadService {
             file = new File(Constants.LOCAL_BASE_PATH + inputDataMap.get(Constants.FILE_NAME));
             if (file.exists() && file.length() > 0) {
                 reader = new BufferedReader(new FileReader(file));
-                csvParser = new CSVParser(reader, CSVFormat.INFORMIX_UNLOAD.withFirstRecordAsHeader());
+                char csvDelimiter = configuration.getCsvDelimiter();
+                String tagsDelimiter =  configuration.getTagsDelimiter();
+                csvParser = new CSVParser(reader,CSVFormat.newFormat(csvDelimiter).withFirstRecordAsHeader());
                 List<CSVRecord> csvRecords = csvParser.getRecords();
                 List<Map<String, Object>> updatedRecords = new ArrayList<>();
                 List<String> headers = new ArrayList<>(csvParser.getHeaderNames());
@@ -740,6 +743,15 @@ public class UserBulkUploadService {
                 }
 
                 for (CSVRecord record : csvRecords) {
+                    if (record.size() > headers.size() - 2) {
+                        Map<String, Object> errorRecord = new LinkedHashMap<>(record.toMap());
+                        errorRecord.put("Status", "FAILED");
+                        errorRecord.put("Error Details", "Number of fields in the record exceeds expected number. Please check your data.");
+                        updatedRecords.add(errorRecord);
+                        totalRecordsCount++;
+                        failedRecordsCount++;
+                        continue;
+                    }
                     long duration = 0;
                     long startTime = System.currentTimeMillis();
                     logger.info("UserBulkUploadService:: Record {}", record.getRecordNumber());
@@ -801,7 +813,7 @@ public class UserBulkUploadService {
                         continue;
                     }
                     if (!isEmailValid) {
-                        errList.add("User record does not exist with given email and/or Mobile Number");
+                        errList.add("User record does not exist with given email");
                     } else if (!isEmailOrPhoneNumberExist && isPhoneNumberValid) {
                         errList.add("Another user record exist with the mobile number");
                     } else {
@@ -945,19 +957,19 @@ public class UserBulkUploadService {
                         valuesToBeUpdate.put(Constants.EXTERNAL_SYSTEM, externalSystem);
                     }
 
-                    // Tags
-                    if (!record.get(13).isEmpty()) {
-                        String[] tagStrList = record.get(13).split("&");
-                        List<String> tagList = new ArrayList<>();
-                        for (String tag : tagStrList) {
-                            tagList.add(tag.trim());
+                        // Tags
+                        if (!record.get(13).isEmpty()) {
+                            String[] tagStrList = record.get(13).trim().split(Pattern.quote(tagsDelimiter), -1);
+                            List<String> tagList = new ArrayList<>();
+                            for (String tag : tagStrList) {
+                                tagList.add(tag.trim());
+                            }
+                            if (!ValidationUtil.validateTag(tagList)) {
+                                errList.add("Invalid Tag: " + tagStrList +
+                                        " Tags are separated by '|' and can contain only alphabets with spaces. e.g., Bihar Circle|Patna Division");
+                            }
+                            valuesToBeUpdate.put(Constants.TAG, tagList);
                         }
-                        if (!ValidationUtil.validateTag(tagList)) {
-                            errList.add("Invalid Tag: " + tagStrList +
-                                    " Tags are separated by '&' and can contain only alphabets with spaces. e.g., Bihar Circle&Patna Division");
-                        }
-                        valuesToBeUpdate.put(Constants.TAG, tagList);
-                    }
 
 
                     if (!CollectionUtils.isEmpty(errList)) {
@@ -1078,10 +1090,10 @@ public class UserBulkUploadService {
                     logger.info("UserBulkUploadService:: Record Completed. Time taken: {} milli-seconds", duration);
                     updatedRecords.add(csvValues);
                 }
-                // Write back updated records to the same CSV file
-                fileWriter = new FileWriter(file);
-                bufferedWriter = new BufferedWriter(fileWriter);
-                csvPrinter = new CSVPrinter(bufferedWriter, CSVFormat.INFORMIX_UNLOAD.withHeader(headers.toArray(new String[0])));
+                    // Write back updated records to the same CSV file
+                    fileWriter = new FileWriter(file);
+                    bufferedWriter = new BufferedWriter(fileWriter);
+                    csvPrinter = new CSVPrinter(bufferedWriter,CSVFormat.newFormat(csvDelimiter).withHeader(headers.toArray(new String[0])).withRecordSeparator(System.lineSeparator()));
 
 
                 for (Map<String, Object> record : updatedRecords) {
