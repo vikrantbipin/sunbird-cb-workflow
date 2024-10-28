@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.util.StringUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -786,6 +787,13 @@ public class WorkflowServiceImpl implements Workflowservice {
 		}
 		if (criteria.getServiceName().equalsIgnoreCase(Constants.BLENDED_PROGRAM_SERVICE_NAME)) {
 			infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getUserId));
+			if (StringUtil.isNotBlank(criteria.getUserId())) {
+				List<WfStatusEntity> matchedInfo = infos.get(criteria.getUserId());
+				infos.clear();
+				if (matchedInfo != null) {
+					infos.put(criteria.getUserId(), matchedInfo);
+				}
+			}
 		} else {
 			infos = wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
 		}
