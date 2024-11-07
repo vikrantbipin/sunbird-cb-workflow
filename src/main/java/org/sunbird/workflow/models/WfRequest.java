@@ -36,6 +36,16 @@ public class WfRequest {
 
 	private String requestType;
 
+	private Date createdOn;
+
+	public Date getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
 	public String getState() {
 		return state;
 	}

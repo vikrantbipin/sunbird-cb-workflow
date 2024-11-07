@@ -233,6 +233,17 @@ public class Configuration {
     @Value(("${sb.tags.delimiter}"))
     private String tagsDelimiter;
 
+    @Value("${course.admin.blended.program.enrol}")
+    private String adminBlendedProgramEnrolEndPoint;
+
+    public String getAdminBlendedProgramEnrolEndPoint() {
+        return adminBlendedProgramEnrolEndPoint;
+    }
+
+    public void setAdminBlendedProgramEnrolEndPoint(String adminBlendedProgramEnrolEndPoint) {
+        this.adminBlendedProgramEnrolEndPoint = adminBlendedProgramEnrolEndPoint;
+    }
+
     public String getModificationRecordAllowActions() {
         return modificationRecordAllowActions;
     }
