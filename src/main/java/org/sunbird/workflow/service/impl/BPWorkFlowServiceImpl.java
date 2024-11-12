@@ -182,7 +182,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             headersValue.put("Content-Type", "application/json");
             try {
                 StringBuilder builder = new StringBuilder(configuration.getCourseServiceHost());
-                if (wfRequest.getState().equalsIgnoreCase("send_for_pc_approval") && wfRequest.getServiceName().equalsIgnoreCase("BlendedProgram")) {
+                if (wfRequest.getState().equalsIgnoreCase(Constants.SEND_FOR_PC_APPROVAL) && wfRequest.getServiceName().equalsIgnoreCase(Constants.BLENDED_PROGRAM_SERVICE_NAME)) {
                     builder.append(configuration.getAdminBlendedProgramEnrolEndPoint());
                     requestBody.put(Constants.ENROLLED_DATE.toLowerCase(), wfRequest.getCreatedOn());
                 } else {
