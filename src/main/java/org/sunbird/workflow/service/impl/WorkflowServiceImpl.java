@@ -172,7 +172,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 			if (Constants.BLENDED_PROGRAM_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName()) && !StringUtils.isEmpty(applicationStatus.getServiceName())) {
 				serviceName = applicationStatus.getServiceName();
 			}
-			if (applicationStatus.getCreatedOn() != null) {
+			if (applicationStatus != null && applicationStatus.getCreatedOn() != null) {
 				wfRequest.setCreatedOn(applicationStatus.getCreatedOn().toString());
 			}
 			WorkFlowModel workFlowModel = getWorkFlowConfig(serviceName);
