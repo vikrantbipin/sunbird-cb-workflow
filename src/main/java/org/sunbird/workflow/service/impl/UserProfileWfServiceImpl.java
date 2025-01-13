@@ -565,18 +565,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 					HashMap<String, Object> toValueList = (HashMap<String, Object>) updatedFieldValueElement.get(Constants.TO_VALUE);
 					for (String key : toValueList.keySet()) {
 						if (Constants.NAME.equals(key) && StringUtils.isNotEmpty((String) toValueList.get(Constants.NAME))) {
-							String updatedDeptName = (String) toValueList.get(Constants.NAME);
-							wfRequest.setDeptName(updatedDeptName);
-							Map<String, Object> response = (Map<String, Object>) migrateUser(wfRequest);
-							if (null != response && !Constants.OK.equals(response.get(Constants.RESPONSE_CODE))) {
-								String migrateError = (String) ((Map<String, Object>) response.getOrDefault(Constants.PARAMS, Collections.emptyMap()))
-										.getOrDefault(Constants.ERROR_MESSAGE, "Unknown error");
-								String errorMessage = "Migrate user failed: " + migrateError;
-								logger.error(errorMessage);
-								failedCase(wfRequest, errorMessage);
-							} else {
-								handlePendingRequestUpdate(wfRequest, updatedDeptName);
-							}
+							updateProfile(wfRequest);
 						} else {
 							Map<String, Object> updateRequest = updateRequestWithWF(wfRequest.getUserId(), wfRequest.getUpdateFieldValues(), profileDetails);
 							isUpdateRequired = true;
