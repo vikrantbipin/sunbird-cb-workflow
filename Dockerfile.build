@@ -3,6 +3,7 @@ FROM openjdk:17-slim
 
 RUN apt update && apt install maven -y && apt install zip -y && apt-get install -y git &&  rm -rf /var/lib/apt/lists/*
 
+COPY . /opt
 WORKDIR /opt
 
 RUN git clone --branch cbrelease-4.8.21-s-2.12.16 https://github.com/KB-iGOT/sunbird-cloud-storage-sdk.git
@@ -15,7 +16,6 @@ RUN mvn install:install-file \
   -Dversion=1.4.8 \
   -Dpackaging=jar
 
-COPY . /opt
 
 RUN mvn clean install -DskipTests
 
