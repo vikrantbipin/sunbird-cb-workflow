@@ -2,9 +2,11 @@ package org.sunbird.workflow;
 
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -31,13 +33,22 @@ public class WorkflowApplication {
 
 	private ClientHttpRequestFactory getClientHttpRequestFactory() {
 		int timeout = 45000;
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
-				.setSocketTimeout(timeout).build();
-		CloseableHttpClient client = HttpClientBuilder.create().setMaxConnTotal(2000).setMaxConnPerRoute(500)
-				.setDefaultRequestConfig(config).build();
-		HttpComponentsClientHttpRequestFactory cRequestFactory = new HttpComponentsClientHttpRequestFactory(client);
-		cRequestFactory.setReadTimeout(timeout);
-		return cRequestFactory;
+		RequestConfig config = RequestConfig.custom().
+				setConnectTimeout(Timeout.ofMilliseconds(timeout)).
+				setConnectionRequestTimeout(Timeout.ofMilliseconds(timeout)).
+				setResponseTimeout(Timeout.ofMilliseconds(timeout)).
+				build();
+
+		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+		connectionManager.setMaxTotal(2000);
+		connectionManager.setDefaultMaxPerRoute(500);
+
+		CloseableHttpClient client = HttpClients.custom()
+				.setDefaultRequestConfig(config)
+				.setConnectionManager(connectionManager)
+				.build();
+
+		return new HttpComponentsClientHttpRequestFactory(client);
 	}
 
 }
