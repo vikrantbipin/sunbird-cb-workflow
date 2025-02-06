@@ -369,4 +369,6 @@ public class Constants {
 	public static final String DESIGNATION_CHANGE ="DESIGNATION_CHANGE";
 	public static final String WF_REQUESTS_KEY = "wfRequests";
 	public static final String ROOT_ORG_ID_RAW_KEY = "rootOrgId.raw";
+	public static final String PROFILE_PRIMARY_EMAIL_FIELD = "profileDetails.personalDetails.primaryEmail.raw";
+	public static final String PROFILE_PHONE_NUMBER_FILED = "profileDetails.personalDetails.mobile.raw";
 }

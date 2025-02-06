@@ -115,16 +115,27 @@ public class ElasticsearchServiceManager {
             // Build the bool query
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
-            SimpleQueryStringBuilder simpleQuery = QueryBuilders.simpleQueryStringQuery(queryString)
-                    .defaultOperator(org.elasticsearch.index.query.Operator.OR)
-                    .analyzeWildcard(false)
-                    .autoGenerateSynonymsPhraseQuery(true)
-                    .fuzzyPrefixLength(0)
-                    .fuzzyMaxExpansions(50)
-                    .fuzzyTranspositions(true)
-                    .boost(1.0f);
+            // if query is email address then check against
+            // profileDetails.personalDetails.primaryEmail
+            // if query is valid mobile number then check against
+            // profileDetails.personalDetails.mobile
+            // if query is none of above use SimpleQueryStringBuilder to get data
+            if (ProjectUtil.isValidEmail(queryString)) {
+                boolQuery.must(QueryBuilders.termQuery(Constants.PROFILE_PRIMARY_EMAIL_FIELD, queryString));
+            } else if (ProjectUtil.isValidMobileNumber(queryString)) {
+                boolQuery.must(QueryBuilders.termQuery(Constants.PROFILE_PHONE_NUMBER_FILED, queryString));
+            } else {
+                SimpleQueryStringBuilder simpleQuery = QueryBuilders.simpleQueryStringQuery(queryString)
+                        .defaultOperator(org.elasticsearch.index.query.Operator.OR)
+                        .analyzeWildcard(false)
+                        .autoGenerateSynonymsPhraseQuery(true)
+                        .fuzzyPrefixLength(0)
+                        .fuzzyMaxExpansions(50)
+                        .fuzzyTranspositions(true)
+                        .boost(1.0f);
 
-            boolQuery.must(simpleQuery);
+                boolQuery.must(simpleQuery);
+            }
 
             boolQuery.must(QueryBuilders.existsQuery(Constants.WF_REQUESTS_KEY));
 
