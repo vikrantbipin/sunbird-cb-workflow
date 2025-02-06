@@ -134,6 +134,10 @@ public class ElasticsearchServiceManager {
                         .fuzzyTranspositions(true)
                         .boost(1.0f);
 
+                for (String field : Constants.USER_DEFAULT_SEARCH_FIELDS) {
+                    simpleQuery.field(field);
+                }
+
                 boolQuery.must(simpleQuery);
             }
 
