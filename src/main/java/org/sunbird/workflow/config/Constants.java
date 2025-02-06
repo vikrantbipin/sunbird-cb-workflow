@@ -367,4 +367,6 @@ public class Constants {
 	public static final String NO_USER_FOUND = "No user found";
 	public static final String GROUP_CHANGE ="GROUP_CHANGE";
 	public static final String DESIGNATION_CHANGE ="DESIGNATION_CHANGE";
+	public static final String WF_REQUESTS_KEY = "wfRequests";
+	public static final String ROOT_ORG_ID_RAW_KEY = "rootOrgId.raw";
 }

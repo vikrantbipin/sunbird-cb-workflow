@@ -1,24 +1,37 @@
 package org.sunbird.workflow.service.impl;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.StringUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -57,6 +70,7 @@ import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.AccessTokenValidator;
 import org.sunbird.workflow.utils.CassandraOperation;
+import org.sunbird.workflow.utils.ElasticsearchServiceManager;
 import org.sunbird.workflow.utils.LRUCache;
 import org.sunbird.workflow.utils.ProjectUtil;
 
@@ -104,6 +118,10 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	@Autowired
 	Producer kafkaProducer;
+
+	@Autowired
+	ElasticsearchServiceManager eServiceManager;
+
 	/**
 	 * Change the status of workflow application
 	 *
@@ -1363,12 +1381,34 @@ public class WorkflowServiceImpl implements Workflowservice {
 			Pageable pageable = getPageReqForApplicationSearch(criteria);
 			List<String> applicationIds = criteria.getApplicationIds();
 			long totalRequestCount = 0;
+			if (StringUtil.isNotBlank(criteria.getQuery())
+					&& criteria.getServiceName().equals(Constants.PROFILE_SERVICE_NAME)) {
+				if (StringUtil.isBlank(rootOrgId) && criteria.getRequestType() != null
+						&& (criteria.getRequestType().contains(Constants.GROUP_CHANGE)
+								|| criteria.getRequestType().contains(Constants.DESIGNATION_CHANGE))) {
+					response.setResponseCode(HttpStatus.BAD_REQUEST);
+					response.put(Constants.MESSAGE, Constants.ROOT_ORG_ERROR_MESSAGE);
+					response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+					return response;
+				}
+				String updatedRootOrgId = "";
+				// if request type is group or designation then use rootOrgId, otherwise set to empty.
+				if ((criteria.getRequestType().contains(Constants.GROUP_CHANGE)
+						|| criteria.getRequestType().contains(Constants.DESIGNATION_CHANGE))) {
+					updatedRootOrgId = rootOrgId;
+				}
+				applicationIds = eServiceManager.searchUsers(criteria.getQuery(), updatedRootOrgId,
+						(int) pageable.getOffset(), pageable.getPageSize());
+				log.info("ES returns {} number of userId for search using query: {} and rootOrgId: {}",
+						applicationIds.size(), criteria.getQuery(), updatedRootOrgId);
+			}
 			if (CollectionUtils.isEmpty(applicationIds)) {
 				Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType(), pageable);
 				applicationIds = applicationIdsPage.getContent();
 				totalRequestCount = applicationIdsPage.getTotalElements();
 			}
+			/*
 			if (StringUtil.isNotBlank(criteria.getQuery()) && criteria.getServiceName().equals(Constants.PROFILE_SERVICE_NAME)) {
 				if (StringUtil.isBlank(rootOrgId) && criteria.getRequestType() != null && (criteria.getRequestType().contains(Constants.GROUP_CHANGE) || criteria.getRequestType().contains(Constants.DESIGNATION_CHANGE))) {
 					response.setResponseCode(HttpStatus.BAD_REQUEST);
@@ -1415,7 +1455,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 						return response;
 					}
 				}
-			}
+			} */
 
 			List<WfStatusEntity> wfStatusEntities = null;
 			if (!StringUtils.isEmpty(criteria.getDeptName()) && !CollectionUtils.isEmpty(applicationIds)) {
