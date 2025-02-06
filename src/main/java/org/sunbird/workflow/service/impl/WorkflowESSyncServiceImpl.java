@@ -29,12 +29,12 @@ public class WorkflowESSyncServiceImpl implements WorkflowESSyncService {
         if (Constants.PROFILE_SERVICE_NAME.equalsIgnoreCase(wfRequest.getServiceName())) {
             switch (wfStatusEntity.getCurrentStatus()) {
                 case Constants.SEND_FOR_APPROVAL:
-                    esServiceManager.upsertWfRequest(wfRequest.getApplicationId(), Arrays.asList(wfRequest.getWfId()));
+                    esServiceManager.updateWfRequest(wfRequest.getApplicationId(), wfRequest.getWfId(), true);
                     break;
                 case Constants.WITHDRAWN:
                 case Constants.APPROVED:
                 case Constants.REJECTED:
-                    esServiceManager.removeWfRequest(wfRequest.getApplicationId(), wfRequest.getWfId());
+                    esServiceManager.updateWfRequest(wfRequest.getApplicationId(), wfRequest.getWfId(), false);
                     break;
                 default:
                     logger.error("Unknown current status for ES Sync request.");
