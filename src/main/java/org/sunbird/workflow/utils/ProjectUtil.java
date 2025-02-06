@@ -1,6 +1,7 @@
 package org.sunbird.workflow.utils;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -42,5 +43,18 @@ public class ProjectUtil {
 		response.setResponseCode(HttpStatus.OK);
 		response.setTs(DateTime.now().toString());
 		return response;
+	}
+
+	public static boolean isValidEmail(String email) {
+		String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\." + "[a-zA-Z0-9_+&*-]+)*@" + "(?:[a-zA-Z0-9-]+\\.)+[a-z"
+				+ "A-Z]{2,7}$";
+		Pattern pat = Pattern.compile(emailRegex);
+		return pat.matcher(email).matches();
+	}
+
+	public static Boolean isValidMobileNumber(String mobileNumber) {
+		String contactNumberRegex = "^\\d{10}$";
+		Pattern pat = Pattern.compile(contactNumberRegex);
+		return pat.matcher(mobileNumber).matches();
 	}
 }

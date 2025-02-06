@@ -1,7 +1,5 @@
 package org.sunbird.workflow.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.service.impl.ApplicationProcessingServiceImpl;
 import org.sunbird.workflow.service.impl.WorkflowAuditProcessingServiceImpl;
+import org.sunbird.workflow.service.impl.WorkflowESSyncServiceImpl;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ApplicationProcessingConsumer {
@@ -28,6 +29,9 @@ public class ApplicationProcessingConsumer {
 
     @Autowired
     private WorkflowAuditProcessingServiceImpl workflowAuditProcessingService;
+
+    @Autowired
+    private WorkflowESSyncServiceImpl workflowESSyncServiceImpl;
 
 
     @KafkaListener(groupId = "workflowContentTopic-consumer", topics = "${kafka.topics.workflow.request}")
@@ -56,6 +60,7 @@ public class ApplicationProcessingConsumer {
         applicationProcessingServiceImpl.processWfApplicationRequest(wfRequest);
         workflowAuditProcessingService.createAudit(wfRequest);
         applicationProcessingServiceImpl.updateDepartmentToPortalDBs(wfRequest);
+        workflowESSyncServiceImpl.syncWithElasticService(wfRequest);
     }
 }
 
