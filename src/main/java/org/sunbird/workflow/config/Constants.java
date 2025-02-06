@@ -357,5 +357,22 @@ public class Constants {
 	public static final String WITHDRAWN = "WITHDRAWN";
 	public static final String WORKFLOW_REQUESTS = "workflowRequests";
 	public static final String SERVICE_NAME = "serviceName";
+	public static final String QUERY = "query";
+	public static final String LIMIT = "limit";
+	public static final String OFFSET = "offset";
+	public static final String X_AUTH_USER_ORG_ID = "x-authenticated-user-orgid";
+	public static final String ORG_CONSTANT = "org";
+	public static final String ROOT_ORG_ERROR_MESSAGE = "Invalid RootOrgId";
+	public static final String ORG_TRANSFER_REQUEST ="ORG_TRANSFER";
+	public static final String NO_USER_FOUND = "No user found";
+	public static final String GROUP_CHANGE ="GROUP_CHANGE";
+	public static final String DESIGNATION_CHANGE ="DESIGNATION_CHANGE";
+	public static final String WF_REQUESTS_KEY = "wfRequests";
+	public static final String ROOT_ORG_ID_RAW_KEY = "rootOrgId.raw";
+	public static final String PROFILE_PRIMARY_EMAIL_FIELD = "profileDetails.personalDetails.primaryEmail.raw";
+	public static final String PROFILE_PHONE_NUMBER_FILED = "profileDetails.personalDetails.mobile.raw";
 
+	public static final List<String> USER_DEFAULT_SEARCH_FIELDS = Collections
+			.unmodifiableList(Arrays.asList(PROFILE_DETAILS_PERSONAL_DETAILS_PRIMARY_EMAIL,
+					FIRST_NAME_CAMEL_CASE, PROFILE_DETAILS_PERSONAL_DETAILS_MOBILE));
 }

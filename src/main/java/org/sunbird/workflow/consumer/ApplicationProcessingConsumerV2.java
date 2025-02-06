@@ -1,8 +1,10 @@
 package org.sunbird.workflow.consumer;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -14,11 +16,10 @@ import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.models.WfRequest;
 import org.sunbird.workflow.service.impl.ApplicationProcessingServiceImplV2;
 import org.sunbird.workflow.service.impl.WorkflowAuditProcessingServiceImpl;
+import org.sunbird.workflow.service.impl.WorkflowESSyncServiceImpl;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ApplicationProcessingConsumerV2 {
@@ -33,6 +34,9 @@ public class ApplicationProcessingConsumerV2 {
 
     @Autowired
     private WorkflowAuditProcessingServiceImpl workflowAuditProcessingService;
+    
+    @Autowired
+    private WorkflowESSyncServiceImpl workflowESSyncServiceImpl;
 
     @KafkaListener(groupId = "workflowContentTopic-consumer-v2", topics = "${kafka.topics.workflow.request.v2}")
     public void processMessage(ConsumerRecord<String, String> data) {
@@ -57,8 +61,9 @@ public class ApplicationProcessingConsumerV2 {
             String userId = (String) workflowEventObj.get(Constants.USER_ID);
             String serviceName = (String) workflowEventObj.get(Constants.SERVICE_NAME);
             @SuppressWarnings("unchecked")
-            List<WfRequest> wfRequests = mapper.convertValue(workflowEventObj.get(Constants.WORKFLOW_REQUESTS), new TypeReference<List<WfRequest>>() {
-            });
+            List<WfRequest> wfRequests = mapper.convertValue(workflowEventObj.get(Constants.WORKFLOW_REQUESTS),
+                    new TypeReference<List<WfRequest>>() {
+                    });
 
             try {
                 logger.debug("Processing workflow request for user ID: {}", userId);
@@ -66,7 +71,9 @@ public class ApplicationProcessingConsumerV2 {
                 applicationProcessingServiceImplV2.processWfApplicationRequest(wfRequests, serviceName, userId);
                 applicationProcessingServiceImplV2.updateDepartmentToPortalDBs(wfRequests);
                 createAudit(wfRequests);
-
+                wfRequests.forEach(wfRequest -> {
+                    workflowESSyncServiceImpl.syncWithElasticService(wfRequest);
+                });
                 logger.debug("Successfully processed workflow request with user ID: {}", userId);
             } catch (Exception e) {
                 logger.error("Error processing workflow request with wf ID: {}", userId, e);
