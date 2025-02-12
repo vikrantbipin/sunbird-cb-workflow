@@ -1378,6 +1378,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 				return applicationsSearch(rootOrg, org, criteria);
 			}
 
+			long totalSearchCount = 0;
+			long totalResponseCount = 0;
 			Pageable pageable = getPageReqForApplicationSearch(criteria);
 			List<String> applicationIds = criteria.getApplicationIds();
 			if (StringUtil.isNotBlank(criteria.getQuery())
@@ -1390,17 +1392,23 @@ public class WorkflowServiceImpl implements Workflowservice {
 					response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
 					return response;
 				}
+				if(CollectionUtils.isEmpty(applicationIds)) {
+					applicationIds = new ArrayList<String>();
+				}
 				String updatedRootOrgId = "";
 				// if request type is group or designation then use rootOrgId, otherwise set to empty.
 				if ((criteria.getRequestType().contains(Constants.GROUP_CHANGE)
 						|| criteria.getRequestType().contains(Constants.DESIGNATION_CHANGE))) {
 					updatedRootOrgId = rootOrgId;
 				}
-				applicationIds = eServiceManager.searchUsers(criteria.getQuery(), updatedRootOrgId,
-						(int) pageable.getOffset(), pageable.getPageSize());
+				totalSearchCount = eServiceManager.searchUsers(criteria.getQuery(), updatedRootOrgId,
+						(int) pageable.getOffset(), pageable.getPageSize(), applicationIds, criteria.getDeptName(),
+						criteria.getRequestType());
 				log.info("ES returns {} number of userId for search using query: {} and rootOrgId: {}",
 						applicationIds.size(), criteria.getQuery(), updatedRootOrgId);
 			} else if (CollectionUtils.isEmpty(applicationIds)) {
+				totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdsUsingServiceAndRequestTypeAndStatus(
+						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType());
 				Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType(), pageable);
 				applicationIds = applicationIdsPage.getContent();
@@ -1424,7 +1432,11 @@ public class WorkflowServiceImpl implements Workflowservice {
 			response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 			response.put(Constants.DATA, userProfiles);
 			response.put(Constants.STATUS, HttpStatus.OK);
-			response.put(Constants.COUNT, userProfiles.size());
+			if (StringUtil.isNotBlank(criteria.getQuery())) {
+				//If search query is present -- we need to return what is the count for search
+				totalResponseCount = totalSearchCount;
+			}
+			response.put(Constants.COUNT, totalResponseCount);
 			this.identifyAndMarkOrgTransferRequest(response);
 		} catch (Exception e) {
 			log.error("Error occurred while processing getUserProfileApprovalRequest", e);
