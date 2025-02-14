@@ -1407,10 +1407,22 @@ public class WorkflowServiceImpl implements Workflowservice {
 				log.info("ES returns {} number of userId for search using query: {} and rootOrgId: {}",
 						applicationIds.size(), criteria.getQuery(), updatedRootOrgId);
 			} else if (CollectionUtils.isEmpty(applicationIds)) {
-				totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdsUsingServiceAndRequestTypeAndStatus(
-						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType());
-				Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
-						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType(), pageable);
+				Page<String> applicationIdsPage = null;
+				if (criteria.getRequestType().contains(Constants.ORG_TRANSFER_REQUEST)) {
+					totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdsUsingServiceAndRequestTypeAndStatus(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType());
+					applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), pageable);
+				} else {
+					totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdForProfileApproval(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), Constants.ORG_TRANSFER_REQUEST);
+					applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestTypeForProfileApproval(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), Constants.ORG_TRANSFER_REQUEST, pageable);
+				}
 				applicationIds = applicationIdsPage.getContent();
 			}
 
