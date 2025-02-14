@@ -246,7 +246,7 @@ public class ElasticsearchServiceManager {
                         "ctx._source.wfTransferRequest.departmentName = params.departmentName; " +
                         "ctx._source.wfTransferRequest.wfId = params.wfId;";
             } else {
-                scriptSource = "ctx._source.remove('wfTransferRequest');";
+                scriptSource = "ctx._source.wfTransferRequest = new HashMap();";
             }
 
             // Create script object
@@ -259,6 +259,8 @@ public class ElasticsearchServiceManager {
                 wfTransferRequest.put(Constants.DEPARTMENT_NAME, deptName);
                 wfTransferRequest.put(Constants.WF_ID_CONSTANT, wfId);
                 upsertContent.put(Constants.WF_TRANSFER_REQUEST_STRING, wfTransferRequest);
+            } else {
+                upsertContent.put("wfTransferRequest", new HashMap<>()); // Set as empty map
             }
 
             // Create UpdateRequest
