@@ -1,7 +1,6 @@
 package org.sunbird.workflow.utils;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.sunbird.workflow.config.Constants;
-
-import io.micrometer.core.instrument.util.StringUtils;
 
 @Service
 public class ElasticsearchServiceManager {
@@ -149,7 +146,7 @@ public class ElasticsearchServiceManager {
                         .should(QueryBuilders.termQuery(Constants.WF_PROFILE_GROUP_REQEST_DEPTNAME_KEY, deptName))
                         .minimumShouldMatch(1); // Ensures at least one of these conditions is met
 
-                boolQuery.must(wfProfileQuery);
+                boolQuery.must(wfProfileQuery).mustNot(QueryBuilders.existsQuery(Constants.WF_TRANSFER_REQUEST_STRING));
             }
 
             sourceBuilder.query(boolQuery);
