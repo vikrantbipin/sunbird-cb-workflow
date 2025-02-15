@@ -102,7 +102,7 @@ public class ElasticsearchServiceManager {
         return true;
     }
 
-    public long searchUsers(String queryString, String rootOrgId, int from, int size, List<String> userInfo,
+    public long searchUsers(String queryString, int from, int size, List<String> userInfo,
             String deptName, List<String> requestTypes) {
         long totalHits = 0;
         try {
@@ -144,10 +144,12 @@ public class ElasticsearchServiceManager {
             if (requestTypes.contains(Constants.ORG_TRANSFER_REQUEST)) {
                 boolQuery.must(QueryBuilders.termQuery(Constants.WF_TRANSFER_REQUEST_DEPTNAME_KEY, deptName));
             } else {
-                boolQuery.must(QueryBuilders.existsQuery(Constants.WF_REQUESTS_KEY));
-            }
-            if (StringUtils.isNotBlank(rootOrgId)) {
-                boolQuery.filter(QueryBuilders.termQuery(Constants.ROOT_ORG_ID_RAW_KEY, rootOrgId));
+                BoolQueryBuilder wfProfileQuery = QueryBuilders.boolQuery()
+                        .should(QueryBuilders.termQuery(Constants.WF_PROFILE_DESIGNATION_REQUEST_DEPTNAME_KEY, deptName))
+                        .should(QueryBuilders.termQuery(Constants.WF_PROFILE_GROUP_REQEST_DEPTNAME_KEY, deptName))
+                        .minimumShouldMatch(1); // Ensures at least one of these conditions is met
+
+                boolQuery.must(wfProfileQuery);
             }
 
             sourceBuilder.query(boolQuery);
@@ -232,7 +234,7 @@ public class ElasticsearchServiceManager {
         return true;
     }
 
-    public boolean updateWfTransferRequest(String userId, String deptName, String wfId, boolean append) {
+    public boolean updateWfRequestObject(String wfId, String userId, String deptName, String attributeName, boolean append) {
         try {
             // Prepare parameters for the script
             Map<String, Object> params = new HashMap<>();
@@ -242,25 +244,25 @@ public class ElasticsearchServiceManager {
             // Script logic for add or remove
             String scriptSource;
             if (append) {
-                scriptSource = "ctx._source.wfTransferRequest = new HashMap(); " +
-                        "ctx._source.wfTransferRequest.departmentName = params.departmentName; " +
-                        "ctx._source.wfTransferRequest.wfId = params.wfId;";
+                scriptSource = "ctx._source." + attributeName + "= new HashMap(); " +
+                        "ctx._source." + attributeName + ".departmentName = params.departmentName; " +
+                        "ctx._source." + attributeName + ".wfId = params.wfId;";
             } else {
-                scriptSource = "ctx._source.wfTransferRequest = new HashMap();";
+                scriptSource = "ctx._source."+ attributeName + " = new HashMap();";
             }
 
             // Create script object
             Script script = new Script(ScriptType.INLINE, "painless", scriptSource, params);
 
-            // Upsert logic: If document doesn’t exist, initialize it with `wfTransferRequest`
+            // Upsert logic: If document doesn’t exist, initialize it with `attributeName`
             Map<String, Object> upsertContent = new HashMap<>();
             if (append) {
-                Map<String, Object> wfTransferRequest = new HashMap<>();
-                wfTransferRequest.put(Constants.DEPARTMENT_NAME, deptName);
-                wfTransferRequest.put(Constants.WF_ID_CONSTANT, wfId);
-                upsertContent.put(Constants.WF_TRANSFER_REQUEST_STRING, wfTransferRequest);
+                Map<String, Object> wfRequestObject = new HashMap<>();
+                wfRequestObject.put(Constants.DEPARTMENT_NAME, deptName);
+                wfRequestObject.put(Constants.WF_ID_CONSTANT, wfId);
+                upsertContent.put(attributeName, wfRequestObject);
             } else {
-                upsertContent.put("wfTransferRequest", new HashMap<>()); // Set as empty map
+                upsertContent.put(attributeName, new HashMap<>()); // Set as empty map
             }
 
             // Create UpdateRequest
@@ -275,22 +277,22 @@ public class ElasticsearchServiceManager {
             // Log success
             switch (updateResponse.getResult()) {
                 case CREATED:
-                    logger.info("WfTransferRequest created successfully for userId: {}", userId);
+                    logger.info("{} created successfully for userId: {}", attributeName, userId);
                     break;
                 case UPDATED:
-                    logger.info("WfTransferRequest updated successfully for userId: {}", userId);
+                    logger.info("{} updated successfully for userId: {}", attributeName, userId);
                     break;
                 case NOOP:
-                    logger.info("WfTransferRequest update was a noop; no changes were made for userId: {}", userId);
+                    logger.info("{} update was a noop; no changes were made for userId: {}", attributeName, userId);
                     break;
                 default:
-                    logger.warn("WfTransferRequest update:: Unexpected result: {}, for userId: {}",
-                            updateResponse.getResult(), userId);
+                    logger.warn("{} update:: Unexpected result: {}, for userId: {}",
+                            attributeName, updateResponse.getResult(), userId);
             }
 
             return true;
         } catch (Exception e) {
-            logger.error("Failed to update wfTransferRequest for userId: {}", userId, e);
+            logger.error("Failed to update {} for userId: {}", attributeName, userId, e);
             return false;
         }
     }
