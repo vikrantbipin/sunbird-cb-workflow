@@ -1382,6 +1382,8 @@ public class WorkflowServiceImpl implements Workflowservice {
 			long totalResponseCount = 0;
 			Pageable pageable = getPageReqForApplicationSearch(criteria);
 			List<String> applicationIds = criteria.getApplicationIds();
+			List<Map<String, Object>> userProfiles = new ArrayList<Map<String, Object>>();
+			Map<String, Object> userInfoMap = new HashMap<String, Object>();
 			if (StringUtil.isNotBlank(criteria.getQuery())
 					&& criteria.getServiceName().equals(Constants.PROFILE_SERVICE_NAME)) {
 				if (StringUtil.isBlank(rootOrgId) && criteria.getRequestType() != null
@@ -1396,11 +1398,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 					applicationIds = new ArrayList<String>();
 				}
 				totalSearchCount = eServiceManager.searchUsers(criteria.getQuery(), (int) pageable.getOffset(),
-						pageable.getPageSize(), applicationIds, criteria.getDeptName(),
+						pageable.getPageSize(), userInfoMap, criteria.getDeptName(),
 						criteria.getRequestType());
+				applicationIds = new ArrayList<String>(userInfoMap.keySet());
 				log.info(
 						"ES returns {} number of userId for search using query: {}, departmentName: {} and requestTypes: {}",
-						applicationIds.size(), criteria.getQuery(), criteria.getDeptName(),
+						userInfoMap.size(), criteria.getQuery(), criteria.getDeptName(),
 						criteria.getRequestType().toString());
 			} else if (CollectionUtils.isEmpty(applicationIds)) {
 				Page<String> applicationIdsPage = null;
@@ -1428,13 +1431,39 @@ public class WorkflowServiceImpl implements Workflowservice {
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds, criteria.getRequestType());
 			}
 
-			List<Map<String, Object>> userProfiles = CollectionUtils.isEmpty(wfStatusEntities) ?
-					Collections.emptyList() :
-					userProfileWfService.enrichUserData(wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId)), rootOrg);
+			if (StringUtil.isNotBlank(criteria.getQuery())) {
+				List<Map<String, Object>> esUserProfiles = new ArrayList<Map<String, Object>>();
+				// If query is present - we already searched the ES and got the details. Just
+				// add the wf details and return the data.
+				Map<String, List<WfStatusEntity>> wfInfos = wfStatusEntities.stream()
+						.collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
 
-			if (criteria.getSortBy() != null && !criteria.getSortBy().isEmpty()) {
-				log.info("sortBy invoked {}", userProfiles);
-				userProfiles = sortDataByCriteria(userProfiles, criteria);
+				for (Map.Entry<String, List<WfStatusEntity>> wfStatusEntity : wfInfos.entrySet()) {
+					HashMap<String, Object> responseMap = new HashMap<>();
+					responseMap.put(Constants.WF_INFO, wfStatusEntity.getValue());
+					responseMap.put(Constants.USER_INFO, userInfoMap.get(wfStatusEntity.getKey()));
+					esUserProfiles.add(responseMap);
+				}
+				userProfiles = esUserProfiles.stream()
+					.sorted((profile1, profile2) -> {
+						Map<String, Object> userInfo1 = (Map<String, Object>) profile1.get(Constants.USER_INFO);
+						Map<String, Object> userInfo2 = (Map<String, Object>) profile2.get(Constants.USER_INFO);
+
+						float searchScore1 = (float) userInfo1.get(Constants.SEARCH_SCORE);
+						float searchScore2 = (float) userInfo2.get(Constants.SEARCH_SCORE);
+
+						return Float.compare(searchScore2, searchScore1);
+					})
+					.collect(Collectors.toList());
+			} else {
+				userProfiles = CollectionUtils.isEmpty(wfStatusEntities) ?
+						Collections.emptyList() :
+						userProfileWfService.enrichUserData(wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId)), rootOrg);
+
+				if (criteria.getSortBy() != null && !criteria.getSortBy().isEmpty()) {
+					log.info("sortBy invoked {}", userProfiles);
+					userProfiles = sortDataByCriteria(userProfiles, criteria);
+				}
 			}
 
 			response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
