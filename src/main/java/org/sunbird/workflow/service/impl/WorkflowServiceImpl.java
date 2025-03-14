@@ -39,6 +39,7 @@ import org.sunbird.workflow.service.UserProfileWfService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.AccessTokenValidator;
 import org.sunbird.workflow.utils.CassandraOperation;
+import org.sunbird.workflow.utils.ElasticsearchServiceManager;
 import org.sunbird.workflow.utils.LRUCache;
 import org.sunbird.workflow.utils.ProjectUtil;
 
@@ -93,6 +94,10 @@ public class WorkflowServiceImpl implements Workflowservice {
 
 	@Autowired
 	Producer kafkaProducer;
+
+	@Autowired
+	ElasticsearchServiceManager eServiceManager;
+
 	/**
 	 * Change the status of workflow application
 	 *
@@ -981,7 +986,6 @@ public class WorkflowServiceImpl implements Workflowservice {
 		SBApiResponse response = ProjectUtil.createDefaultResponse(Constants.API_USER_BULK_UPDATE_STATUS);
 		try {
 			String userId = accessTokenValidator.fetchUserIdFromAccessToken(userAuthToken);
-			userId = "291fd548-ab04-4f16-938a-67963ed0b6b6";
 			if (StringUtils.isEmpty(userId)) {
 				setErrorData(response, "Invalid User Token");
 				response.setResponseCode(HttpStatus.BAD_REQUEST);
@@ -1342,7 +1346,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 	}
 
 	@Override
-	public Response getUserProfileApprovalRequest(String rootOrg, String org, SearchCriteria criteria) {
+	public Response getUserProfileApprovalRequest(String rootOrg, String org, SearchCriteria criteria, String rootOrgId) {
 		Response response = new Response();
 
 		try {
@@ -1350,36 +1354,102 @@ public class WorkflowServiceImpl implements Workflowservice {
 				return applicationsSearch(rootOrg, org, criteria);
 			}
 
+			long totalSearchCount = 0;
+			long totalResponseCount = 0;
 			Pageable pageable = getPageReqForApplicationSearch(criteria);
 			List<String> applicationIds = criteria.getApplicationIds();
-			long totalRequestCount = 0;
-
-			if (CollectionUtils.isEmpty(applicationIds)) {
-				Page<String> applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
-						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), criteria.getRequestType(), pageable);
+			List<Map<String, Object>> userProfiles = new ArrayList<Map<String, Object>>();
+			Map<String, Object> userInfoMap = new HashMap<String, Object>();
+			if (StringUtil.isNotBlank(criteria.getQuery())
+					&& criteria.getServiceName().equals(Constants.PROFILE_SERVICE_NAME)) {
+				if (StringUtil.isBlank(rootOrgId) && criteria.getRequestType() != null
+						&& (criteria.getRequestType().contains(Constants.GROUP_CHANGE)
+								|| criteria.getRequestType().contains(Constants.DESIGNATION_CHANGE))) {
+					response.setResponseCode(HttpStatus.BAD_REQUEST);
+					response.put(Constants.MESSAGE, Constants.ROOT_ORG_ERROR_MESSAGE);
+					response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+					return response;
+				}
+				if(CollectionUtils.isEmpty(applicationIds)) {
+					applicationIds = new ArrayList<String>();
+				}
+				totalSearchCount = eServiceManager.searchUsers(criteria.getQuery(), (int) pageable.getOffset(),
+						pageable.getPageSize(), userInfoMap, criteria.getDeptName(),
+						criteria.getRequestType());
+				applicationIds = new ArrayList<String>(userInfoMap.keySet());
+				log.info(
+						"ES returns {} number of userId for search using query: {}, departmentName: {} and requestTypes: {}",
+						userInfoMap.size(), criteria.getQuery(), criteria.getDeptName(),
+						criteria.getRequestType().toString());
+			} else if (CollectionUtils.isEmpty(applicationIds)) {
+				Page<String> applicationIdsPage = null;
+				if (criteria.getRequestType().contains(Constants.ORG_TRANSFER_REQUEST)) {
+					totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdsUsingServiceAndRequestTypeAndStatus(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType());
+					applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestType(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), pageable);
+				} else {
+					totalResponseCount = wfStatusRepo.getCountOfDistinctUserIdForProfileApproval(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), Constants.ORG_TRANSFER_REQUEST);
+					applicationIdsPage = wfStatusRepo.getListOfDistinctUserIdsUsingRequestTypeForProfileApproval(
+							criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(),
+							criteria.getRequestType(), Constants.ORG_TRANSFER_REQUEST, pageable);
+				}
 				applicationIds = applicationIdsPage.getContent();
-				totalRequestCount = applicationIdsPage.getTotalElements();
 			}
 
-			List<WfStatusEntity> wfStatusEntities = null;
+			List<WfStatusEntity> wfStatusEntities = new ArrayList<>();
 			if (!StringUtils.isEmpty(criteria.getDeptName()) && !CollectionUtils.isEmpty(applicationIds)) {
 				wfStatusEntities = wfStatusRepo.findByServiceNameAndCurrentStatusAndDeptNameAndUserIdInAndRequestTypeIn(
 						criteria.getServiceName(), criteria.getApplicationStatus(), criteria.getDeptName(), applicationIds, criteria.getRequestType());
 			}
 
-			List<Map<String, Object>> userProfiles = CollectionUtils.isEmpty(wfStatusEntities) ?
-					Collections.emptyList() :
-					userProfileWfService.enrichUserData(wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId)), rootOrg);
+			if (StringUtil.isNotBlank(criteria.getQuery())) {
+				List<Map<String, Object>> esUserProfiles = new ArrayList<Map<String, Object>>();
+				// If query is present - we already searched the ES and got the details. Just
+				// add the wf details and return the data.
+				Map<String, List<WfStatusEntity>> wfInfos = wfStatusEntities.stream()
+						.collect(Collectors.groupingBy(WfStatusEntity::getApplicationId));
 
-			if (criteria.getSortBy() != null && !criteria.getSortBy().isEmpty()) {
-				log.info("sortBy invoked {}", userProfiles);
-				userProfiles = sortDataByCriteria(userProfiles, criteria);
+				for (Map.Entry<String, List<WfStatusEntity>> wfStatusEntity : wfInfos.entrySet()) {
+					HashMap<String, Object> responseMap = new HashMap<>();
+					responseMap.put(Constants.WF_INFO, wfStatusEntity.getValue());
+					responseMap.put(Constants.USER_INFO, userInfoMap.get(wfStatusEntity.getKey()));
+					esUserProfiles.add(responseMap);
+				}
+				userProfiles = esUserProfiles.stream()
+					.sorted((profile1, profile2) -> {
+						Map<String, Object> userInfo1 = (Map<String, Object>) profile1.get(Constants.USER_INFO);
+						Map<String, Object> userInfo2 = (Map<String, Object>) profile2.get(Constants.USER_INFO);
+
+						float searchScore1 = (float) userInfo1.get(Constants.SEARCH_SCORE);
+						float searchScore2 = (float) userInfo2.get(Constants.SEARCH_SCORE);
+
+						return Float.compare(searchScore2, searchScore1);
+					})
+					.collect(Collectors.toList());
+			} else {
+				userProfiles = CollectionUtils.isEmpty(wfStatusEntities) ?
+						Collections.emptyList() :
+						userProfileWfService.enrichUserData(wfStatusEntities.stream().collect(Collectors.groupingBy(WfStatusEntity::getApplicationId)), rootOrg);
+
+				if (criteria.getSortBy() != null && !criteria.getSortBy().isEmpty()) {
+					log.info("sortBy invoked {}", userProfiles);
+					userProfiles = sortDataByCriteria(userProfiles, criteria);
+				}
 			}
 
 			response.put(Constants.MESSAGE, Constants.SUCCESSFUL);
 			response.put(Constants.DATA, userProfiles);
 			response.put(Constants.STATUS, HttpStatus.OK);
-			response.put(Constants.COUNT, totalRequestCount);
+			if (StringUtil.isNotBlank(criteria.getQuery())) {
+				//If search query is present -- we need to return what is the count for search
+				totalResponseCount = totalSearchCount;
+			}
+			response.put(Constants.COUNT, totalResponseCount);
 			this.identifyAndMarkOrgTransferRequest(response);
 		} catch (Exception e) {
 			log.error("Error occurred while processing getUserProfileApprovalRequest", e);

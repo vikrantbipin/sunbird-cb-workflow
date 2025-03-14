@@ -2,8 +2,6 @@ package org.sunbird.workflow.controller;
 
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,7 +20,6 @@ import org.sunbird.workflow.models.Response;
 import org.sunbird.workflow.models.SBApiResponse;
 import org.sunbird.workflow.models.SearchCriteria;
 import org.sunbird.workflow.models.WfRequest;
-import org.sunbird.workflow.service.UserBulkUploadService;
 import org.sunbird.workflow.service.Workflowservice;
 
 @RestController
@@ -139,9 +136,12 @@ public class WorkFlowController {
 	}
 
 	@PostMapping(path = "/profile/approvalRequest/search", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Response> getUserProfileApprovalRequest(@RequestHeader String rootOrg, @RequestHeader String org,
-														@RequestBody SearchCriteria searchCriteria) {
-		Response response = workflowService.getUserProfileApprovalRequest(rootOrg, org, searchCriteria);
+	public ResponseEntity<Response> getUserProfileApprovalRequest(
+			@RequestHeader(name = Constants.ROOT_ORG_CONSTANT, defaultValue = Constants.ROOT_ORG) String rootOrg,
+			@RequestHeader(name = Constants.ORG_CONSTANT, defaultValue = Constants.ORG) String org,
+			@RequestHeader(name = Constants.X_AUTH_USER_ORG_ID, required = false) String rootOrgId,
+			@RequestBody SearchCriteria searchCriteria) {
+		Response response = workflowService.getUserProfileApprovalRequest(rootOrg, org, searchCriteria,rootOrgId);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

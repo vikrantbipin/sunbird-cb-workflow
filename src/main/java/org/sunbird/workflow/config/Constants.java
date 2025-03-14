@@ -357,5 +357,31 @@ public class Constants {
 	public static final String WITHDRAWN = "WITHDRAWN";
 	public static final String WORKFLOW_REQUESTS = "workflowRequests";
 	public static final String SERVICE_NAME = "serviceName";
+	public static final String QUERY = "query";
+	public static final String LIMIT = "limit";
+	public static final String OFFSET = "offset";
+	public static final String X_AUTH_USER_ORG_ID = "x-authenticated-user-orgid";
+	public static final String ORG_CONSTANT = "org";
+	public static final String ROOT_ORG_ERROR_MESSAGE = "Invalid RootOrgId";
+	public static final String ORG_TRANSFER_REQUEST ="ORG_TRANSFER";
+	public static final String NO_USER_FOUND = "No user found";
+	public static final String GROUP_CHANGE ="GROUP_CHANGE";
+	public static final String DESIGNATION_CHANGE ="DESIGNATION_CHANGE";
+	public static final String WF_REQUESTS_KEY = "wfRequests";
+	public static final String ROOT_ORG_ID_RAW_KEY = "rootOrgId.raw";
+	public static final String PROFILE_PRIMARY_EMAIL_FIELD = "profileDetails.personalDetails.primaryEmail.raw";
+	public static final String PROFILE_PHONE_NUMBER_FILED = "profileDetails.personalDetails.mobile.raw";
+	public static final String WF_TRANSFER_REQUEST_STRING = "wfTransferRequest";
+	public static final String WF_TRANSFER_REQUEST_DEPTNAME_KEY = "wfTransferRequest.departmentName";
+	public static final String WF_PROFILE_GROUP_REQUEST_STRING = "wfProfileGroupRequest";
+	public static final String WF_PROFILE_DESIGNATION_REQUEST_STRING = "wfProfileDesignationRequest";
+	public static final String WF_PROFILE_GROUP_REQEST_DEPTNAME_KEY = "wfProfileGroupRequest.departmentName";
+	public static final String WF_PROFILE_DESIGNATION_REQUEST_DEPTNAME_KEY = "wfProfileDesignationRequest.departmentName";
+	public static final String SEARCH_SCORE = "searchScore";
+	public static final String WF_INFO = "wfInfo";
+	public static final String USER_INFO = "userInfo";
 
+	public static final List<String> USER_DEFAULT_SEARCH_FIELDS = Collections
+			.unmodifiableList(Arrays.asList(PROFILE_DETAILS_PERSONAL_DETAILS_PRIMARY_EMAIL,
+					FIRST_NAME_CAMEL_CASE, PROFILE_DETAILS_PERSONAL_DETAILS_MOBILE));
 }
