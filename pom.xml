@@ -74,6 +74,10 @@
             <artifactId>spring-data-cassandra</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-cassandra</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-tools</artifactId>
             <version>2.0</version>
@@ -99,9 +103,9 @@
 			<artifactId>spring-boot-starter-log4j2</artifactId>
 		</dependency>
         <dependency>
-            <groupId>org.sunbird.sahil</groupId>
+            <groupId>net.karmayogibharat</groupId>
             <artifactId>cloud-store-sdk_2.12</artifactId>
-            <version>1.4.9</version>
+            <version>1.4.8</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -124,6 +128,10 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
