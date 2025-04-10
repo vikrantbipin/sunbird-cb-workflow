@@ -15,6 +15,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+import org.sunbird.workflow.utils.InstantToEpochMillisSerializer;
+
+import java.time.Instant;
 
 @SpringBootApplication
 public class WorkflowApplication {
@@ -25,10 +28,14 @@ public class WorkflowApplication {
 
 	@Bean
 	public ObjectMapper objectMapper() {
+		JavaTimeModule javaTimeModule = new JavaTimeModule();
+
+		// This will force Jackson to write epoch milliseconds as long for Instant
+		javaTimeModule.addSerializer(Instant.class, new InstantToEpochMillisSerializer());
 		ObjectMapper objectMapper = new ObjectMapper()
 				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-		objectMapper.registerModule(new JavaTimeModule());
-		objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);  // Disable timestamps for date-time fields
+		objectMapper.registerModule(javaTimeModule);
+		objectMapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		return objectMapper;
 	}
 
