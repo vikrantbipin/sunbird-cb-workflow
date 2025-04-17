@@ -669,26 +669,24 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
      * @return - return a boolean value 'true' is there is conflict of the dates.
      */
     public boolean enrollmentDateValidations(List<Map<String, Object>> enrolledCourseBatchList, Date[] startDate, Date[] endDate) {
-        final boolean[] startDateFlag = {false};
-        final boolean[] endDateFlag = {false};
-        enrolledCourseBatchList.forEach(enrolledCourseBatch -> enrolledCourseBatch.forEach((key, value) -> {
+        boolean hasConflict = enrolledCourseBatchList.stream().anyMatch(enrolledCourseBatch -> {
             Date startDateValue = Date.from((Instant) enrolledCourseBatch.get(Constants.START_DATE));
             Date endDateValue = Date.from((Instant) enrolledCourseBatch.get(Constants.END_DATE));
+
             if (startDateValue != null && isWithinRange(startDateValue, startDate[0], endDate[0])) {
-                logger.info("The user is not allowed to enroll for the course since there is a conflict" + startDateValue + startDate[0] + endDate[0]);
-                startDateFlag[0] = true;
-            } else {
-                startDateFlag[0] = false;
+                logger.info("Conflict detected: START_DATE = {}, range = {} to {}", startDateValue, startDate[0], endDate[0]);
+                return true;
             }
 
             if (endDateValue != null && isWithinRange(endDateValue, startDate[0], endDate[0])) {
-                logger.info("The user is not allowed to enroll for the course since there is a conflict" + endDateValue + startDate[0] + endDate[0]);
-                endDateFlag[0] = true;
-            } else {
-                endDateFlag[0] = false;
+                logger.info("Conflict detected: END_DATE = {}, range = {} to {}", endDateValue, startDate[0], endDate[0]);
+                return true;
             }
-        }));
-        return startDateFlag[0] || endDateFlag[0];
+
+            return false;
+        });
+
+        return hasConflict;
     }
 
     /**
