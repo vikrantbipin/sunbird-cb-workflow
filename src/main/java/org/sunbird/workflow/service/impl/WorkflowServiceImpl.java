@@ -1784,12 +1784,12 @@ public class WorkflowServiceImpl implements Workflowservice {
 		Map<String, Object> userData = userProfileRead(wfRequest.getUserId());
 		Map<String, Object> placeholder = new HashMap<>();
 		if (MapUtils.isNotEmpty(userData)) {
-			placeholder.put(Constants.USER_NAME, userData.get(Constants.USER_NAME));
+			placeholder.put(Constants.FIRST_NAME, userData.get(Constants.USER_NAME));
 			Map<String, Object> profileDetails = (Map<String, Object>) userData.get(Constants.PROFILE_DETAILS);
 			if (MapUtils.isNotEmpty(profileDetails)) {
 				Map<String, Object> employmentDetails = (Map<String, Object>) profileDetails.get(Constants.EMPLOYMENT_DETAILS);
 				if (MapUtils.isNotEmpty(employmentDetails)) {
-					placeholder.put(Constants.DEPARTMENT_NAME, employmentDetails.get(Constants.DEPARTMENT_NAME));
+					placeholder.put(Constants.TITLE, employmentDetails.get(Constants.DEPARTMENT_NAME));
 				}
 			}
 		}
@@ -1805,7 +1805,7 @@ public class WorkflowServiceImpl implements Workflowservice {
 		Map<String, Object> userData = userProfileRead(wfRequest.getUserId());
 		Map<String, Object> placeholder = new HashMap<>();
 		if (MapUtils.isNotEmpty(userData)) {
-			placeholder.put(Constants.USER_NAME, userData.get(Constants.USER_NAME));
+			placeholder.put(Constants.FIRST_NAME, userData.get(Constants.USER_NAME));
 		}
 		Map<String, Object> data = new HashMap<>();
 		data.put("id", wfRequest.getUserId());
