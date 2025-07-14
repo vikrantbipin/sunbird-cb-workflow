@@ -414,5 +414,8 @@ public class Constants {
 	public static final String SUB_TYPE = "subType";
 	public static final String USER_IDS = "userIds";
 	public static final String PLACE_HOLDER = "placeholders";
+	public static final String TITLE = "title";
+	public static final String PROFILE_UPDATE = "PROFILE_UPDATE";
+	public static final String TRANSFER_UPDATE = "TRANSFER_UPDATE";
 
 }
