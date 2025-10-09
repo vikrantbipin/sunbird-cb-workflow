@@ -2,7 +2,7 @@ package org.sunbird.workflow.utils;
 
 public class CassandraConnectionMngrFactory {
 
-    private static CassandraConnectionManager instance;
+    private static volatile CassandraConnectionManager instance;
 
     public static CassandraConnectionManager getInstance() {
         if (instance == null) {
