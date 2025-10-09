@@ -7,14 +7,19 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.sunbird.workflow.config.Constants;
 import org.sunbird.workflow.exception.ProjectCommonException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,9 +37,8 @@ class CassandraConnectionManagerImplTest {
 
     @Test
     void testGetConsistencyLevel_valid() {
-        try (MockedStatic<PropertiesCache> staticMock = mockStatic(PropertiesCache.class)) {
-            staticMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
-            when(propertiesCache.readProperty(Constants.SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL))
+        try (MockedStatic<ProjectUtil> staticMock = mockStatic(ProjectUtil.class)) {
+            staticMock.when(() -> ProjectUtil.getConfigValue(Constants.SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL))
                     .thenReturn("LOCAL_QUORUM");
 
             ConsistencyLevel level = invokeGetConsistencyLevel();
@@ -44,9 +48,8 @@ class CassandraConnectionManagerImplTest {
 
     @Test
     void testGetConsistencyLevel_invalid() {
-        try (MockedStatic<PropertiesCache> staticMock = mockStatic(PropertiesCache.class)) {
-            staticMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
-            when(propertiesCache.readProperty(Constants.SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL))
+        try (MockedStatic<ProjectUtil> staticMock = mockStatic(ProjectUtil.class)) {
+            staticMock.when(() -> ProjectUtil.getConfigValue(Constants.SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL))
                     .thenReturn("INVALID");
 
             ConsistencyLevel level = invokeGetConsistencyLevel();
@@ -75,12 +78,10 @@ class CassandraConnectionManagerImplTest {
         try (
                 MockedStatic<PropertiesCache> propertiesCacheStatic = Mockito.mockStatic(PropertiesCache.class)
         ) {
-            // Arrange
             PropertiesCache mockPropertiesCache = mock(PropertiesCache.class);
             propertiesCacheStatic.when(PropertiesCache::getInstance).thenReturn(mockPropertiesCache);
             when(mockPropertiesCache.getProperty(Constants.CASSANDRA_CONFIG_HOST)).thenReturn("");
 
-            // Act & Assert
             ProjectCommonException exception = assertThrows(ProjectCommonException.class, CassandraConnectionManagerImpl::new);
             assertEquals("Cassandra host is not configured", exception.getMessage()); // Adjust message if needed
         }
@@ -88,7 +89,6 @@ class CassandraConnectionManagerImplTest {
 
     @Test
     void testResourceCleanup() {
-        // This is just for code coverage
         CassandraConnectionManagerImpl.ResourceCleanUp cleanup = new CassandraConnectionManagerImpl.ResourceCleanUp();
         cleanup.run();
     }
