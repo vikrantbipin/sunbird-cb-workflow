@@ -66,6 +66,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 
 	@Autowired
 	private RedisCacheMgr redisCacheMgr;
+
+    private final List<String> stateOrMinistry = Arrays.asList("16", "2048");
 	/**
 	 * Update user profile based on wf request
 	 *
@@ -430,9 +432,20 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 			}
 		}
         Map<String, Object> orgDetails = fetchOrgDetails(wfRequest.getDeptName());
-        if(MapUtils.isNotEmpty(orgDetails)){
-            updateRequest.put(Constants.MINISTRYORSTATEID, orgDetails.get(Constants.MINISTRYORSTATEID));
-            updateRequest.put(Constants.MINISTRYORSTATEORGNAME, orgDetails.get(Constants.MINISTRYORSTATENAME));
+        if (MapUtils.isNotEmpty(orgDetails)) {
+            Object organisationTypeObj = orgDetails.get(Constants.ORGANISATION_TYPE);
+            if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(organisationTypeObj)) {
+                String organisationType = organisationTypeObj.toString();
+                if (stateOrMinistry.contains(organisationType)) {
+                    updateRequest.put(Constants.MINISTRYORSTATEID, String.valueOf(orgDetails.get(Constants.MINISTRYORSTATEID)));
+                    updateRequest.put(Constants.MINISTRYORSTATEORGNAME, String.valueOf(orgDetails.get(Constants.MINISTRYORSTATENAME)));
+                } else if (Constants.SPV_ORGTYPEVALUE.equalsIgnoreCase(organisationType)) {
+                    logger.warn("Organisation type is SPV, hence not updating ministry or state details");
+                } else {
+                    updateRequest.put(Constants.MINISTRYORSTATEID, String.valueOf(orgDetails.get(Constants.ROOT_ORG_ID)));
+                    updateRequest.put(Constants.MINISTRYORSTATEORGNAME, String.valueOf(orgDetails.get(Constants.ORG_NAME)));
+                }
+            }
         }
 		requestWrapper.put(Constants.USER_ID, wfRequest.getApplicationId());
 		requestWrapper.put(Constants.PROFILE_DETAILS, updateRequest);
