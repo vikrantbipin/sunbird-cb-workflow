@@ -52,7 +52,7 @@ class ElasticsearchServiceManagerTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(service, "sbUserIndex", INDEX);
+        ReflectionTestUtils.setField(service, "userIndexName", INDEX);
     }
 
     @Test

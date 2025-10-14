@@ -19,8 +19,8 @@ class ElasticsearchConfigTest {
     void testElasticsearchClient() throws Exception {
         // Arrange
         ElasticsearchConfig config = new ElasticsearchConfig();
-        setField(config, "elasticsearchHost", "localhost,127.0.0.1");
-        setField(config, "elasticsearchPort", "9200,9201"); // port parsing exists but is ignored
+        setField(config, "userESHost", "localhost,127.0.0.1");
+        setField(config, "userESPort", "9200,9200"); // port parsing exists but is ignored
 
         // Act
         RestHighLevelClient client = config.elasticsearchClient();
