@@ -17,22 +17,22 @@ import org.springframework.context.annotation.Configuration;
 public class ElasticsearchConfig {
     Logger logger = LogManager.getLogger(ElasticsearchConfig.class);
 
-    @Value("${sunbird_es_host}")
-    private String elasticsearchHost;
+    @Value("${user_es_host}")
+    private String userESHost;
 
-    @Value("${sunbird_es_port}")
-    private String elasticsearchPort;
+    @Value("${user_es_port}")
+    private String userESPort;
 
     @Bean
     public RestHighLevelClient elasticsearchClient() {
         List<String> host = new ArrayList<>();
         List<Integer> ports = new ArrayList<>();
-        String[] splitedHost = elasticsearchHost.split(",");
+        String[] splitedHost = userESHost.split(",");
         for (String val : splitedHost) {
             host.add(val);
         }
 
-        String[] splitedPort = elasticsearchPort.split(",");
+        String[] splitedPort = userESPort.split(",");
         for (String val : splitedPort) {
             ports.add(Integer.parseInt(val));
         }

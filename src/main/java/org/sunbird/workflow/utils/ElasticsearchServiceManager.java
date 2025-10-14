@@ -34,8 +34,8 @@ import org.sunbird.workflow.config.Constants;
 public class ElasticsearchServiceManager {
     Logger logger = LogManager.getLogger(ElasticsearchServiceManager.class);
 
-    @Value("${sunbird_user_index}")
-    private String sbUserIndex;
+    @Value("${user_index_name}")
+    private String userIndexName;
 
     @Autowired
     private RestHighLevelClient client;
@@ -48,9 +48,9 @@ public class ElasticsearchServiceManager {
             Map<String, Object> updates = new HashMap<>();
             updates.put(Constants.WF_REQUESTS_KEY, wfRequests);
 
-            UpdateRequest updateRequest = new UpdateRequest(sbUserIndex, _DOC, userId)
+            UpdateRequest updateRequest = new UpdateRequest(userIndexName, _DOC, userId)
                     .doc(updates)
-                    .upsert(new IndexRequest(sbUserIndex).id(userId).source(updates));
+                    .upsert(new IndexRequest(userIndexName).id(userId).source(updates));
 
             client.update(updateRequest, RequestOptions.DEFAULT);
             logger.info("WfRequests Upsert successful for userId: {}", userId);
@@ -67,7 +67,7 @@ public class ElasticsearchServiceManager {
     public boolean removeWfRequest(String userId, String wfRequestToRemove) {
         try {
             // Fetch the existing document
-            GetResponse getResponse = client.get(new org.elasticsearch.action.get.GetRequest(sbUserIndex, _DOC, userId),
+            GetResponse getResponse = client.get(new org.elasticsearch.action.get.GetRequest(userIndexName, _DOC, userId),
                     RequestOptions.DEFAULT);
 
             if (!getResponse.isExists()) {
@@ -89,7 +89,7 @@ public class ElasticsearchServiceManager {
             source.put(Constants.WF_REQUESTS_KEY, wfRequests);
 
             // Update document
-            UpdateRequest updateRequest = new UpdateRequest(sbUserIndex, _DOC, userId).doc(source);
+            UpdateRequest updateRequest = new UpdateRequest(userIndexName, _DOC, userId).doc(source);
             client.update(updateRequest, RequestOptions.DEFAULT);
 
             logger.info("wfRequest with id: {} is removed successfully from user: {}", wfRequestToRemove, userId);
@@ -105,7 +105,7 @@ public class ElasticsearchServiceManager {
         long totalHits = 0;
         try {
             // Construct the search request
-            SearchRequest searchRequest = new SearchRequest(sbUserIndex);
+            SearchRequest searchRequest = new SearchRequest(userIndexName);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
             sourceBuilder.from(from);
             sourceBuilder.size(size);
@@ -227,9 +227,9 @@ public class ElasticsearchServiceManager {
 
             // Create the UpdateRequest with a retry_on_conflict setting to handle rapid
             // concurrent updates
-            UpdateRequest updateRequest = new UpdateRequest(sbUserIndex, _DOC, userId)
+            UpdateRequest updateRequest = new UpdateRequest(userIndexName, _DOC, userId)
                     .script(script)
-                    .upsert(new IndexRequest(sbUserIndex).id(userId).source(upsertContent))
+                    .upsert(new IndexRequest(userIndexName).id(userId).source(upsertContent))
                     .retryOnConflict(5);
 
             // Execute the update
@@ -285,7 +285,7 @@ public class ElasticsearchServiceManager {
             }
 
             // Create UpdateRequest
-            UpdateRequest updateRequest = new UpdateRequest(sbUserIndex, _DOC, userId)
+            UpdateRequest updateRequest = new UpdateRequest(userIndexName, _DOC, userId)
                     .script(script)
                     .upsert(upsertContent) // Creates the document if missing
                     .retryOnConflict(5); // Handle concurrent updates
