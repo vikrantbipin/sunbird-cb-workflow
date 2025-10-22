@@ -446,6 +446,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
                     updateRequest.put(Constants.MINISTRYORSTATEORGNAME, String.valueOf(orgDetails.get(Constants.MINISTRYORSTATENAME)));
                 }
             }
+        } else {
+            logger.warn("Organisation details not found for deptName: {}",wfRequest.getDeptName());
         }
 		requestWrapper.put(Constants.USER_ID, wfRequest.getApplicationId());
 		requestWrapper.put(Constants.PROFILE_DETAILS, updateRequest);
@@ -691,6 +693,7 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 	}
 
     private Map<String, Object> fetchOrgDetails(String deptName) {
+        logger.debug("Fetching Org details for deptName: {}", deptName);
         if (StringUtils.isNotEmpty(deptName)) {
             Map<String, Object> reqMap = new HashMap<>();
             reqMap.put(Constants.FILTERS, Collections.singletonMap(Constants.CHANNEL, deptName));
