@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.sunbird.workflow.config.Configuration;
@@ -40,10 +39,6 @@ import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import java.util.UUID;
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
@@ -190,12 +185,22 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 }
                 Map<String, Object> enrolResp = (Map<String, Object>) requestServiceImpl
                         .fetchResultUsingPost(builder, request, Map.class, headersValue);
-                if (enrolResp != null
-                        && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
-                    logger.info("User enrolment success");
+                if (MapUtils.isNotEmpty(enrolResp)) {
+                    String responseCode = (String) enrolResp.get(Constants.RESPONSE_CODE);
+                    if (Constants.OK.equalsIgnoreCase(responseCode)) {
+                        logger.info("User enrolment success");
+                    } else {
+                        Object paramsObj = enrolResp.get(Constants.PARAMS);
+                        String errorMessage = Optional.ofNullable(paramsObj)
+                                .filter(Map.class::isInstance)
+                                .map(obj -> (Map<String, Object>) obj)
+                                .map(map -> (String) map.get(Constants.ERROR_MESSAGE))
+                                .orElse("Unknown error response from un-enrolment API");
+
+                        logger.error("User un-enrollment failed: {}", errorMessage);
+                    }
                 } else {
-                    logger.error("user enrolment failed"
-                            + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+                    logger.error("User enrolment failed: enrolResp is null");
                 }
             } catch (Exception e) {
                 logger.error("Exception while enrol user");
@@ -571,7 +576,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         data.put(Constants.WF_IDS_CONSTANT, wfId);
         response.put(Constants.MESSAGE, Constants.STATUS_CHANGE_MESSAGE + Constants.ADMIN_ENROLL_IS_IN_PROGRESS);
         response.put(Constants.DATA, data);
-        
+
                response.put(Constants.STATUS, HttpStatus.OK);
         return response;
     }
@@ -808,11 +813,19 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
                 builder.append(configuration.getAdminUnEnrolEndPoint());
                 Map<String, Object> enrolResp = (Map<String, Object>) requestServiceImpl
                         .fetchResultUsingPost(builder, request, Map.class, headersValue);
-                if (enrolResp != null
+                if (MapUtils.isNotEmpty(enrolResp)
                         && "OK".equalsIgnoreCase((String) enrolResp.get(Constants.RESPONSE_CODE))) {
                     logger.info("User un-enrollment success");
                 } else {
-                    logger.error("user un-enrollment failed" + ((Map<String, Object>) enrolResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
+                    Object paramsObj = enrolResp.get(Constants.PARAMS);
+
+                    String errorMessage = Optional.ofNullable(paramsObj)
+                            .filter(Map.class::isInstance)
+                            .map(obj -> (Map<String, Object>) obj)
+                            .map(map -> (String) map.get(Constants.ERROR_MESSAGE))
+                            .orElse("Unknown error response from un-enrolment API");
+
+                    logger.error("User un-enrollment failed: {}", errorMessage);
                 }
             } catch (Exception e) {
                 logger.error("Exception while un-enrol user");
@@ -1099,8 +1112,17 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         String csvFilePath = tempDir + File.separator + csvFileName;
         File logFile = new File(csvFilePath);
         if (!logFile.exists()) {
-            logFile.getParentFile().mkdirs();
-            logFile.createNewFile();
+            File parentDir = logFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                boolean dirsCreated = parentDir.mkdirs();
+                if (!dirsCreated) {
+                    logger.warn("Could not create directories for path: {}", parentDir.getAbsolutePath());
+                }
+            }
+            boolean fileCreated = logFile.createNewFile();
+            if (!fileCreated) {
+                logger.warn("File already exists or could not be created: {}", logFile.getAbsolutePath());
+            }
         }
         try (FileWriter writer = new FileWriter(csvFilePath)) {
             if (!logs.isEmpty()) {
@@ -1273,7 +1295,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
             logger.info("Row {} skipped: 'action' field is empty.", rowNumber);
             return Collections.emptyMap(); // Skip row silently
         }
-      
+
         if (!"approve".equalsIgnoreCase(action) && !"reject".equalsIgnoreCase(action)) {
             errors.add("Row " + rowNumber + " has invalid action: " + action);
             return null;
@@ -1318,6 +1340,11 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     private String writeUpdatedCsv(MultipartFile originalFile, List<String[]> updatedRows) throws IOException {
         String originalFileName = originalFile.getOriginalFilename();
+        if (StringUtils.isEmpty(originalFileName)) {
+            logger.warn("Original filename is null or empty. Using default name 'updated_file.csv'");
+            originalFileName = Constants.DEFAULT_UPDATED_FILE_NAME;
+        }
+
         String updatedFileName = originalFileName.replace(".csv", "_updated.csv");
         File tempFile = new File(System.getProperty("java.io.tmpdir"), updatedFileName);
         try (
