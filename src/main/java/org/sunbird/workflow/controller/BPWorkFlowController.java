@@ -159,6 +159,22 @@ public class BPWorkFlowController {
         return bPWorkFlowService.loadApprovalDataFromCsv(file, contentId);
     }
 
+    @PostMapping("/remove/approved/user")
+    public ResponseEntity<Response> bpRemoveApprovedUser(@RequestHeader boolean isPc,
+                                                         @RequestBody WfRequest wfRequest) {
+        Response response = bPWorkFlowService.removeApprovedUser(wfRequest, isPc);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
 
+    @PostMapping("/nominate")
+    public ResponseEntity<Response> nominateUsers(
+            @RequestHeader(Constants.X_AUTH_USER_ID) String actorUserId,
+            @RequestHeader String rootOrg,
+            @RequestHeader String org,
+            @RequestBody Map<String, Object> requestBody) {
+
+        Response response = bPWorkFlowService.nominateUsers(rootOrg, org, actorUserId, requestBody);
+        return new ResponseEntity<>(response, (HttpStatus) response.get(Constants.STATUS));
+    }
 
 }

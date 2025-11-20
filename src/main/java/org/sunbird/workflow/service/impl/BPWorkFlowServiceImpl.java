@@ -34,16 +34,13 @@ import org.sunbird.workflow.service.BPWorkFlowService;
 import org.sunbird.workflow.service.ContentReadService;
 import org.sunbird.workflow.service.Workflowservice;
 import org.sunbird.workflow.utils.CassandraOperation;
+import org.sunbird.workflow.utils.UserUtil;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import java.util.UUID;
 @Service
 public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
@@ -72,6 +69,9 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
 
     @Autowired
     private ContentReadService contentReadService;
+
+    @Autowired
+    private UserUtil userUtils;
 
     @Override
     public Response enrolBPWorkFlow(String rootOrg, String org, WfRequest wfRequest) {
@@ -699,7 +699,7 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         propertyMap.put(Constants.USER_ID, wfRequest.getUserId());
         List<Map<String, Object>> allEnrollmentDetails = cassandraOperation.getRecordsByProperties(
                 Constants.KEYSPACE_SUNBIRD_COURSES,
-                Constants.USER_ENROLMENTS,
+                Constants.USER_ENROLMENTS_V2,
                 propertyMap,
                 Arrays.asList(Constants.BATCH_ID, Constants.USER_ID, Constants.COURSE_ID, Constants.ACTIVE)
         );
@@ -1443,6 +1443,324 @@ public class BPWorkFlowServiceImpl implements BPWorkFlowService {
         failureDetails.put(Constants.WF_ID_CONSTANT, wfId);
         failureDetails.put("error", error);
         ((List<Map<String, String>>) response.getResult().get("updateFailures")).add(failureDetails);
+    }
+
+    @Override
+    public Response removeApprovedUser(WfRequest wfRequest, boolean isPc) {
+        Response response = new Response();
+        String role = isPc ? Constants.PROGRAM_COORDINATOR : Constants.MDO_ADMIN;
+        String userId = wfRequest.getUserId();
+        logger.info("Initiating workflow REMOVE action by role: {} for user: {}", role, userId);
+        String applicationId = wfRequest.getApplicationId();
+        String courseId = wfRequest.getCourseId();
+        Response validationResponse = validateApprovedUserRemovalRequest(userId, wfRequest, response);
+        if (validationResponse != null) {
+            return validationResponse;
+        }
+        List<WfStatusEntity> wfRecords = wfStatusRepo.findWorkflowByBatchAndUser(applicationId, userId);
+        if (CollectionUtils.isEmpty(wfRecords)) {
+            logger.error("No active workflow found for applicationId: {} and userId: {}", applicationId, userId);
+            response.put(Constants.ERROR_MESSAGE, "No active workflow found for the given applicationId and userId.");
+            response.put(Constants.STATUS, HttpStatus.NOT_FOUND);
+            return response;
+        }
+        List<WfStatusEntity> approvedRecords = wfRecords.stream()
+                .filter(wfRecord -> Constants.APPROVED.equalsIgnoreCase(wfRecord.getCurrentStatus()))
+                .toList();
+        if (approvedRecords.isEmpty()) {
+            logger.warn("No APPROVED workflow entry found for user {} in application {}", userId, applicationId);
+            response.put(Constants.ERROR_MESSAGE, "User is not currently in APPROVED state.");
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+
+        if (approvedRecords.size() > 1) {
+            logger.error("Multiple APPROVED workflow records found for user {} in application {} — data inconsistency!", userId, applicationId);
+            response.put(Constants.ERROR_MESSAGE, "Data inconsistency: Multiple APPROVED workflow records found.");
+            response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+            return response;
+        }
+        WfStatusEntity approvedRecord = approvedRecords.get(0);
+        logger.info("Found APPROVED workflow record. wfId: {}", approvedRecord.getWfId());
+        List<HashMap<String, Object>> updateFieldValuesHashMap =
+                extractUpdateFieldValues(approvedRecord.getUpdateFieldValues());
+
+        if (CollectionUtils.isEmpty(updateFieldValuesHashMap)) {
+            response.put(Constants.ERROR_MESSAGE, "Invalid updateFieldValues format in workflow record.");
+            response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+            return response;
+        }
+        wfRequest.setWfId(approvedRecord.getWfId());
+        wfRequest.setUserId(userId);
+        wfRequest.setActorUserId(userId);
+        wfRequest.setAction(Constants.REMOVE);
+        wfRequest.setState(Constants.APPROVED);
+        wfRequest.setServiceName(approvedRecord.getServiceName());
+        wfRequest.setRootOrgId(approvedRecord.getRootOrg());
+        wfRequest.setDeptName(approvedRecord.getDeptName());
+        wfRequest.setCourseId(courseId);
+        wfRequest.setUpdateFieldValues(updateFieldValuesHashMap);
+        return updateBPWorkFlow(
+                wfRequest.getRootOrgId(),
+                approvedRecord.getOrg(),
+                wfRequest,
+                userId,
+                role
+        );
+    }
+
+    private List<HashMap<String, Object>> extractUpdateFieldValues(String updateFieldValuesJson) {
+        try {
+            List<Map<String, Object>> parsedList = mapper.readValue(
+                    updateFieldValuesJson,
+                    new TypeReference<List<Map<String, Object>>>() {
+                    }
+            );
+            return parsedList.stream()
+                    .map(HashMap::new)
+                    .toList();
+
+        } catch (Exception e) {
+            logger.error("Failed to parse update_field_values JSON: {}", updateFieldValuesJson, e);
+            return null;
+        }
+    }
+
+    private Response validateApprovedUserRemovalRequest(String userId, WfRequest wfRequest, Response response) {
+
+        if (StringUtils.isEmpty(wfRequest.getApplicationId())) {
+            logger.error("ApplicationId is missing or empty.");
+            response.put(Constants.ERROR_MESSAGE, "applicationId must not be empty.");
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+        if (StringUtils.isEmpty(userId)) {
+            logger.error(" userId is missing.");
+            response.put(Constants.ERROR_MESSAGE, "userId must not be empty.");
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+        if (StringUtils.isEmpty(wfRequest.getCourseId())) {
+            logger.error(" courseId is missing.");
+            response.put(Constants.ERROR_MESSAGE, "courseId must not be empty.");
+            response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+            return response;
+        }
+        return null;
+    }
+
+    public Response nominateUsers(String rootOrg, String org, String actorUserId, Map<String, Object> requestBody) {
+        logger.info("Nomination Wrapper API triggered by Program Coordinator: {}", actorUserId);
+
+        Response response = new Response();
+        List<Map<String, Object>> processedUsers = new ArrayList<>();
+
+        try {
+            String programId = (String) requestBody.get(Constants.COURSE_ID);
+            String batchId = (String) requestBody.get(Constants.BATCH_ID);
+            String deptName = (String) requestBody.get(Constants.DEPT_NAME);
+            String wfApproveType = contentReadService.getServiceNameDetails(programId);
+            if (wfApproveType == null || wfApproveType.isEmpty()) {
+                wfApproveType = Constants.BLENDED_PROGRAM_SERVICE_NAME;
+            }
+
+            @SuppressWarnings("unchecked")
+            List<String> userIds = (List<String>) requestBody.get(Constants.USER_IDS);
+            if (CollectionUtils.isEmpty(userIds)) {
+                response.put(Constants.ERROR_MESSAGE, "No userIds provided for nomination");
+                response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+                return response;
+            }
+
+            if (userIds.size() > 200) {
+                response.put(Constants.ERROR_MESSAGE, "Maximum 200 users allowed per nomination batch");
+                response.put(Constants.STATUS, HttpStatus.BAD_REQUEST);
+                return response;
+            }
+
+            for (String userId : userIds) {
+                Map<String, Object> userResponse = new HashMap<>();
+                userResponse.put("userId", userId);
+
+                if (isExistingWorkflowPresent(batchId, userId)) {
+                    logger.warn("Skipping nomination for userId: {} as active workflow already exists for batchId: {}", userId, batchId);
+                    userResponse.put(Constants.STATUS, Constants.ALREADY_EXISTS);
+                    processedUsers.add(userResponse);
+                    continue;
+                }
+
+                WfRequest wfRequest = new WfRequest();
+                wfRequest.setApplicationId(batchId);
+                wfRequest.setCourseId(programId);
+                wfRequest.setUserId(userId);
+                wfRequest.setActorUserId(actorUserId);
+                wfRequest.setDeptName(deptName);
+                wfRequest.setServiceName(wfApproveType);
+                wfRequest.setUpdateFieldValues(buildUpdateFieldValuesWithFirstName(userId));
+
+                switch (wfApproveType) {
+                    case Constants.ONE_STEP_PC_APPROVAL:
+                        wfRequest.setState(Constants.SEND_FOR_PC_APPROVAL);
+                        wfRequest.setAction(Constants.APPROVE);
+                        break;
+
+                    case Constants.TWO_STEP_PC_AND_MDO_APPROVAL:
+                        wfRequest.setState(Constants.SEND_FOR_MDO_APPROVAL);
+                        wfRequest.setAction(Constants.APPROVE);
+                        break;
+
+                    case Constants.ONE_STEP_MDO_APPROVAL:
+                        wfRequest.setState(Constants.SEND_FOR_MDO_APPROVAL);
+                        wfRequest.setAction(Constants.APPROVE);
+                        break;
+
+                    case Constants.TWO_STEP_MDO_AND_PC_APPROVAL:
+                        wfRequest.setState(Constants.SEND_FOR_PC_APPROVAL);
+                        wfRequest.setAction(Constants.APPROVE);
+                        break;
+
+                    default:
+                        logger.warn("Invalid wfApproveType provided: {}", wfApproveType);
+                        userResponse.put(Constants.STATUS, Constants.INVALID_APPROVAL_TYPE);
+                        processedUsers.add(userResponse);
+                        continue;
+                }
+
+
+                Map<String, Object> batchDetailsMap = new HashMap<>();
+                String validationError = validateBatchUserRequestAccess(wfRequest, batchDetailsMap);
+                wfRequest.setBatchName((String) batchDetailsMap.get(Constants.BATCH_NAME));
+                wfRequest.setBatchStartDate((Date) batchDetailsMap.get(Constants.START_DATE));
+
+                if (Constants.BATCH_START_DATE_ERROR.equals(validationError)) {
+                    logger.warn("Batch start date invalid for userId: {}", userId);
+                    userResponse.put(Constants.STATUS, Constants.BATCH_START_DATE_INVALID);
+                    processedUsers.add(userResponse);
+                    continue;
+                }
+
+                if (Constants.BATCH_SIZE_ERROR.equals(validationError)) {
+                    logger.warn("Batch full for userId: {}", userId);
+                    userResponse.put(Constants.STATUS, Constants.BATCH_FULL);
+                    processedUsers.add(userResponse);
+                    continue;
+                }
+
+                List<Map<String, Object>> activeEnrollments = getActiveEnrollmentForUserAndCourse(userId, wfRequest.getCourseId());
+                if (CollectionUtils.isNotEmpty(activeEnrollments)) {
+                    logger.warn("Active enrollment exists for userId: {} and courseId: {}", userId, wfRequest.getCourseId());
+                    userResponse.put(Constants.STATUS, Constants.ALREADY_EXISTS);
+                    processedUsers.add(userResponse);
+                    continue;
+                }
+
+                if (scheduleConflictCheck(wfRequest)) {
+                    logger.warn("Schedule conflict for userId: {}", userId);
+                    userResponse.put(Constants.STATUS, "SCHEDULE_CONFLICT");
+                    processedUsers.add(userResponse);
+                    continue;
+                }
+                    WfStatusEntity entity = persistApprovedStateDirectly(wfRequest, rootOrg, org);
+                    wfRequest.setWfId(entity.getWfId());
+                    wfRequest.setCreatedOn(entity.getCreatedOn() != null ? entity.getCreatedOn().toString() : null);
+                    try {
+                        producer.push(configuration.getWorkFlowNotificationTopic(), wfRequest);
+                        producer.push(configuration.getWorkflowApplicationTopic(), wfRequest);
+                    } catch (Exception e) {
+                        logger.error("Error publishing kafka for approved nomination userId: {}", userId, e);
+                    }
+                    userResponse.put("status", Constants.APPROVED);
+                    userResponse.put("wfId", entity.getWfId());
+
+                processedUsers.add(userResponse);
+            }
+
+            response.put(Constants.MESSAGE, "Nomination workflow processing complete");
+            response.put(Constants.DATA, processedUsers);
+            response.put(Constants.STATUS, HttpStatus.OK);
+
+        } catch (Exception e) {
+            logger.error("Error in nomination workflow creation: ", e);
+            response.put(Constants.ERROR_MESSAGE, e.getMessage());
+            response.put(Constants.STATUS, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return response;
+    }
+
+    private List<HashMap<String, Object>> buildUpdateFieldValuesWithFirstName(String userId) {
+        HashMap<String, Object> toValue = new HashMap<>();
+        HashMap<String, Object> updateField = new HashMap<>();
+        String firstName = getFirstName(userId);
+        toValue.put(Constants.NAME, firstName != null ? firstName : userId);
+        updateField.put(Constants.TO_VALUE, toValue);
+        return Collections.singletonList(updateField);
+    }
+
+    private WfStatusEntity persistApprovedStateDirectly(WfRequest wfRequest, String rootOrg, String org) {
+        WfStatusEntity entity = new WfStatusEntity();
+        String wfId = UUID.randomUUID().toString();
+        entity.setWfId(wfId);
+        entity.setApplicationId(wfRequest.getApplicationId());
+        entity.setUserId(wfRequest.getUserId());
+        entity.setServiceName(wfRequest.getServiceName());
+        entity.setDeptName(wfRequest.getDeptName());
+        entity.setCurrentStatus(Constants.APPROVED);
+        entity.setInWorkflow(false);
+        entity.setCreatedOn(new Date());
+        entity.setLastUpdatedOn(new Date());
+        entity.setRootOrg(rootOrg);
+        entity.setOrg(org);
+        try {
+            entity.setUpdateFieldValues(mapper.writeValueAsString(wfRequest.getUpdateFieldValues()));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize updateFieldValues", e);
+        }
+        entity.setComment("Auto-approved via nomination wrapper (PC final)");
+
+        WfStatusEntity saved = wfStatusRepo.save(entity);
+        return saved;
+    }
+
+    private boolean isExistingWorkflowPresent(String batchId, String userId) {
+        List<WfStatusEntity> existingRecords = wfStatusRepo.findWorkflowByBatchAndUser(batchId, userId);
+        boolean exists = CollectionUtils.isNotEmpty(existingRecords);
+        if (exists) {
+            logger.warn("Active workflow already exists for userId: {} batchId: {}", userId, batchId);
+        }
+        return exists;
+    }
+
+    private String getFirstName(String userId) {
+        Map<String, Object> userData = userUtils.userProfileRead(userId);
+
+        if (MapUtils.isNotEmpty(userData)) {
+            Object firstName = userData.get(Constants.FIRST_NAME_CAMEL_CASE);
+            if (firstName != null) {
+                return firstName.toString().trim();
+            }
+        }
+        return userId;
+    }
+
+    public List<Map<String, Object>> getActiveEnrollmentForUserAndCourse(String userId, String courseId) {
+
+        Map<String, Object> propertyMap = new HashMap<>();
+        propertyMap.put(Constants.USER_ID, userId);
+        propertyMap.put(Constants.COURSE_ID, courseId);
+
+        List<Map<String, Object>> allEnrollmentDetails = cassandraOperation.getRecordsByProperties(
+                Constants.KEYSPACE_SUNBIRD_COURSES,
+                Constants.USER_ENROLMENTS_V2,
+                propertyMap,
+                Arrays.asList(Constants.ACTIVE)
+        );
+
+        return allEnrollmentDetails.stream()
+                .filter(e -> e != null
+                        && e.get(Constants.ACTIVE) != null
+                        && (boolean) e.get(Constants.ACTIVE))
+                .collect(Collectors.toList());
     }
 
 

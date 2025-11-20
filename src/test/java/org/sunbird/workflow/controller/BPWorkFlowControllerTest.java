@@ -163,4 +163,19 @@ class BPWorkFlowControllerTest {
         ResponseEntity<Response> res = controller.blendedProgramWfStatusCount(criteria);
         assertEquals(HttpStatus.OK, res.getStatusCode());
     }
+
+    @Test
+    void testBpRemoveApprovedUser() {
+        boolean isPc = true;
+        WfRequest wfRequest = new WfRequest();
+
+        when(bPWorkFlowService.removeApprovedUser(wfRequest, isPc)).thenReturn(mockResponse);
+
+        ResponseEntity<Response> responseEntity = controller.bpRemoveApprovedUser(isPc, wfRequest);
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(mockResponse, responseEntity.getBody());
+        verify(bPWorkFlowService, times(1)).removeApprovedUser(wfRequest, isPc);
+    }
+
 }
