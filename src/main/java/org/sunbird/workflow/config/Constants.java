@@ -423,4 +423,20 @@ public class Constants {
     public static final String MINISTRYORSTATENAME = "ministryOrStateName";
     public static final String ORGANISATION_TYPE = "organisationType";
     public static final String SPV_ORGTYPEVALUE = "512";
+    public static final String PAGE_NUMBER = "pageNumber";
+    public static final String PAGE_SIZE = "pageSize";
+    public static final String REQUEST_FIELDS = "requestedFields";
+    public static final String FILTER_CRITERIA_MAP = "filterCriteriaMap";
+    public static final String ACTIVE_TITLE_CASE = "Active";
+    public static final String REMOVE = "REMOVE";
+    public static final String APPROVE = "APPROVE";
+    public static final String DEPT_NAME = "deptName";
+    public static final String ALREADY_EXISTS = "ALREADY_EXISTS";
+    public static final String INVALID_APPROVAL_TYPE = "INVALID_APPROVAL_TYPE";
+    public static final String BATCH_START_DATE_INVALID = "BATCH_START_DATE_INVALID";
+    public static final String BATCH_FULL = "BATCH_FULL";
+    public static final String IN_WORKFLOW = "IN_WORKFLOW";
+    public static final String USER_ENROLMENTS_V2  = "user_enrolments_v2";
+
+
 }

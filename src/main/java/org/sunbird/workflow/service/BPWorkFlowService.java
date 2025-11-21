@@ -67,4 +67,9 @@ public interface BPWorkFlowService {
     ResponseEntity<ByteArrayResource> generateUserApprovalCsv(SearchCriteria criteria);
 
     ResponseEntity<?> loadApprovalDataFromCsv(MultipartFile file, String contentId) throws IOException;
-    }
+
+    public Response removeApprovedUser(WfRequest wfRequest, boolean isPc);
+
+    public Response nominateUsers(String rootOrg, String org, String actorUserId, Map<String, Object> requestBody);
+
+}
