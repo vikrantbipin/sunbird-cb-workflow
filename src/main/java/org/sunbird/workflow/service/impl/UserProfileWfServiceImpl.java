@@ -130,7 +130,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				logger.error("user update failed" + ((Map<String, Object>) updateUserApiResp.get(Constants.PARAMS)).get(Constants.ERROR_MESSAGE));
 				failedCase(wfRequest);
 			} else {
-				String cacheKey = Constants.USER + ":basicProfile:" + existingUserResponse.get(Constants.USER_ID);
+				String cacheKey = Constants.USER_BASIC_PROFILE_REDIS_KEY_PREFIX + existingUserResponse.get(Constants.USER_ID);
+				logger.info("User profile updated. Invalidating basicProfile cache for userId: {}", existingUserResponse.get(Constants.USER_ID));
 				redisCacheMgr.deleteCache(cacheKey);
 			}
 		} catch (Exception e) {
@@ -632,9 +633,8 @@ public class UserProfileWfServiceImpl implements UserProfileWfService {
 				logger.error("User update failed: {}", updateError);
 				failedCaseProfileUpdate(wfRequests, errorMessage);
 			} else {
-				logger.info("Successfully updated user profile for userId: {}", userId);
-				logger.info("Deleting basic profile cache data for userId: {}", userId);
-				String cacheKey = Constants.USER + ":basicProfile:" + userId;
+				String cacheKey = Constants.USER_BASIC_PROFILE_REDIS_KEY_PREFIX + userId;
+				logger.info("User profile updated. Invalidating basicProfile cache for userId: {}", userId);
 				redisCacheMgr.deleteCache(cacheKey);
 			}
 		} catch (Exception e) {
