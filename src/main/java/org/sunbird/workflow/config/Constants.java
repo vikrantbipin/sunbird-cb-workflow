@@ -440,6 +440,7 @@ public class Constants {
     public static final String PC = "PC";
     public static final String MDO = "MDO";
     public static final String SELF = "SELF";
+	public static final String USER = "user";
 
 
 }
